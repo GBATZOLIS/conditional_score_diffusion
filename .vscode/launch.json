@@ -44,6 +44,20 @@
                 "configs/vp/SyntheticDataset.py"
             ],
             "console": "integratedTerminal"
+        },
+        {
+            "name": "NCSN++",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "args": [
+                "--config","configs/jan/holiday/ncsnpp_tets.py",
+                "--mode", "train",
+                "--log_path", "./"
+            ],
+            "console": "integratedTerminal"
         }
+
+
     ]
 }
