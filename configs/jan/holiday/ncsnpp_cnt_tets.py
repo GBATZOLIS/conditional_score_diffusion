@@ -31,7 +31,7 @@ def get_config():
   ## produce samples at each snapshot.
   training.snapshot_sampling = True
   training.likelihood_weighting = False
-  training.continuous = False
+  training.continuous = True
   training.reduce_mean = True 
   training.sde = 'vesde'
   
@@ -63,7 +63,7 @@ def get_config():
   data.datamodule = 'image'
   data.create_dataset = False
   data.split = [0.8, 0.1, 0.1]
-  data.image_size = 64
+  data.image_size = 128
   data.effective_image_size = data.image_size
   data.shape = [3, data.image_size, data.image_size]
   data.centered = False
@@ -92,28 +92,28 @@ def get_config():
   model.embedding_type = 'fourier'
 
   model.name = 'ncsnpp'
+  model.sigma_max = 348
   model.scale_by_sigma = True
-  model.sigma_begin = 90
   model.ema_rate = 0.999
   model.normalization = 'GroupNorm'
   model.nonlinearity = 'swish'
-  model.nf = 128 # ?? number of filters ??
-  model.ch_mult = (1, 2, 2, 2)
-  model.num_res_blocks = 4
+  model.nf = 128
+  model.ch_mult = (1, 1, 2, 2, 2, 2, 2)
+  model.num_res_blocks = 2
   model.attn_resolutions = (16,)
   model.resamp_with_conv = True
-  model.conditional = True # noise conditional model
-  model.fir = True # finite impulse response filter (used in upsampling?)
+  model.conditional = True
+  model.fir = True
   model.fir_kernel = [1, 3, 3, 1]
   model.skip_rescale = True
   model.resblock_type = 'biggan'
-  model.progressive = 'none'
-  model.progressive_input = 'residual'
+  model.progressive = 'output_skip'
+  model.progressive_input = 'input_skip'
   model.progressive_combine = 'sum'
   model.attention_type = 'ddpm'
-  model.init_scale = 0.0
+  model.init_scale = 0.
+  model.fourier_scale = 16
   model.conv_size = 3
-  model.embedding_type = 'positional'
 
   # optimization
   config.optim = optim = ml_collections.ConfigDict()

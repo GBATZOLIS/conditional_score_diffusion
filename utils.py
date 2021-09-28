@@ -1,6 +1,8 @@
 import torch
 import os
 import logging
+import numpy as np
+import torchvision
 from matplotlib import pyplot as plt
 import io
 import PIL
@@ -68,3 +70,20 @@ def compute_grad(f,x,t):
   gradients = gradients.view(gradients.size(0), -1)
   return gradients
 
+def batch_show(batch, n=None, device=None, save_path=None):
+    if n == None:
+        n = batch.shape[0]
+    if device == None:
+        device = batch.device
+    w=int(np.sqrt(n))
+    batch = batch.detach()
+    batch = batch.cpu()
+    #device="cpu"
+    #real_batch = next(iter(dataloader))
+    plt.figure(figsize=(w,w))
+    plt.axis("off")
+    image=np.transpose(torchvision.utils.make_grid(batch[:n].to(device), nrow=w, padding=2, normalize=True).cpu(),(1,2,0))
+    plt.imshow(image)
+    if save_path:
+        plt.savefig(save_path, dpi=300)
+    plt.show()

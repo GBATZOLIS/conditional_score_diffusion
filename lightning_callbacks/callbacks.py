@@ -5,6 +5,7 @@ from models.ema import ExponentialMovingAverage
 import torchvision
 from . import utils
 import numpy as np
+from lightning_callbacks.HaarMultiScaleCallback import normalise_per_image
 
 @utils.register_callback(name='configuration')
 class ConfigurationSetterCallback(Callback):
@@ -139,7 +140,7 @@ class ImageVisualizationCallback(Callback):
     def visualise_samples(self, samples, pl_module):
         # log sampled images
         sample_imgs =  samples.cpu()
-        grid_images = torchvision.utils.make_grid(sample_imgs, normalize=True)
+        grid_images = torchvision.utils.make_grid(normalise_per_image(sample_imgs), normalize=False)
         pl_module.logger.experiment.add_image('generated_images', grid_images, pl_module.current_epoch)
     
     def visualise_evolution(self, evolution, pl_module):
