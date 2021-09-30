@@ -40,7 +40,7 @@ def get_config():
 
   # data
   data = config.data
-  data.base_dir = '/store/CIA/js2164/data'
+  data.base_dir = '/rds/user/js2164/hpc-work/data/'
   data.dataset = 'celeba/img_align_celeba'
   data.datamodule = 'image'
   data.create_dataset = False
