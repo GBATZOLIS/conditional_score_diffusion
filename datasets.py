@@ -15,7 +15,7 @@
 
 # pylint: skip-file
 """Return training and evaluation/test datasets from config files."""
-import jax
+#import jax
 import tensorflow as tf
 import tensorflow_datasets as tfds
 
@@ -68,33 +68,33 @@ def central_crop(image, size):
   return tf.image.crop_to_bounding_box(image, top, left, size, size)
 
 
-def get_dataset(config, uniform_dequantization=False, evaluation=False):
-  """Create data loaders for training and evaluation.
+# def get_dataset(config, uniform_dequantization=False, evaluation=False):
+#   """Create data loaders for training and evaluation.
 
-  Args:
-    config: A ml_collection.ConfigDict parsed from config files.
-    uniform_dequantization: If `True`, add uniform dequantization to images.
-    evaluation: If `True`, fix number of epochs to 1.
+#   Args:
+#     config: A ml_collection.ConfigDict parsed from config files.
+#     uniform_dequantization: If `True`, add uniform dequantization to images.
+#     evaluation: If `True`, fix number of epochs to 1.
 
-  Returns:
-    train_ds, eval_ds, dataset_builder.
-  """
-  # Compute batch size for this worker.
-  batch_size = config.training.batch_size if not evaluation else config.eval.batch_size
-  if batch_size % jax.device_count() != 0:
-    raise ValueError(f'Batch sizes ({batch_size} must be divided by'
-                     f'the number of devices ({jax.device_count()})')
+#   Returns:
+#     train_ds, eval_ds, dataset_builder.
+#   """
+#   # Compute batch size for this worker.
+#   batch_size = config.training.batch_size if not evaluation else config.eval.batch_size
+#   if batch_size % jax.device_count() != 0:
+#     raise ValueError(f'Batch sizes ({batch_size} must be divided by'
+#                      f'the number of devices ({jax.device_count()})')
 
-  # Reduce this when image resolution is too large and data pointer is stored
-  shuffle_buffer_size = 10000
-  prefetch_size = tf.data.experimental.AUTOTUNE
-  num_epochs = None if not evaluation else 1
+#   # Reduce this when image resolution is too large and data pointer is stored
+#   shuffle_buffer_size = 10000
+#   prefetch_size = tf.data.experimental.AUTOTUNE
+#   num_epochs = None if not evaluation else 1
 
-  # Create dataset builders for each dataset.
-  if config.data.dataset == 'CIFAR10':
-    dataset_builder = tfds.builder('cifar10')
-    train_split_name = 'train'
-    eval_split_name = 'test'
+#   # Create dataset builders for each dataset.
+#   if config.data.dataset == 'CIFAR10':
+#     dataset_builder = tfds.builder('cifar10')
+#     train_split_name = 'train'
+#     eval_split_name = 'test'
 
     def resize_op(img):
       img = tf.image.convert_image_dtype(img, tf.float32)

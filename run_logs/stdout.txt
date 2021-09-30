@@ -1,0 +1,7 @@
+WARNING - utils.py - 2021-09-30 12:14:26,078 - No checkpoint found at ./run_logs/checkpoints-meta/checkpoint.pth. Returned the same state as input
+INFO - run_lib.py - 2021-09-30 12:14:33,324 - Starting training loop at step 0.
+INFO - run_lib.py - 2021-09-30 12:14:39,225 - step: 0, training_loss: 9.83071e+04
+INFO - run_lib.py - 2021-09-30 12:14:40,503 - step: 0, eval_loss: 9.86252e+04
+INFO - run_lib.py - 2021-09-30 12:16:31,865 - step: 50, training_loss: 9.71002e+04
+INFO - run_lib.py - 2021-09-30 12:18:23,582 - step: 100, training_loss: 9.49974e+04
+INFO - run_lib.py - 2021-09-30 12:18:24,722 - step: 100, eval_loss: 9.50967e+04
