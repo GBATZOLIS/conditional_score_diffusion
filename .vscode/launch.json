@@ -26,7 +26,7 @@
             "program": "${file}",
             "args": [
                 "--config",
-                "configs/ve/my/ddpm/celeba_64.py",
+                "/home/js2164/jan/repos/diffusion_score/configs/jan/holiday/unconditional_generation.py",
                 "--data_path",
                 "/store/CIA/js2164/data/celeba",
                 "--log_path",
