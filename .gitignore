@@ -19,3 +19,10 @@ dist/
 
 # Other
 *.DS_Store
+
+checkpoints-meta/
+checkpoints/
+lightning_logs/
+samples/
+scripts/
+tensorboard/
