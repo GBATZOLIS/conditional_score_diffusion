@@ -18,7 +18,7 @@ def get_config():
   training.workers = 4*training.gpus
   #----- to be removed -----
   training.num_epochs = 10000
-  training.n_iters = 500000
+  training.n_iters = 447655
   training.snapshot_freq = 5000
   training.log_freq = 250
   training.eval_freq = 2500

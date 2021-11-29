@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 import os
 import logging
@@ -6,9 +7,31 @@ import io
 import PIL
 from torch._C import device
 import torchvision.transforms as transforms
+<<<<<<< HEAD
 import numpy as np
 import cv2
 import math
+=======
+from sklearn.neighbors import KernelDensity
+
+def hist(data):
+  s=data.detach().cpu().numpy().squeeze()
+  fig = plt.figure()
+  plt.hist(s, density=True, bins=30)
+  kde = KernelDensity(kernel='gaussian', bandwidth=0.2)
+  kde.fit(s.reshape(-1,1))
+  mn, mx = s.min(), s.max()
+  t=np.linspace(mn,mx,100).reshape(-1,1)
+  scores=np.exp(kde.score_samples(t))
+  plt.plot(t,scores)
+  buf = io.BytesIO()
+  plt.savefig(buf, format='jpeg')
+  buf.seek(0)
+  image = PIL.Image.open(buf)
+  image = transforms.ToTensor()(image)
+  plt.close()
+  return image
+>>>>>>> conditional_low_dim
 
 def scatter(x, y, **kwargs):
   fig = plt.figure()

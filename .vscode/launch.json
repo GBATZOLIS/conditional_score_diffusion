@@ -25,6 +25,32 @@
             "console": "integratedTerminal"
         },
         {
+            "name": "Synthetic1D",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "args": [
+                "--config",
+                "/home/js2164/jan/repos/diffusion_score/configs/jan/holiday/Synthetic1DDataset_Song.py",
+                "--log_path",
+                "./1D"
+            ],
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Test",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "args": [
+                "--config",
+                "/home/js2164/jan/repos/diffusion_score/configs/jan/holiday/SyntheticDataset.py",
+                "--log_path",
+                "./test_logs"
+            ],
+            "console": "integratedTerminal"
+        },
+        {
             "name": "CelebA",
             "type": "python",
             "request": "launch",
