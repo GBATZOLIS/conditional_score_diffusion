@@ -137,7 +137,9 @@ def get_config():
   model.init_scale = 0.
   model.fourier_scale = 16
   model.conv_size = 3
-
+  model.input_channels = data.num_channels
+  model.output_channels = data.num_channels
+  
   # optimization
   config.optim = optim = ml_collections.ConfigDict()
 

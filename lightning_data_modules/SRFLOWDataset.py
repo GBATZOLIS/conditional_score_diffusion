@@ -6,7 +6,7 @@ import numpy as np
 import time
 import torch
 from torchvision.transforms import Resize
-from torchvision.transforms.functional import InterpolationMode
+from torchvision.transforms.functional import InterpolationMode, rgb_to_grayscale
 from iunets.layers import InvertibleDownsampling2D
 
 import pickle
@@ -53,7 +53,6 @@ class LRHR_PKLDataset(data.Dataset):
         self.target_size = config.data.target_resolution #overall target size
         self.crop_size = config.data.image_size #target image size for this scale
         self.scale = config.data.scale
-        self.random_scale_list = [1]
 
         hr_file_path = get_exact_paths(config, phase)['GT']
         lr_file_path = get_exact_paths(config, phase)['LQ']
@@ -61,9 +60,7 @@ class LRHR_PKLDataset(data.Dataset):
         self.use_flip = config.data.use_flip
         self.use_rot = config.data.use_rot
         self.use_crop = config.data.use_crop
-        #self.center_crop_hr_size = opt.get("center_crop_hr_size", None)
-
-        #n_max = opt["n_max"] if "n_max" in opt.keys() else int(1e8)
+        self.upscale_lr = config.data.upscale_lr
 
         t = time.time()
         self.lr_images = self.load_pkls(lr_file_path, n_max=int(1e9))
@@ -117,6 +114,10 @@ class LRHR_PKLDataset(data.Dataset):
 
             hr = torch.Tensor(hr)
             lr = torch.Tensor(lr)
+
+            if self.upscale_lr:
+                resize_to_hr = Resize(self.crop_size, interpolation=InterpolationMode.NEAREST)
+                lr = resize_to_hr(lr)
         
         elif self.scale < hr.shape[1] // lr.shape[1]:
             if self.crop_size == self.scale * lr.shape[1]:
@@ -227,6 +228,66 @@ class Haar_PKLDataset(data.Dataset):
             return lr, torch.cat((approx_cf, detail_cf), dim=1)
         else:
             raise NotImplementedError('Mapping <<%s>> is not supported' % self.map)
+
+class General_PKLDataset(data.Dataset):
+    def __init__(self, config, phase):
+        super(General_PKLDataset, self).__init__()
+        self.image_size = config.data.image_size #target image size for this scale
+        self.task = config.data.task
+
+        self.scale = config.data.scale #used for SR
+        self.mask_coverage = config.data.mask_coverage #used for inpainting
+        self.use_flip = config.data.use_flip
+
+        hr_file_path = get_exact_paths(config, phase)['GT']
+        self.hr_images = self.load_pkls(hr_file_path, n_max=int(1e9))
+
+    def load_pkls(self, path, n_max):
+        assert os.path.isfile(path), path
+        images = []
+        with open(path, "rb") as f:
+            images += pickle.load(f)
+        assert len(images) > 0, path
+        images = images[:n_max]
+        images = [np.transpose(image, [2, 0, 1]) for image in images]
+        return images
+
+    def __len__(self):
+        return len(self.hr_images)
+
+    def __getitem__(self, item):
+        hr = self.hr_images[item]
+
+        if self.use_flip:
+            random_choice = np.random.choice([True, False])
+            hr = hr if random_choice else np.flip(hr, 2).copy()
+        
+        hr = hr / 255.0
+        hr = torch.Tensor(hr)
+
+        resize_to_target = Resize(self.image_size, interpolation=InterpolationMode.BICUBIC)
+        hr = resize_to_target(hr)
+
+        if self.task == 'super-resolution':
+            resize_to_lr = Resize(self.image_size//self.scale, interpolation=InterpolationMode.BICUBIC)
+            lr = resize_to_lr(hr)
+            resize_to_hr = Resize(self.image_size, interpolation=InterpolationMode.NEAREST)
+            lr_nn = resize_to_hr(lr)
+            return lr_nn, hr
+
+        elif self.task == 'colorization':
+            gray = rgb_to_grayscale(hr)
+            return gray, hr
+
+        elif self.task == 'inpainting':
+            masked_img = hr.clone()
+            mask_size = int(np.sqrt(self.mask_coverage * hr.shape[1] * hr.shape[2]))
+            size_x, size_y = masked_img.shape[1], masked_img.shape[2]
+            start_x = np.random.randint(low=0, high=(size_x - mask_size) + 1) if size_x > mask_size else 0
+            start_y = np.random.randint(low=0, high=(size_y - mask_size) + 1) if size_y > mask_size else 0
+            masked_img[:, start_x:start_x + mask_size, start_y:start_y + mask_size] = 0.
+            return masked_img, hr
+
 
         
 def permute_channels(haar_image, forward=True):
@@ -353,6 +414,34 @@ class PairedDataModule(pl.LightningDataModule):
         self.train_dataset = Haar_PKLDataset(self.config, phase='train')
         self.val_dataset = Haar_PKLDataset(self.config, phase='val')
         self.test_dataset = Haar_PKLDataset(self.config, phase='test')
+
+    def train_dataloader(self):
+        return DataLoader(self.train_dataset, batch_size = self.train_batch, shuffle=True, num_workers=self.train_workers) 
+  
+    def val_dataloader(self):
+        return DataLoader(self.val_dataset, batch_size = self.val_batch, shuffle=False, num_workers=self.val_workers) 
+  
+    def test_dataloader(self): 
+        return DataLoader(self.test_dataset, batch_size = self.test_batch, shuffle=False, num_workers=self.test_workers) 
+
+@utils.register_lightning_datamodule(name='General_PKLDataset')
+class PairedDataModule(pl.LightningDataModule):
+    def __init__(self, config):
+        super().__init__()
+        #DataLoader arguments
+        self.config = config
+        self.train_workers = config.training.workers
+        self.val_workers = config.eval.workers
+        self.test_workers = config.eval.workers
+
+        self.train_batch = config.training.batch_size
+        self.val_batch = config.eval.batch_size
+        self.test_batch = config.eval.batch_size
+
+    def setup(self, stage=None): 
+        self.train_dataset = General_PKLDataset(self.config, phase='train')
+        self.val_dataset = General_PKLDataset(self.config, phase='val')
+        self.test_dataset = General_PKLDataset(self.config, phase='test')
 
     def train_dataloader(self):
         return DataLoader(self.train_dataset, batch_size = self.train_batch, shuffle=True, num_workers=self.train_workers) 

@@ -22,8 +22,15 @@ def get_callback_by_name(name):
     return _CALLBACKS[name]
 
 def get_callbacks(config):
-    callbacks=[get_callback_by_name('ema')(), \
-    get_callback_by_name(config.training.visualization_callback)(show_evolution=config.training.show_evolution)]
+    callbacks=[get_callback_by_name('ema')()] #check if this works for testing as well.
+
+    if config.eval.callback is not None:
+      callbacks.append(get_callback_by_name(config.eval.callback)(show_evolution=False, 
+                                                                  eval_config=config.eval, 
+                                                                  data_config=config.data,
+                                                                  approach = config.training.conditioning_approach))
+    else:
+      callbacks.append(get_callback_by_name(config.training.visualization_callback)(show_evolution=config.training.show_evolution))
 
     if config.training.lightning_module in ['conditional_decreasing_variance','haar_conditional_decreasing_variance'] :
       callbacks.append(get_callback_by_name('decreasing_variance_configuration')(config))

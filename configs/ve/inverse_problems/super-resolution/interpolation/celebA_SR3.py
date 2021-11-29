@@ -8,16 +8,17 @@ def get_config():
 
   # training
   config.training = training = ml_collections.ConfigDict()
-  config.training.lightning_module = 'conditional_decreasing_variance'
-  training.batch_size = 40
+  config.training.lightning_module = 'conditional'
+  training.conditioning_approach = 'sr3'
+  training.batch_size = 80
   training.num_nodes = 1
-  training.gpus = 2
+  training.gpus = 1
   training.accelerator = None if training.gpus == 1 else 'ddp'
   training.accumulate_grad_batches = 1
   training.workers = 4*training.gpus
   #----- to be removed -----
   training.num_epochs = 10000
-  training.n_iters = 2400001
+  training.n_iters = 500000
   training.snapshot_freq = 5000
   training.log_freq = 250
   training.eval_freq = 2500
@@ -39,14 +40,14 @@ def get_config():
   sampling.n_steps_each = 1
   sampling.noise_removal = True
   sampling.probability_flow = False
-  sampling.snr = 0.16 #0.15 in VE sde (you typically need to play with this term - more details in the main paper)
+  sampling.snr = 0.15 #0.15 in VE sde (you typically need to play with this term - more details in the main paper)
 
   # evaluation (this file is not modified at all - subject to change)
   config.eval = evaluate = ml_collections.ConfigDict()
   evaluate.workers = 4*training.gpus
   evaluate.begin_ckpt = 50
   evaluate.end_ckpt = 96
-  evaluate.batch_size = 25
+  evaluate.batch_size = 64
   evaluate.enable_sampling = True
   evaluate.num_samples = 50000
   evaluate.enable_loss = True
@@ -55,10 +56,13 @@ def get_config():
 
   # data
   config.data = data = ml_collections.ConfigDict()
-  data.base_dir = 'datasets'
-  data.dataset = 'edges2shoes'
+  data.base_dir = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/datasets'
+  data.dataset = 'celebA-HQ-160'
+  data.task = 'super-resolution'
+  data.scale = 4
+  data.mask_coverage = 0.25
   data.use_data_mean = False
-  data.datamodule = 'paired'
+  data.datamodule = 'General_PKLDataset'
   data.create_dataset = False
   data.split = [0.8, 0.1, 0.1]
   data.image_size = 64
@@ -66,7 +70,7 @@ def get_config():
   data.shape_x = [3, data.image_size, data.image_size]
   data.shape_y = [3, data.image_size, data.image_size]
   data.centered = False
-  data.random_flip = False
+  data.use_flip = True
   data.uniform_dequantization = False
   data.num_channels = data.shape_x[0]+data.shape_y[0] #the number of channels the model sees as input.
 
@@ -76,13 +80,13 @@ def get_config():
   model.num_scales = 1000
 
   #SIGMA INFORMATION FOR THE VE SDE
-  model.reach_target_steps = 8000
+  model.reach_target_steps = 500000
   model.sigma_max_x = np.sqrt(np.prod(data.shape_x))
   model.sigma_max_y = np.sqrt(np.prod(data.shape_y))
-  model.sigma_max_y_target = model.sigma_max_y/2
-  model.sigma_min_x = 1e-2
-  model.sigma_min_y = 1e-2
-  model.sigma_min_y_target = 1e-2
+  model.sigma_max_y_target = 0.1
+  model.sigma_min_x = 5e-3
+  model.sigma_min_y = 5e-3
+  model.sigma_min_y_target = 5e-3
 
   model.beta_min = 0.1
   model.beta_max = 20.
@@ -91,15 +95,15 @@ def get_config():
   model.embedding_type = 'positional'
 
 
-  model.name = 'ncsnpp_paired'
+  model.name = 'ddpm_paired_SR3'
   model.scale_by_sigma = True
   model.ema_rate = 0.999
   model.normalization = 'GroupNorm'
   model.nonlinearity = 'swish'
-  model.nf = 128
-  model.ch_mult = (1, 1, 2, 2)
+  model.nf = 96
+  model.ch_mult = (1, 1, 2, 2, 3)
   model.num_res_blocks = 2
-  model.attn_resolutions = (16, 8)
+  model.attn_resolutions = (16, 8, 4)
   model.resamp_with_conv = True
   model.conditional = True
   model.fir = True
@@ -113,6 +117,8 @@ def get_config():
   model.init_scale = 0.
   model.fourier_scale = 16
   model.conv_size = 3
+  model.input_channels = data.shape_x[0]+data.shape_y[0]
+  model.output_channels = data.shape_x[0]
 
   # optimization
   config.optim = optim = ml_collections.ConfigDict()

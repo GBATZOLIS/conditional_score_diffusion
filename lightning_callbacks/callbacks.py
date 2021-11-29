@@ -15,9 +15,6 @@ class ConfigurationSetterCallback(Callback):
         # Configure trainining and validation loss functions.
         pl_module.train_loss_fn = pl_module.configure_loss_fn(pl_module.config, train=True)
         pl_module.eval_loss_fn = pl_module.configure_loss_fn(pl_module.config, train=False)
-
-        # Configure default sampling shape
-        pl_module.configure_default_sampling_shape(pl_module.config)
     
     def on_test_epoch_start(self, trainer, pl_module):
         pl_module.configure_sde(pl_module.config)

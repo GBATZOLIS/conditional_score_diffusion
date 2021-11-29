@@ -268,6 +268,24 @@ class VESDE(SDE):
     std = sigma_min * (sigma_max / sigma_min) ** t
     mean = x
     return mean, std
+  
+  def compute_backward_kernel(self, x0, x_tplustau, t, tau):
+    #x_forward = x(t+\tau)
+    #compute the parameters of p(x(t)|x(0), x(t+\tau)) - the reverse kernel of width tau at time step t.
+    sigma_min, sigma_max = torch.tensor(self.sigma_min).type_as(t), torch.tensor(self.sigma_max).type_as(t)
+
+    sigma_t_square = (sigma_min * (sigma_max / sigma_min) ** t)**2
+    sigma_tplustau_square = (sigma_min * (sigma_max / sigma_min) ** (t+tau))**2
+
+    std_backward = torch.sqrt(sigma_t_square * (sigma_tplustau_square - sigma_t_square) / sigma_tplustau_square)
+
+    #backward scaling factor for the mean
+    s_b_0 = (sigma_tplustau_square - sigma_t_square) / sigma_tplustau_square
+    s_b_tplustau = sigma_t_square / sigma_tplustau_square
+
+    mean_backward = x0 * s_b_0[(...,) + (None,) * len(x0.shape[1:])] + x_tplustau * s_b_tplustau[(...,) + (None,) * len(x0.shape[1:])]
+
+    return mean_backward, std_backward
 
   def prior_sampling(self, shape):
     if self.diffused_mean is not None:

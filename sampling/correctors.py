@@ -158,6 +158,7 @@ class NoneCorrector(Corrector):
   def update_fn(self, x, t):
     return x, x
 
+#use this none corrector for conditional settings
 @register_corrector(name='conditional_none')
 class NoneCorrector(Corrector):
   """An empty corrector that does nothing."""

@@ -153,7 +153,7 @@ def get_model_fn(model, train=False):
 
 
 
-def get_score_fn(sde, model, train=False, continuous=False):
+def get_score_fn(sde, model, conditional=False, train=False, continuous=False):
   """Wraps `score_fn` so that the model output corresponds to a real time-dependent score function.
   Args:
     sde: An `sde_lib.SDE` object that represents the forward SDE.
@@ -165,72 +165,115 @@ def get_score_fn(sde, model, train=False, continuous=False):
   """
   model_fn = get_model_fn(model, train=train)
 
-  if isinstance(sde, dict):
-    if isinstance(sde['y'], sde_lib.VPSDE) or isinstance(sde['y'], sde_lib.subVPSDE):
-      raise NotImplementedError('This combination of sdes is not supported for conditional SDEs yet.')
-    elif isinstance(sde['y'], sde_lib.VESDE) and isinstance(sde['x'], sde_lib.cVESDE) and len(sde)==2:
-      def score_fn(x, t):
-        if continuous:
-          labels = t * (sde['x'].N - 1)
-          score = model_fn(x, labels)
-          score = divide_by_sigmas(score, t, sde, continuous)
-        else:
-          # For VE-trained models, t=0 corresponds to the highest noise level
-          labels = t*(sde['x'].N - 1)
-          labels = torch.round(labels.float()).long()
-          score = model_fn(x, labels)
-          score = divide_by_sigmas(score, labels, sde, continuous)
+  if conditional:
+    """COVERS OUR CONDITIONAL SCORE ESTIMATOR"""
+    if isinstance(sde, dict):
+      if isinstance(sde['y'], sde_lib.VPSDE) or isinstance(sde['y'], sde_lib.subVPSDE):
+        raise NotImplementedError('This combination of sdes is not supported for conditional SDEs yet.')
+      elif isinstance(sde['y'], sde_lib.VESDE) and isinstance(sde['x'], sde_lib.cVESDE) and len(sde)==2:
+        def score_fn(x, t):
+          if continuous:
+            labels = t * (sde['x'].N - 1)
+            score = model_fn(x, labels)
+            score = divide_by_sigmas(score, t, sde, continuous)
+          else:
+            # For VE-trained models, t=0 corresponds to the highest noise level
+            labels = t*(sde['x'].N - 1)
+            labels = torch.round(labels.float()).long()
+            score = model_fn(x, labels)
+            score = divide_by_sigmas(score, labels, sde, continuous)
 
-        return score
+          return score
+      else:
+        raise NotImplementedError('This combination of SDEs is not supported for conditional SDEs yet.')
     else:
-      raise NotImplementedError('This combination of SDEs is not supported for conditional SDEs yet.')
+      """COVERS THE SR3 CONDITIONAL SCORE ESTIMATOR"""
+      if isinstance(sde, sde_lib.VPSDE) or isinstance(sde, sde_lib.subVPSDE):
+        def score_fn(x, t):
+          # Scale neural network output by standard deviation and flip sign
+          if continuous or isinstance(sde, sde_lib.subVPSDE):
+            # For VP-trained models, t=0 corresponds to the lowest noise level
+            # The maximum value of time embedding is assumed to 999 for
+            # continuously-trained models.
+            labels = t * (sde.N - 1)
+            score = model_fn(x, labels)
+            std = sde.marginal_prob(torch.zeros_like(score), t)[1]
+          else:
+            # For VP-trained models, t=0 corresponds to the lowest noise level
+            labels = t * (sde.N - 1)
+            score = model_fn(x, labels)
+            std = sde.sqrt_1m_alphas_cumprod.type_as(labels)[labels.long()]
 
-  elif isinstance(sde, sde_lib.VPSDE) or isinstance(sde, sde_lib.subVPSDE):
-    def score_fn(x, t):
-      # Scale neural network output by standard deviation and flip sign
-      if continuous or isinstance(sde, sde_lib.subVPSDE):
-        # For VP-trained models, t=0 corresponds to the lowest noise level
-        # The maximum value of time embedding is assumed to 999 for
-        # continuously-trained models.
-        labels = t * (sde.N - 1)
-        score = model_fn(x, labels)
-        std = sde.marginal_prob(torch.zeros_like(x), t)[1]
+          score = score / std[(...,)+(None,)*len(score.shape[1:])] #-> why do they scale the output of the network by std ??
+          return score
+
+      elif isinstance(sde, sde_lib.VESDE) or isinstance(sde, sde_lib.cVESDE):
+        def score_fn(x, t):
+          if continuous:
+            labels = t * (sde.N - 1)
+            score = model_fn(x, labels)
+            score = divide_by_sigmas(score, t, sde, continuous)
+          else:
+            labels = t*(sde.N - 1)
+            labels = torch.round(labels.float()).long()
+            score = model_fn(x, labels)
+            score = divide_by_sigmas(score, labels, sde, continuous)
+          return score
       else:
-        # For VP-trained models, t=0 corresponds to the lowest noise level
-        labels = t * (sde.N - 1)
-        score = model_fn(x, labels)
-        std = sde.sqrt_1m_alphas_cumprod.type_as(labels)[labels.long()]
-
-      score = score / std[(...,)+(None,)*len(x.shape[1:])] #-> why do they scale the output of the network by std ??
-      return score
-
-  elif isinstance(sde, sde_lib.VESDE) or isinstance(sde, sde_lib.cVESDE):
-    def score_fn(x, t):
-      if continuous:
-        #raise NotImplementedError('Continuous training for VE SDE is not checked. Division by std should be included. Not completed yet.')
-        std = labels = sde.marginal_prob(torch.zeros_like(x), t)[1]
-        time_embedding = torch.log(labels) if model.embedding_type == 'fourier' else labels
-        score = model_fn(x, time_embedding)
-        score = score / std[(...,)+(None,)*len(x.shape[1:])]
-      else:
-        # For VE-trained models, t=0 corresponds to the lowest noise level
-        labels = t*(sde.N - 1)
-        labels = torch.round(labels).long()
-        std = sigma_labels = sde.discrete_sigmas.type_as(x)[labels]
-        score = model_fn(x, sigma_labels)
-        score = score / std[(...,)+(None,)*len(x.shape[1:])]
-
-      return score
+        raise NotImplementedError(f"SDE class {sde.__class__.__name__} not yet supported.")
 
   else:
-    raise NotImplementedError(f"SDE class {sde.__class__.__name__} not yet supported.")
+    """COVERS THE BASIC UNCONDITIONAL CASE"""
+    if isinstance(sde, sde_lib.VPSDE) or isinstance(sde, sde_lib.subVPSDE):
+      def score_fn(x, t):
+        # Scale neural network output by standard deviation and flip sign
+        if continuous or isinstance(sde, sde_lib.subVPSDE):
+          # For VP-trained models, t=0 corresponds to the lowest noise level
+          # The maximum value of time embedding is assumed to 999 for
+          # continuously-trained models.
+          labels = t * (sde.N - 1)
+          score = model_fn(x, labels)
+          std = sde.marginal_prob(torch.zeros_like(x), t)[1]
+        else:
+          # For VP-trained models, t=0 corresponds to the lowest noise level
+          labels = t * (sde.N - 1)
+          score = model_fn(x, labels)
+          std = sde.sqrt_1m_alphas_cumprod.type_as(labels)[labels.long()]
+
+        score = score / std[(...,)+(None,)*len(x.shape[1:])] #-> why do they scale the output of the network by std ??
+        return score
+
+    elif isinstance(sde, sde_lib.VESDE) or isinstance(sde, sde_lib.cVESDE):
+      def score_fn(x, t):
+        if continuous:
+          #raise NotImplementedError('Continuous training for VE SDE is not checked. Division by std should be included. Not completed yet.')
+          std = labels = sde.marginal_prob(torch.zeros_like(x), t)[1]
+          time_embedding = torch.log(labels) if model.embedding_type == 'fourier' else labels
+          score = model_fn(x, time_embedding)
+          score = score / std[(...,)+(None,)*len(x.shape[1:])]
+        else:
+          # For VE-trained models, t=0 corresponds to the lowest noise level
+          labels = t*(sde.N - 1)
+          labels = torch.round(labels).long()
+          std = sigma_labels = sde.discrete_sigmas.type_as(x)[labels]
+          score = model_fn(x, sigma_labels)
+          score = score / std[(...,)+(None,)*len(x.shape[1:])]
+
+        return score
+
+    else:
+      raise NotImplementedError(f"SDE class {sde.__class__.__name__} not yet supported.")
 
   return score_fn
 
 #needs shape generalisation
 def get_conditional_score_fn(score_fn, target_domain): #for standard inverse problems. It should be modified for general inverse problems (different resolutions etc.).
   def conditional_score_fn(x, y, t):
-    return score_fn({'x':x, 'y':y}, t)[target_domain]
+    score = score_fn({'x':x, 'y':y}, t)
+    if isinstance(score, dict):
+      return score[target_domain]
+    else:
+      return score
 
   return conditional_score_fn
 

@@ -105,10 +105,11 @@ class DDPM(pl.LightningModule):
       nn.init.zeros_(modules[1].bias)
 
     self.centered = config.data.centered
-    channels = config.data.num_channels
+    input_channels = config.model.input_channels
+    output_channels = config.model.output_channels
 
     # ddpm_conv3x3
-    modules.append(conv3x3(channels, nf))
+    modules.append(conv3x3(input_channels, nf))
     hs_c = [nf]
     in_ch = nf
     for i_level in range(num_resolutions):
@@ -142,7 +143,7 @@ class DDPM(pl.LightningModule):
 
     assert not hs_c
     modules.append(nn.GroupNorm(num_channels=in_ch, num_groups=32, eps=1e-6))
-    modules.append(conv3x3(in_ch, channels, init_scale=0.))
+    modules.append(conv3x3(in_ch, output_channels, init_scale=0.))
     self.all_modules = nn.ModuleList(modules)
 
   def forward(self, x, labels):
@@ -270,7 +271,19 @@ class DDPM_multi_speed_haar(DDPM):
     image_output = super().forward(x, labels)
     haar_output = self.convert_to_haar_space(image_output)
     return haar_output
+
+@utils.register_model(name='ddpm_paired_SR3')
+class DDPM_paired_SR3(DDPM):
+  def __init__(self, config, *args, **kwargs):
+        super().__init__(config)
   
+  def forward(self, input_dict, labels):
+    x, y = input_dict['x'], input_dict['y']
+    x_channels = x.size(1)
+    concat = torch.cat((x, y), dim=1)
+    score_x = super().forward(concat, labels)
+    return score_x
+
 @utils.register_model(name='ddpm_paired')
 class DDPM_paired(DDPM):
   def __init__(self, config, *args, **kwargs):
