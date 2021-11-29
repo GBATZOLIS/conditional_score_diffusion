@@ -61,4 +61,46 @@ class FCN(pl.LightningModule):
 
 
 
+@utils.register_model(name='fcn_joint')
+class FCN_joint(FCN):
+  def __init__(self, config, *args, **kwargs):
+        config.model.state_size = config.model.state_size + 1 # assuming condition size 1
+        super().__init__(config)
+  
+  def forward(self, input_dict, labels):
+    x, y = input_dict['x'], input_dict['y']
+    concat = torch.cat((x, y.unsqueeze(dim=1)), dim=1)
+    score = super().forward(concat, labels)
+    return {'x': score[:,:x.shape[1]],
+            'y': score[:,x.shape[1]:]}
+
+@utils.register_model(name='fcn_conditional')
+class FCN_conditional(FCN):
+    def __init__(self, config): 
+        super(FCN, self).__init__()
+        state_size = config.model.state_size
+        hidden_layers = config.model.hidden_layers
+        hidden_nodes = config.model.hidden_nodes
+        dropout = config.model.dropout
+
+        input_size = state_size + 1 + 1 #+1 because of the time dimension.
+        output_size = state_size
+
+        self.mlp = nn.ModuleList()
+        self.mlp.append(nn.Linear(input_size, hidden_nodes))
+        self.mlp.append(nn.Dropout(dropout)) #addition
+        self.mlp.append(nn.ReLU())
+
+        for _ in range(hidden_layers):
+            self.mlp.append(nn.Linear(hidden_nodes, hidden_nodes))
+            self.mlp.append(nn.Dropout(dropout)) #addition
+            self.mlp.append(nn.ReLU())
         
+        self.mlp.append(nn.Linear(hidden_nodes, output_size))
+        self.mlp = nn.Sequential(*self.mlp)
+  
+    def forward(self, input_dict, labels):
+        x, y = input_dict['x'], input_dict['y']
+        concat = torch.cat((x, y.unsqueeze(dim=1)), dim=1)
+        score_x = super().forward(concat, labels)
+        return score_x
