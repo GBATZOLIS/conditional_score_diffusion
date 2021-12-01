@@ -12,7 +12,7 @@ from lightning_callbacks.utils import get_callbacks
 from lightning_data_modules import HaarDecomposedDataset, ImageDatasets, PairedDataset, SyntheticDataset, SyntheticPairedDataset, Synthetic1DConditionalDataset, SRDataset, SRFLOWDataset #needed for datamodule registration
 from lightning_data_modules.utils import create_lightning_datamodule
 
-from lightning_modules import BaseSdeGenerativeModel, HaarMultiScaleSdeGenerativeModel, ConditionalSdeGenerativeModel #need for lightning module registration
+from lightning_modules import BaseSdeGenerativeModel, HaarMultiScaleSdeGenerativeModel, ConditionalSdeGenerativeModel, ConservativeSdeGenerativeModel #need for lightning module registration
 from lightning_modules.utils import create_lightning_module
 
 from torchvision.transforms import RandomCrop, CenterCrop, ToTensor, Resize

@@ -41,6 +41,6 @@ def curl(vx, vy, dx):
     return dvy_dx - dvx_dy
 
 def curl_backprop(f, xs, ts):
-    dvy_dx = compute_grad(lambda x,t: f(x,t)[1],xs,ts)[:,0]
-    dvx_dy = compute_grad(lambda x,t: f(x,t)[0],xs,ts)[:,1]
-    return (dvy_dx - dvx_dy).detach().numpy()
+    dvy_dx = compute_grad(lambda x,t: f(x,t)[:,1],xs,ts)[:,0]
+    dvx_dy = compute_grad(lambda x,t: f(x,t)[:,0],xs,ts)[:,1]
+    return (dvy_dx - dvx_dy)

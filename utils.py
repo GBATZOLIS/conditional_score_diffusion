@@ -7,11 +7,9 @@ import io
 import PIL
 from torch._C import device
 import torchvision.transforms as transforms
-<<<<<<< HEAD
 import numpy as np
 import cv2
 import math
-=======
 from sklearn.neighbors import KernelDensity
 
 def hist(data):
@@ -31,7 +29,6 @@ def hist(data):
   image = transforms.ToTensor()(image)
   plt.close()
   return image
->>>>>>> conditional_low_dim
 
 def scatter(x, y, **kwargs):
   fig = plt.figure()
@@ -82,13 +79,16 @@ def compute_grad(f,x,t):
   Retruns:
       - grads - tensor of gradients for each x
   """
+  torch_grad_enabled =torch.is_grad_enabled()
+  torch.set_grad_enabled(True)
   device = x.device
-  x.requires_grad=True
   ftx =f(x,t)
+  assert len(ftx.shape)==1
   gradients = torch.autograd.grad(outputs=ftx, inputs=x,
                                   grad_outputs=torch.ones(ftx.size()).to(device),
                                   create_graph=True, retain_graph=True, only_inputs=True)[0]
   gradients = gradients.view(gradients.size(0), -1)
+  torch.set_grad_enabled(torch_grad_enabled)
   return gradients
 
 

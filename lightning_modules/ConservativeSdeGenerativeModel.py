@@ -1,5 +1,6 @@
 import losses
 from losses import get_sde_loss_fn, get_smld_loss_fn, get_ddpm_loss_fn, get_general_sde_loss_fn
+from utils import compute_grad
 import pytorch_lightning as pl
 import sde_lib
 from sampling.unconditional import get_sampling_fn
@@ -10,7 +11,7 @@ import torch.optim as optim
 import os
 import torch
 
-@utils.register_lightning_module(name='base')
+@utils.register_lightning_module(name='curl_penalty')
 class BaseSdeGenerativeModel(pl.LightningModule):
     def __init__(self, config, *args, **kwargs):
         super().__init__()
@@ -20,7 +21,6 @@ class BaseSdeGenerativeModel(pl.LightningModule):
         self.config = config
         self.score_model = mutils.create_model(config)
         self.configure_default_sampling_shape(config)
-        
         # Placeholder to store samples
         self.samples = None
 
@@ -44,6 +44,7 @@ class BaseSdeGenerativeModel(pl.LightningModule):
             raise NotImplementedError(f"SDE {config.training.sde} unknown.")
 
     def configure_loss_fn(self, config, train):
+        self.LAMBDA = config.training.LAMBDA
         if config.training.continuous:
             loss_fn = get_general_sde_loss_fn(self.sde, train, reduce_mean=config.training.reduce_mean,
                                     continuous=True, likelihood_weighting=config.training.likelihood_weighting)
@@ -64,7 +65,9 @@ class BaseSdeGenerativeModel(pl.LightningModule):
         self.default_sampling_shape = [config.training.batch_size] +  self.data_shape
 
     def training_step(self, batch, batch_idx):
-        loss = self.train_loss_fn(self.score_model, batch)
+        curl_penalty = self.curl_penalty(self.score_model,batch)
+        loss = self.train_loss_fn(self.score_model, batch) + self.LAMBDA*curl_penalty
+        self.log('curl_penalty', curl_penalty, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         return loss
     
@@ -106,6 +109,21 @@ class BaseSdeGenerativeModel(pl.LightningModule):
                     
         return [optimizer], [scheduler]
 
-    
-    
 
+
+    def curl_penalty(self, score, batch, eps=1e-5):
+
+        t = torch.rand(batch.shape[0], device=batch.device) * (self.sde.T - eps) + eps
+        z = torch.randn_like(batch)
+        mean, std = self.sde.marginal_prob(batch, t)
+        perturbed_data = mean + std[(...,) + (None,) * len(batch.shape[1:])] * z
+        perturbed_data.requires_grad = True
+        #i = torch.randint(0, perturbed_data.shape[1],(1,)).item()
+        #j=i
+        #while j==i:
+        #    j = torch.randint(0, perturbed_data.shape[1],(1,)).item()
+
+
+        dvy_dx = compute_grad(lambda x,t: score(x,t)[:,1],perturbed_data,t)[:,0]
+        dvx_dy = compute_grad(lambda x,t: score(x,t)[:,0],perturbed_data,t)[:,1]
+        return torch.mean((dvy_dx - dvx_dy)**2)

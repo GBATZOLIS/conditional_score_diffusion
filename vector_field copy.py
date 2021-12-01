@@ -21,11 +21,11 @@ XYpairs = np.stack([ X.reshape(-1), Y.reshape(-1) ], axis=1)
 
 # %%
 # non conservative
-model = BaseSdeGenerativeModel.load_from_checkpoint('/home/js2164/jan/repos/diffusion_score/lightning_logs/version_28/checkpoints/epoch=4367-step=349439.ckpt')
+model = BaseSdeGenerativeModel.load_from_checkpoint('/home/js2164/jan/repos/diffusion_score/potential/lightning_logs/fcn/checkpoints/epoch=6249-step=499999.ckpt')
 score = model.score_model
 score = score.eval()
 # conservative
-model_conservative = BaseSdeGenerativeModel.load_from_checkpoint('/home/js2164/jan/repos/diffusion_score/lightning_logs/version_43/checkpoints/epoch=6249-step=499999.ckpt')
+model_conservative = BaseSdeGenerativeModel.load_from_checkpoint('potential/lightning_logs/fcn_potential/checkpoints/epoch=6249-step=499999.ckpt')
 score_conservative = model_conservative.score_model
 score_conservative= score_conservative.eval()
 # %%

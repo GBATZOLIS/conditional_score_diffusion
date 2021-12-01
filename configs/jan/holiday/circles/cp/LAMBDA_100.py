@@ -27,15 +27,17 @@ def get_config():
   config = get_default_configs()
 
   # training
-  training = config.training 
+  training = config.training
+  training.lightning_module = 'curl_penalty' 
   training.batch_size = 500
   training.num_epochs = 10000
   training.n_iters = 500000
   training.likelihood_weighting = False
   training.continuous = False
   training.sde = 'vesde'
+  training.LAMBDA=100
   # callbacks
-  training.visualization_callback = '2DVisualization'
+  training.visualization_callback = '2DCurlVisualization'
 
   # validation
   validation = config.validation
@@ -54,13 +56,14 @@ def get_config():
   # data
   config.data = data = ml_collections.ConfigDict()
   data.datamodule = 'Synthetic'
-  data.dataset_type = 'GaussianBubbles'
+  data.dataset_type = 'Circles'
   data.use_data_mean = False # What is this?
   data.create_dataset = False
   data.split = [0.8, 0.1, 0.1]
   data.data_samples = 50000
-  data.mixtures = 4
-  data.return_mixtures = False #whether to return the mixture class of each point in the mixture.
+  data.noise = 0.06
+  data.factor = 0.5
+  data.return_labels = False #whether to return the mixture class of each point in the mixture.
   data.shape = [2]
   data.dim = 2
   data.num_channels = 0 
@@ -73,7 +76,7 @@ def get_config():
   model.beta_min = 0.1
   model.beta_max = 25
 
-  model.name = 'fcn_potential'
+  model.name = 'fcn'
   model.state_size = data.dim
   model.hidden_layers = 3
   model.hidden_nodes = 128

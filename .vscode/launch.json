@@ -44,7 +44,7 @@
             "program": "${file}",
             "args": [
                 "--config",
-                "/home/js2164/jan/repos/diffusion_score/configs/jan/holiday/SyntheticDataset.py",
+                "/home/js2164/jan/repos/diffusion_score/configs/jan/holiday/circles/Circles_cp.py",
                 "--log_path",
                 "./test_logs"
             ],
@@ -72,7 +72,7 @@
             "program": "${file}",
             "args": [
                 "--config",
-                "/home/js2164/jan/repos/diffusion_score/configs/jan/holiday/SyntheticDataset_potential.py",
+                "/home/js2164/jan/repos/diffusion_score/configs/jan/holiday/Circles_potential.py",
                 "--log_path",
                 "./"
             ],
