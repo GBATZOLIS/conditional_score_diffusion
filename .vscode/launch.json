@@ -51,6 +51,19 @@
             "console": "integratedTerminal"
         },
         {
+            "name": "Test_HPC",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "args": [
+                "--config",
+                "/home/js2164/rds/hpc-work/repos/score_sde_pytorch/configs/jan/holiday/circles/cp/LAMBDA_0.py",
+                "--log_path",
+                "./test_logs"
+            ],
+            "console": "integratedTerminal"
+        },
+        {
             "name": "CelebA",
             "type": "python",
             "request": "launch",

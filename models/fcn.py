@@ -18,12 +18,12 @@ class FCN(pl.LightningModule):
         self.mlp = nn.ModuleList()
         self.mlp.append(nn.Linear(input_size, hidden_nodes))
         self.mlp.append(nn.Dropout(dropout)) #addition
-        self.mlp.append(nn.Tanh())
+        self.mlp.append(nn.ELU())
 
         for _ in range(hidden_layers):
             self.mlp.append(nn.Linear(hidden_nodes, hidden_nodes))
             self.mlp.append(nn.Dropout(dropout)) #addition
-            self.mlp.append(nn.Tanh())
+            self.mlp.append(nn.ELU())
         
         self.mlp.append(nn.Linear(hidden_nodes, output_size))
         self.mlp = nn.Sequential(*self.mlp)
