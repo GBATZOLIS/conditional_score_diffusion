@@ -11,6 +11,7 @@ import torchvision.transforms as transforms
 import io
 from . import utils
 from torchvision.transforms.functional import normalize
+from sklearn.datasets import make_circles
 
 def scatter_plot(x, x_lim=None, y_lim=None, labels=None, save=False):
     assert len(x.shape)==2, 'x must have 2 dimensions to create a scatter plot.'
@@ -32,19 +33,17 @@ def scatter_plot(x, x_lim=None, y_lim=None, labels=None, save=False):
     return image
 
 class SyntheticDataset(Dataset):
-    def __init__(self, data_samples, dataset_type='GaussianBubbles', mixtures=4, return_mixtures=False, normalize=False):
+    def __init__(self, config):
         super(SyntheticDataset, self).__init__()
-        #self.data, self.labels = self.read_dataset(filename)
-        #self.transform = transforms.Compose([convert_to_robust_range])
-        self.normalize = normalize
-        self.data_samples = data_samples
-        self.dataset_type = dataset_type
-        self.mixtures = mixtures
-        self.return_mixtures = return_mixtures
-        self.data, self.mixtures_indices = self.create_dataset(self.dataset_type, self.mixtures, self.data_samples)
+        self.return_labels = config.data.return_labels
+        self.data, self.labels = self.create_dataset(config)
 
-    def create_dataset(self, dataset_type, mixtures, data_samples):
+    def create_dataset(self, config):
+        #normalize = config.data.normalize
+        data_samples = config.data.data_samples
+        dataset_type = config.data.dataset_type
         if dataset_type == 'GaussianBubbles':
+            self.mixtures = config.data.mixtures
             def calculate_centers(num_mixtures):
                 if num_mixtures==1:
                     return torch.zeros(1,2)
@@ -57,7 +56,7 @@ class SyntheticDataset(Dataset):
                         theta+=2*np.pi/num_mixtures
                     centers=torch.tensor(centers)
                     return centers
-            n=mixtures
+            n=self.mixtures
             categorical = D.categorical.Categorical(torch.ones(n,)/n)
             distributions = []
             for center in calculate_centers(n):
@@ -68,20 +67,22 @@ class SyntheticDataset(Dataset):
             for index in mixtures_indices:
                 data.append(distributions[index].sample().to(torch.float32))
             data = torch.stack(data)
-
-            #mix = D.categorical.Categorical(torch.ones(n,))
-            #comp = D.independent.Independent(D.Normal(calculate_centers(n), 0.2*torch.ones(n,2)), 1)
-            #gmm = D.mixture_same_family.MixtureSameFamily(mix, comp)
-            #data = gmm.sample(torch.Size([data_samples])).float()
             if normalize:
                 data[:,0] = data[:,0] / torch.max(torch.abs(data[:,0]))
                 data[:,1] = data[:,1] / torch.max(torch.abs(data[:,1]))
             return data, mixtures_indices
-    
+
+        elif dataset_type == 'Circles':
+            noise = config.data.noise
+            factor = config.data.factor
+            points, labels = make_circles(n_samples=data_samples, noise=noise, factor=factor)
+            points = torch.from_numpy(points).float()
+            labels = torch.from_numpy(labels).float()
+            return points, labels
+
     def __getitem__(self, index):
-        if self.return_mixtures:
-            print(self.data[index].size())
-            item = self.data[index], self.mixtures_indices[index]
+        if self.return_labels:
+            item = self.data[index], self.labels[index]
         else:
             item = self.data[index]
         return item 
@@ -94,10 +95,7 @@ class SyntheticDataModule(pl.LightningDataModule):
     def __init__(self, config): 
         super().__init__()
         #Synthetic Dataset arguments
-        self.data_samples=config.data.data_samples
-        self.dataset_type=config.data.dataset_type
-        self.mixtures = config.data.mixtures
-        self.return_mixtures = config.data.return_mixtures
+        self.config = config
         self.split = config.data.split
 
         #DataLoader arguments
@@ -108,11 +106,9 @@ class SyntheticDataModule(pl.LightningDataModule):
         self.train_batch = config.training.batch_size
         self.val_batch = config.validation.batch_size
         self.test_batch = config.eval.batch_size
-
-        #self.normalize = config.normalize
         
     def setup(self, stage=None): 
-        data = SyntheticDataset(self.data_samples, self.dataset_type, self.mixtures, self.return_mixtures)
+        data = SyntheticDataset(self.config)
         l=len(data)
         self.train_data, self.valid_data, self.test_data = random_split(data, [int(self.split[0]*l), int(self.split[1]*l), int(self.split[2]*l)]) 
     

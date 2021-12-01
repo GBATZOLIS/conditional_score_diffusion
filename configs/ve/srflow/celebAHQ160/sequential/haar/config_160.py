@@ -99,7 +99,7 @@ def get_config():
 
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = '/home/gb511/saved_checkpoints/celebA/sequential/haar/80to160/checkpoints/epoch=199-step=254399.ckpt'
+  model.checkpoint_path = '/home/gb511/saved_checkpoints/celebA/sequential/haar/80to160/checkpoints/epoch=330-step=421031.ckpt'
   model.num_scales = 1000
   
   #SIGMA INFORMATION FOR THE VE SDE
@@ -141,6 +141,8 @@ def get_config():
   model.init_scale = 0.
   model.fourier_scale = 16
   model.conv_size = 3
+  model.input_channels = data.num_channels
+  model.output_channels = data.num_channels
 
   # optimization
   config.optim = optim = ml_collections.ConfigDict()

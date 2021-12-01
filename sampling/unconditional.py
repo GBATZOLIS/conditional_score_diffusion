@@ -81,7 +81,7 @@ def get_ode_sampler(sde, shape,
   """
 
   def denoise_update_fn(model, x):
-    score_fn = get_score_fn(sde, model, train=False, continuous=True)
+    score_fn = get_score_fn(sde, model, conditional=False, train=False, continuous=True)
     # Reverse diffusion predictor for denoising
     predictor_obj = ReverseDiffusionPredictor(sde, score_fn, probability_flow=False)
     vec_eps = torch.ones(x.shape[0], device=x.device) * eps
@@ -90,7 +90,7 @@ def get_ode_sampler(sde, shape,
 
   def drift_fn(model, x, t):
     """Get the drift function of the reverse-time SDE."""
-    score_fn = get_score_fn(sde, model, train=False, continuous=True)
+    score_fn = get_score_fn(sde, model, conditional=False, train=False, continuous=True)
     rsde = sde.reverse(score_fn, probability_flow=True)
     return rsde.sde(x, t)[0]
 
@@ -317,7 +317,7 @@ def get_pc_inpainter(sde, predictor, corrector, snr,
 
 def shared_predictor_update_fn(x, t, sde, model, predictor, probability_flow, continuous):
   """A wrapper that configures and returns the update function of predictors."""
-  score_fn = mutils.get_score_fn(sde, model, train=False, continuous=continuous)
+  score_fn = mutils.get_score_fn(sde, model, conditional=False, train=False, continuous=continuous)
 
   if predictor is None:
     # Corrector-only sampler
@@ -328,7 +328,7 @@ def shared_predictor_update_fn(x, t, sde, model, predictor, probability_flow, co
 
 def shared_corrector_update_fn(x, t, sde, model, corrector, continuous, snr, n_steps):
   """A wrapper that configures and returns the update function of correctors."""
-  score_fn = mutils.get_score_fn(sde, model, train=False, continuous=continuous)
+  score_fn = mutils.get_score_fn(sde, model, conditional=False, train=False, continuous=continuous)
 
   if corrector is None:
     # Predictor-only sampler

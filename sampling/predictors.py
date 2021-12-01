@@ -188,3 +188,13 @@ class NonePredictor(Predictor):
 
   def update_fn(self, x, t):
     return x, x
+
+@register_predictor(name='conditional_none')
+class NonePredictor(Predictor):
+  """An empty predictor that does nothing."""
+
+  def __init__(self, sde, score_fn, probability_flow=False):
+    pass
+
+  def update_fn(self, x, y, t):
+    return x, x

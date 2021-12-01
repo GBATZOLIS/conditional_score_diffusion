@@ -19,6 +19,7 @@ class BaseSdeGenerativeModel(pl.LightningModule):
         # Initialize the score model
         self.config = config
         self.score_model = mutils.create_model(config)
+        self.configure_default_sampling_shape(config)
         
         # Placeholder to store samples
         self.samples = None

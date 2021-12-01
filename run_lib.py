@@ -1,5 +1,6 @@
-from models import ddpm, ncsnv2, fcn, ddpm3D #needed for model registration
+from models import ddpm, ncsnv2, fcn, ddpm3D, fcn_potential #needed for model registration
 import pytorch_lightning as pl
+#from pytorch_lightning.plugins import DDPPlugin
 import numpy as np
 
 from torchvision.utils import make_grid
@@ -8,10 +9,10 @@ from lightning_callbacks import callbacks, HaarMultiScaleCallback, PairedCallbac
 from lightning_callbacks.HaarMultiScaleCallback import normalise_per_image, permute_channels, normalise, normalise_per_band, create_supergrid
 from lightning_callbacks.utils import get_callbacks
 
-from lightning_data_modules import HaarDecomposedDataset, ImageDatasets, PairedDataset, SyntheticDataset, SRDataset, SRFLOWDataset #needed for datamodule registration
+from lightning_data_modules import HaarDecomposedDataset, ImageDatasets, PairedDataset, SyntheticDataset, SyntheticPairedDataset, Synthetic1DConditionalDataset, SRDataset, SRFLOWDataset #needed for datamodule registration
 from lightning_data_modules.utils import create_lightning_datamodule
 
-from lightning_modules import BaseSdeGenerativeModel, HaarMultiScaleSdeGenerativeModel, ConditionalSdeGenerativeModel #need for lightning module registration
+from lightning_modules import BaseSdeGenerativeModel, HaarMultiScaleSdeGenerativeModel, ConditionalSdeGenerativeModel, ConservativeSdeGenerativeModel #need for lightning module registration
 from lightning_modules.utils import create_lightning_module
 
 from torchvision.transforms import RandomCrop, CenterCrop, ToTensor, Resize
@@ -44,7 +45,7 @@ def train(config, log_path, checkpoint_path):
 
       trainer = pl.Trainer(gpus=config.training.gpus,
                           num_nodes = config.training.num_nodes,
-                          accelerator = config.training.accelerator,
+                          accelerator = config.training.accelerator, #plugins = DDPPlugin(find_unused_parameters=False) if config.training.accelerator=='ddp' else None,
                           accumulate_grad_batches = config.training.accumulate_grad_batches,
                           gradient_clip_val = config.optim.grad_clip,
                           max_steps=config.training.n_iters, 
@@ -65,19 +66,34 @@ def train(config, log_path, checkpoint_path):
     trainer.fit(LightningModule, datamodule=DataModule)
 
 def test(config, log_path, checkpoint_path):
-  DataModule = create_lightning_datamodule(config)
-  DataModule.setup() #instantiate the datasets
+    eval_log_path = os.path.join(config.eval.base_log_dir, config.data.task, config.data.dataset, config.training.conditioning_approach)
+    Path(eval_log_path).mkdir(parents=True, exist_ok=True)
+    logger = pl.loggers.TensorBoardLogger(save_dir=eval_log_path, name='test_metrics')
 
-  callbacks = get_callbacks(config)
-  LightningModule = create_lightning_module(config)
-  logger = pl.loggers.TensorBoardLogger(log_path, name='test_lightning_logs')
+    DataModule = create_lightning_datamodule(config)
+    DataModule.setup()
 
-  trainer = pl.Trainer(gpus=config.training.gpus,
-                      callbacks=callbacks, 
-                      logger = logger,
-                      resume_from_checkpoint=checkpoint_path)
+    callbacks = get_callbacks(config)
 
-  trainer.test(LightningModule, DataModule.test_dataloader())
+    if checkpoint_path is not None or config.model.checkpoint_path is not None:
+      if config.model.checkpoint_path is not None and checkpoint_path is None:
+        checkpoint_path = config.model.checkpoint_path
+    else:
+      return 'Testing cannot be completed because no checkpoint has been provided.'
+
+    LightningModule = create_lightning_module(config, checkpoint_path)
+
+    trainer = pl.Trainer(gpus=config.training.gpus,
+                         num_nodes = config.training.num_nodes,
+                         accelerator = 'ddp',
+                         accumulate_grad_batches = config.training.accumulate_grad_batches,
+                         gradient_clip_val = config.optim.grad_clip,
+                         max_steps=config.training.n_iters, 
+                         callbacks=callbacks, 
+                         logger = logger)
+    
+    trainer.test(LightningModule, test_dataloaders = DataModule.test_dataloader())
+
 
 def multi_scale_test(master_config, log_path):
   def get_lowest_level_fn(scale_info, coord_space):
@@ -247,7 +263,7 @@ def multi_scale_test(master_config, log_path):
     scale_info[scale]['LightningModule'].eval()
   
   #instantiate the autoregressive sampling function
-  autoregressive_sampler = get_autoregressive_sampler(scale_info, coord_space, p_steps=2000)
+  autoregressive_sampler = get_autoregressive_sampler(scale_info, coord_space, p_steps=2000, corrector='conditional_none')
 
   #instantiate the function that computes the dc coefficients of the input batch at the required depth/level.
   #lowest_level_fn = get_lowest_level_fn(scale_info, coord_space)

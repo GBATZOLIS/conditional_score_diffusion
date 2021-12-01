@@ -5,17 +5,48 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal"
+        },
+        {
             "name": "Synthetic",
             "type": "python",
             "request": "launch",
             "program": "${file}",
             "args": [
                 "--config",
-                "configs/ve/SyntheticDataset.py",
-                "--data_path",
-                "/store/CIA/js2164/data/celeba",
+                "/home/js2164/jan/repos/diffusion_score/configs/jan/holiday/SyntheticDataset.py",
                 "--log_path",
                 "./"
+            ],
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Synthetic1D",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "args": [
+                "--config",
+                "/home/js2164/jan/repos/diffusion_score/configs/jan/holiday/Synthetic1DDataset_Song.py",
+                "--log_path",
+                "./1D"
+            ],
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Test",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "args": [
+                "--config",
+                "/home/js2164/jan/repos/diffusion_score/configs/jan/holiday/circles/Circles_cp.py",
+                "--log_path",
+                "./test_logs"
             ],
             "console": "integratedTerminal"
         },
@@ -35,13 +66,15 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "Python: Current File",
+            "name": "Potential_Learning",
             "type": "python",
             "request": "launch",
             "program": "${file}",
             "args": [
                 "--config",
-                "configs/vp/SyntheticDataset.py"
+                "/home/js2164/jan/repos/diffusion_score/configs/jan/holiday/Circles_potential.py",
+                "--log_path",
+                "./"
             ],
             "console": "integratedTerminal"
         }

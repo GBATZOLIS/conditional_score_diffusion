@@ -1,9 +1,10 @@
 import torch
 from pytorch_lightning.callbacks import Callback
-from utils import scatter, plot, compute_grad, create_video
+from utils import scatter, plot, compute_grad, create_video, hist
 from models.ema import ExponentialMovingAverage
 import torchvision
 from . import utils
+from plot_utils import plot_curl_backprop
 import numpy as np
 
 @utils.register_callback(name='configuration')
@@ -15,9 +16,6 @@ class ConfigurationSetterCallback(Callback):
         # Configure trainining and validation loss functions.
         pl_module.train_loss_fn = pl_module.configure_loss_fn(pl_module.config, train=True)
         pl_module.eval_loss_fn = pl_module.configure_loss_fn(pl_module.config, train=False)
-
-        # Configure default sampling shape
-        pl_module.configure_default_sampling_shape(pl_module.config)
     
     def on_test_epoch_start(self, trainer, pl_module):
         pl_module.configure_sde(pl_module.config)
@@ -163,6 +161,49 @@ class ImageVisualizationCallback(Callback):
         #to be implemented - has already been implemented for the conditional case
         return
 
+@utils.register_callback(name='2DCurlVisualization')
+class TwoDimVizualizer(Callback):
+    def __init__(self, show_evolution=False):
+        super().__init__()
+        self.evolution = show_evolution
+
+    def on_train_start(self, trainer, pl_module):
+        # pl_module.logxger.log_hyperparams(params=pl_module.config.to_dict())
+        samples, _ = pl_module.sample()
+        self.visualise_samples(samples, pl_module)
+        self.visualise_curl(pl_module)
+
+    def on_validation_epoch_end(self,trainer, pl_module):
+        if pl_module.current_epoch % 500 == 0 \
+            and pl_module.current_epoch % 2500 != 0:
+            samples, _ = pl_module.sample()
+            self.visualise_samples(samples, pl_module)
+            self.visualise_curl(pl_module)
+        if self.evolution and pl_module.current_epoch % 2500 == 0:
+            samples, sampling_info = pl_module.sample(show_evolution=True)
+            evolution = sampling_info['evolution']
+            self.visualise_evolution(evolution, pl_module)
+
+    def visualise_curl(self, pl_module):
+        score = pl_module.score_model
+        image=plot_curl_backprop(score, 'curl')
+        pl_module.logger.experiment.add_image('curl', image, pl_module.current_epoch)
+
+    def visualise_samples(self, samples, pl_module):
+        # log sampled images
+        samples_np =  samples.cpu().numpy()
+        image = scatter(samples_np[:,0],samples_np[:,1], 
+                        title='samples epoch: ' + str(pl_module.current_epoch))
+        pl_module.logger.experiment.add_image('samples', image, pl_module.current_epoch)
+    
+    def visualise_evolution(self, evolution, pl_module):
+        title = 'samples epoch: ' + str(pl_module.current_epoch)
+        video_tensor = create_video(evolution, 
+                                    title=title,
+                                    xlim=[-1,1],
+                                    ylim=[-1,1])
+        tag='Evolution_epoch_%d' % pl_module.current_epoch
+        pl_module.logger.experiment.add_video(tag=tag, vid_tensor=video_tensor, fps=video_tensor.size(1)//20)
 
 
 @utils.register_callback(name='GradientVisualization')
@@ -227,3 +268,55 @@ class TwoDimVizualizer(Callback):
         pl_module.logger.experiment.add_video(tag=tag, vid_tensor=video_tensor, fps=video_tensor.size(1)//20)
 
 
+
+@utils.register_callback(name='Conditional2DVisualization')
+class ConditionalTwoDimVizualizer(Callback):
+    def __init__(self, show_evolution=False):
+        super().__init__()
+        self.evolution = show_evolution
+
+    def on_train_start(self, trainer, pl_module):
+        pass
+
+    def on_validation_epoch_end(self,trainer, pl_module):
+        batch_size=pl_module.config.validation.batch_size
+        if pl_module.current_epoch % 500 == 0:
+            ys = torch.tensor([0,.5,1,2]).to(pl_module.device)
+            for y in ys:
+                samples, _ = pl_module.sample(y.repeat(batch_size))
+                self.visualise_samples(samples, y, pl_module)
+
+    def visualise_samples(self, samples, y, pl_module):
+        # log sampled images
+        samples_np =  samples.cpu().numpy()
+        image = scatter(samples_np[:,0],samples_np[:,1], 
+                        title='samples epoch: ' + str(pl_module.current_epoch) + ' y = ' + str(y.item()))
+        pl_module.logger.experiment.add_image('samples y = ' + str(y.item()), image, pl_module.current_epoch)
+    def visualise_evolution(self, evolution, pl_module):
+        pass
+
+
+@utils.register_callback(name='Conditional1DVisualization')
+class ConditionalTwoDimVizualizer(Callback):
+    def __init__(self, show_evolution=False):
+        super().__init__()
+        self.evolution = show_evolution
+
+    def on_train_start(self, trainer, pl_module):
+        pass
+
+    def on_validation_epoch_end(self,trainer, pl_module):
+        batch_size=pl_module.config.validation.batch_size
+        if pl_module.current_epoch % 250 == 0:
+            ys = torch.tensor([0,.5,1,2]).to(pl_module.device)
+            for y in ys:
+                samples, _ = pl_module.sample(y.repeat(batch_size))
+                self.visualise_samples(samples, y, pl_module)
+
+    def visualise_samples(self, samples, y, pl_module):
+        # log sampled images
+        image = hist(samples)
+        pl_module.logger.experiment.add_image('samples y = ' + str(y.item()), image, pl_module.current_epoch)
+
+    def visualise_evolution(self, evolution, pl_module):
+        pass
