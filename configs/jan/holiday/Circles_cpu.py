@@ -30,7 +30,7 @@ def get_config():
   training = config.training 
   training.gpus = 0
   training.batch_size = 500
-  training.num_epochs = 10000
+  training.num_epochs = 5
   training.n_iters = 500000
   training.likelihood_weighting = False
   training.continuous = False

@@ -49,9 +49,11 @@ def train(config, log_path, checkpoint_path):
                           accumulate_grad_batches = config.training.accumulate_grad_batches,
                           gradient_clip_val = config.optim.grad_clip,
                           max_steps=config.training.n_iters, 
+                          max_epochs =config.training.num_epochs,
                           callbacks=callbacks, 
                           logger = logger,
-                          resume_from_checkpoint=checkpoint_path)
+                          resume_from_checkpoint=checkpoint_path
+                          )
     else:  
       trainer = pl.Trainer(gpus=config.training.gpus,
                           num_nodes = config.training.num_nodes,
@@ -59,6 +61,7 @@ def train(config, log_path, checkpoint_path):
                           accumulate_grad_batches = config.training.accumulate_grad_batches,
                           gradient_clip_val = config.optim.grad_clip,
                           max_steps=config.training.n_iters,
+                          max_epochs =config.training.num_epochs,
                           callbacks=callbacks,
                           logger = logger                          
                           )

@@ -12,32 +12,6 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "Synthetic",
-            "type": "python",
-            "request": "launch",
-            "program": "${file}",
-            "args": [
-                "--config",
-                "/home/js2164/jan/repos/diffusion_score/configs/jan/holiday/SyntheticDataset.py",
-                "--log_path",
-                "./"
-            ],
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "Synthetic1D",
-            "type": "python",
-            "request": "launch",
-            "program": "${file}",
-            "args": [
-                "--config",
-                "/home/js2164/jan/repos/diffusion_score/configs/jan/holiday/Synthetic1DDataset_Song.py",
-                "--log_path",
-                "./1D"
-            ],
-            "console": "integratedTerminal"
-        },
-        {
             "name": "Test",
             "type": "python",
             "request": "launch",
@@ -51,15 +25,28 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "Test_HPC",
+            "name": "Test_CPU",
             "type": "python",
             "request": "launch",
             "program": "${file}",
             "args": [
                 "--config",
-                "/home/js2164/rds/hpc-work/repos/score_sde_pytorch/configs/jan/holiday/circles/cp/LAMBDA_0.py",
+                "/home/js2164/rds/hpc-work/repos/score_sde_pytorch/configs/jan/holiday/Circles_cpu.py",
                 "--log_path",
                 "./test_logs"
+            ],
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Synthetic1D",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "args": [
+                "--config",
+                "/home/js2164/jan/repos/diffusion_score/configs/jan/holiday/Synthetic1DDataset_Song.py",
+                "--log_path",
+                "./1D"
             ],
             "console": "integratedTerminal"
         },

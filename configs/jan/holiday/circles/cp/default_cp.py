@@ -28,9 +28,10 @@ def get_config():
 
   # training
   training = config.training
+  training.gpus = 1
   training.lightning_module = 'curl_penalty' 
   training.batch_size = 500
-  training.num_epochs = 6000
+  training.num_epochs = 7000
   training.n_iters = int(1e10)  
   training.likelihood_weighting = False
   training.continuous = False
