@@ -21,7 +21,7 @@ import torch
 import math
 import numpy as np
 
-from configs.jan.holiday.default import get_default_configs
+from configs.jan.default import get_default_configs
 
 def get_config():
   config = get_default_configs()
@@ -31,12 +31,12 @@ def get_config():
   training.gpus = 1
   training.lightning_module = 'curl_penalty' 
   training.batch_size = 500
-  training.num_epochs = 7000
-  training.n_iters = int(1e10)  
+  training.num_epochs = 25000 #7000
+  training.n_iters = int(1e100)  
   training.likelihood_weighting = False
   training.continuous = False
   training.sde = 'vesde'
-  training.LAMBDA=0
+  training.LAMBDA = 0.0
   # callbacks
   training.visualization_callback = '2DCurlVisualization'
 
@@ -52,7 +52,7 @@ def get_config():
   sampling.n_steps_each = 1
   sampling.noise_removal = True
   sampling.probability_flow = False
-  sampling.snr = 0.075 #0.15 in VE sde (you typically need to play with this term - more details in the main paper)
+  sampling.snr = 0.15 #0.15 in VE sde (you typically need to play with this term - more details in the main paper)
 
   # data
   config.data = data = ml_collections.ConfigDict()

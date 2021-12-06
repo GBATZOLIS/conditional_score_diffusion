@@ -1,0 +1,50 @@
+Loading rhel8/default-amp
+  Loading requirement: dot rhel8/slurm singularity/current rhel8/global
+    cuda/11.4 openmpi/4.1.1/gcc-9.4.0-epagguv
+Changed directory to /rds/user/js2164/hpc-work/repos/score_sde_pytorch.
+
+JobID: 50943984
+======
+Time: Mon  6 Dec 17:47:16 GMT 2021
+Running on master node: gpu-q-76
+Current directory: /rds/user/js2164/hpc-work/repos/score_sde_pytorch
+
+Nodes allocated:
+================
+gpu-q-76
+
+numtasks=1, numnodes=1, mpi_tasks_per_node=1 (OMP_NUM_THREADS=1)
+
+Executing command:
+==================
+/home/js2164/rds/hpc-work/repos/score_sde_pytorch/wilkes_scripts/main.sh 
+
+Currently Loaded Modulefiles:
+ 1) dot                   5) cuda/11.4                        
+ 2) rhel8/slurm           6) openmpi/4.1.1/gcc-9.4.0-epagguv  
+ 3) singularity/current   7) rhel8/default-amp                
+ 4) rhel8/global         
+Mon Dec  6 17:47:16 2021       
++-----------------------------------------------------------------------------+
+| NVIDIA-SMI 470.57.02    Driver Version: 470.57.02    CUDA Version: 11.4     |
+|-------------------------------+----------------------+----------------------+
+| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
+|                               |                      |               MIG M. |
+|===============================+======================+======================|
+|   0  NVIDIA A100-SXM...  On   | 00000000:01:00.0 Off |                    0 |
+| N/A   34C    P0    77W / 500W |      0MiB / 81251MiB |      0%      Default |
+|                               |                      |             Disabled |
++-------------------------------+----------------------+----------------------+
+|   1  NVIDIA A100-SXM...  On   | 00000000:41:00.0 Off |                    0 |
+| N/A   32C    P0    74W / 500W |      0MiB / 81251MiB |      0%      Default |
+|                               |                      |             Disabled |
++-------------------------------+----------------------+----------------------+
+                                                                               
++-----------------------------------------------------------------------------+
+| Processes:                                                                  |
+|  GPU   GI   CI        PID   Type   Process name                  GPU Memory |
+|        ID   ID                                                   Usage      |
+|=============================================================================|
+|  No running processes found                                                 |
++-----------------------------------------------------------------------------+

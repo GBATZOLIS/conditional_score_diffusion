@@ -9,6 +9,7 @@ from . import utils
 import torch.optim as optim
 import os
 import torch
+import dill
 
 @utils.register_lightning_module(name='base')
 class BaseSdeGenerativeModel(pl.LightningModule):
