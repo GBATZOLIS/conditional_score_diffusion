@@ -90,6 +90,10 @@ class SyntheticDataset(Dataset):
     def __len__(self):
         return len(self.data)
 
+    
+    def ground_truth_score(self, x, t):
+        return None
+
 @utils.register_lightning_datamodule(name='Synthetic')
 class SyntheticDataModule(pl.LightningDataModule):
     def __init__(self, config): 

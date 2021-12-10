@@ -23,7 +23,7 @@ class ConservativeSdeGenerativeModel(BaseSdeGenerativeModel):
 
     def training_step(self, batch, batch_idx):
         curl_penalty = self.curl_penalty(batch)
-        loss = self.train_loss_fn(self.score_model, batch) + (self.current_epoch * 1e-4)**2 *curl_penalty
+        loss = self.train_loss_fn(self.score_model, batch) + 0.01*(self.current_epoch * 1e-3)**2 *curl_penalty
         self.log('curl_penalty', curl_penalty, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         return loss
