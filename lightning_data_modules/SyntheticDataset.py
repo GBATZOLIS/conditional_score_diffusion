@@ -44,7 +44,8 @@ class GaussianBubbles(SyntheticDataset):
         n=self.mixtures
         categorical = D.categorical.Categorical(torch.ones(n,)/n)
         distributions = []
-        for center in self.calculate_centers(n):
+        self.centres = self.calculate_centers(n)
+        for center in self.centres:
             distributions.append(D.normal.Normal(loc=center, scale=0.2))
         mixtures_indices = categorical.sample(torch.Size([data_samples]))
         data = []
@@ -69,27 +70,48 @@ class GaussianBubbles(SyntheticDataset):
                     centers=torch.tensor(centers)
                     return centers
 
-    def gmm_log_prob(self, x, sigma_t=0):
-        n=self.mixtures
-        mus=torch.tensor(self.calculate_centers(n)).type_as(x)
-        sigmas=torch.tensor([[.2 + sigma_t,.2 + sigma_t]]*n).type_as(x)
-        mix = D.categorical.Categorical(torch.ones(n,).type_as(x))
-        comp = D.independent.Independent(D.normal.Normal(
-                    mus, sigmas), 1)
-        gmm = D.mixture_same_family.MixtureSameFamily(mix, comp)
-        return gmm.log_prob(x)
+    # def gmm_log_prob(self, x, sigma_t=0):
+    #     n=self.mixtures
+    #     mus=torch.tensor(self.calculate_centers(n)).type_as(x)
+    #     sigmas=torch.tensor([[.2 + sigma_t,.2 + sigma_t]]*n).type_as(x)
+    #     mix = D.categorical.Categorical(torch.ones(n,).type_as(x))
+    #     comp = D.independent.Independent(D.normal.Normal(
+    #                 mus, sigmas), 1)
+    #     gmm = D.mixture_same_family.MixtureSameFamily(mix, comp)
+    #     return gmm.log_prob(x)
+
+    # def ground_truth_score(self, batch, sigmas_t=None):
+    #     if sigmas_t is None:
+    #         sigmas_t = torch.zeros_like(batch)
+        
+    #     prob_fn = lambda batch: torch.stack(
+    #                                         [self.gmm_log_prob(x, simga_t) 
+    #                                             for (x, simga_t) in zip(batch, sigmas_t)], 
+    #                                         dim=0)
+
+    #     score = compute_grad2(prob_fn, batch)
+    #     return score
 
     def ground_truth_score(self, batch, sigmas_t=None):
-        if sigmas_t is None:
-            sigmas_t = torch.zeros_like(batch)
-        
-        prob_fn = lambda batch: torch.stack(
-                                            [self.gmm_log_prob(x, simga_t) 
-                                                for (x, simga_t) in zip(batch, sigmas_t)], 
-                                            dim=0)
+        def normal_density_2D(x, mu, sigma):
+            const = 2 * np.pi * sigma**2
+            return torch.exp(-torch.linalg.norm(x -mu)**2 / (2 * sigma**2)) / const
+        def grad_normal_density_2D(x, mu, sigma):
+            return normal_density_2D(x, mu, sigma) * (-0.5 * sigma**(-2)) * (x - mu)
+        def gmm_density(x, mus, sigma):
+            mixture_dinsities=[normal_density_2D(x, mu, sigma) for mu in mus]
+            return torch.mean(torch.stack(mixture_dinsities, dim=0))
+        def grad_gmm_density(x, mus ,sigma):
+            grad_mixture_dinsities=[grad_normal_density_2D(x, mu, sigma) for mu in mus]
+            return torch.mean(torch.stack(grad_mixture_dinsities, dim=0))
+        def gmm_score(x, mus, sigma):
+            grad_gmm_density(x, mus, sigma) / gmm_density(x, mus, sigma)
 
-        score = compute_grad2(prob_fn, batch)
-        return score
+        mus = self.centres
+        sigma=0.2
+        scores = [gmm_score(x, mus, sigma + sigma_t) for (x, sigma_t) in zip (batch, sigmas_t)]
+        return torch.stack(scores, dim=0)
+    
 
 class Circles(SyntheticDataset):
     def __init__(self, config):

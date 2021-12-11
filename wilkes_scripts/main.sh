@@ -12,7 +12,7 @@ conda activate score_sde
 
 REPO=/rds/user/js2164/hpc-work/repos/score_sde_pytorch/
 CONFIG=configs/jan/GaussianBubbles.py
-LOG=logs/gaussian_bubles
+LOG=logs/gaussian_bubbles
 
 cd $REPO
 

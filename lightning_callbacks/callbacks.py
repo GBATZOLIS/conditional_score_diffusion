@@ -336,5 +336,5 @@ class FisherDivergence(Callback):
             perturbed_data.requires_grad = True
             model_score = pl_module.score_model(perturbed_data, t)
             gt_score = trainer.datamodule.data.ground_truth_score(perturbed_data, std)
-            fisher_div = torch.mean(torch.norm(gt_score-model_score))
+            fisher_div = torch.mean(torch.linalg.norm(gt_score - model_score, dim=1)**2)
             pl_module.log('fisher_divergence', fisher_div, on_step=False, on_epoch=True, prog_bar=True, logger=True)
