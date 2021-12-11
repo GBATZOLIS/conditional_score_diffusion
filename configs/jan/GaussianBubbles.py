@@ -21,6 +21,8 @@ import torch
 import math
 import numpy as np
 
+from lightning_callbacks.callbacks import FisherDivergence
+
 def get_config():
   config = ml_collections.ConfigDict()
 
@@ -47,7 +49,7 @@ def get_config():
   training.reduce_mean = False #look more for that setting
   training.sde = 'vesde'
   # callbacks
-  training.visualization_callback = '2DVisualization'
+  training.visualization_callback = ['2DVisualization', 'FisherDivergence']
   training.show_evolution = False
 
 

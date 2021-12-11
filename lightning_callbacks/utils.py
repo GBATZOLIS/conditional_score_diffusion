@@ -30,8 +30,11 @@ def get_callbacks(config):
                                                                   data_config=config.data,
                                                                   approach = config.training.conditioning_approach))
     else:
-      callbacks.append(get_callback_by_name(config.training.visualization_callback)(show_evolution=config.training.show_evolution))
-
+      if isinstance(config.training.visualization_callback, list):
+        for callback in config.training.visualization_callback:
+          callbacks.append(get_callback_by_name(callback)(show_evolution=config.training.show_evolution))
+      else:
+        callbacks.append(get_callback_by_name(config.training.visualization_callback)(show_evolution=config.training.show_evolution))
     if config.training.lightning_module in ['conditional_decreasing_variance','haar_conditional_decreasing_variance'] :
       callbacks.append(get_callback_by_name('decreasing_variance_configuration')(config))
     else:

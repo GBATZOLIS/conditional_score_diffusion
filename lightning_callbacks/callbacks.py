@@ -320,3 +320,21 @@ class ConditionalTwoDimVizualizer(Callback):
 
     def visualise_evolution(self, evolution, pl_module):
         pass
+
+@utils.register_callback(name='FisherDivergence')
+class FisherDivergence(Callback):
+    def __init__(self, show_evolution=False):
+        super().__init__()
+
+    def on_validation_batch_start(self, trainer, pl_module, batch, batch_idx, dataloader_idx):
+        if pl_module.current_epoch % 100 == 0:
+            eps=1e-5
+            t = torch.rand(batch.shape[0], device=batch.device) * (pl_module.sde.T - eps) + eps
+            z = torch.randn_like(batch)
+            mean, std = pl_module.sde.marginal_prob(batch, t)
+            perturbed_data = mean + std[(...,) + (None,) * len(batch.shape[1:])] * z
+            perturbed_data.requires_grad = True
+            model_score = pl_module.score_model(perturbed_data, t)
+            gt_score = trainer.datamodule.data.ground_truth_score(perturbed_data, std)
+            fisher_div = torch.mean(torch.norm(gt_score-model_score))
+            pl_module.log('fisher_divergence', fisher_div, on_step=False, on_epoch=True, prog_bar=True, logger=True)

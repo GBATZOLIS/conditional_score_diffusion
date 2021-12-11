@@ -24,3 +24,4 @@ dist/
 #LOGS 
 lightning_logs/
 run_log/
+logs/

@@ -1,5 +1,9 @@
 import numpy as np
+import torch
+import torch.distributions as D
 from utils import compute_grad
+from torch.distributions.multivariate_normal import MultivariateNormal
+from torch.distributions.mixture_same_family import MixtureSameFamily
 #%%
 def calculate_centers(num_mixtures):
                 if num_mixtures==1:
@@ -12,27 +16,21 @@ def calculate_centers(num_mixtures):
                         centers.append(center)
                         theta+=2*np.pi/num_mixtures
                     return centers
-#%%
-def normal_score(x, mus, sigmas):
-    summands=[] # x centered using different mus
-    for mu, sigma in zip(mus, sigmas):
-        x_centred = gaussian_density2D(x,mu,sigma) * (- (x - mu)/ (sigma**2))
-        summands.append(x_centred)
-    summands=np.stack(summands, axis=0) # n_mix x 2
-    return  (1/len(mus) * np.sum(summands, axis=0))/mixture_density(x,mus,sigmas)
 
-
-def gaussian_density2D(x, mu=[0,0], sigma=1):
-    norm = np.linalg.norm(x - mu)
-    constant = 1/(2*np.pi * sigma**2)
-    return constant * np.exp(-norm/(2*sigma**2))
-
-def mixture_density(x,mus,sigmas):
-    densities=[]
-    for mu,sigma in zip(mus, sigmas):
-        densities.append(gaussian_density2D(x,mu,sigma))
-    densities=np.stack(densities, axis=0)
-    return 1/len(mus) * np.sum(densities,axis=0)
+# def normal_score(x, mus, sigmas):
+#     # to be improved
+#     n=len(mus)
+#     mix = D.categorical.Categorical(torch.ones(n,))
+#     nomral_distro = D.independent.Independent(D.normal.Normal(
+#                 mus, sigmas), 1)
+#     gmm = D.mixture_same_family.MixtureSameFamily(mix, nomral_distro)
+#     summands=[] # x centered using different mus
+#     for mu, sigma in zip(mus, sigmas):
+#         gaussian_prob=torch.exp(nomral_distro.log_prob(x))
+#         x_centred = gaussian_prob * (- (x - mu)/ (sigma**2))
+#         summands.append(x_centred)
+#     summands=torch.stack(summands, axis=0) # n_mix x 2
+#     return  torch.sum(summands, axis=0)) / torch.exp(gmm.log_prob(x))
 
 def curl(vx, vy, dx):
     dvy_dx = np.gradient(vy, dx, axis=1)

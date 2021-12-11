@@ -11,9 +11,10 @@ source /home/js2164/.bashrc
 conda activate score_sde
 
 REPO=/rds/user/js2164/hpc-work/repos/score_sde_pytorch/
-CONFIG=configs/jan/circles/cp/Adaptive.py
+CONFIG=configs/jan/GaussianBubbles.py
+LOG=logs/gaussian_bubles
 
 cd $REPO
 
 python main.py --config $CONFIG \
-               --log_path ./potential
+               --log_path $LOG

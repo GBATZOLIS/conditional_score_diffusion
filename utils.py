@@ -91,4 +91,17 @@ def compute_grad(f,x,t):
   torch.set_grad_enabled(torch_grad_enabled)
   return gradients
 
+def compute_grad2(f, x):
+    # CLEAN THE NAME UP (MULTIPLE DISPATCH)
+    torch_grad_enabled =torch.is_grad_enabled()
+    torch.set_grad_enabled(True)
+    device = x.device
+    log_px = f(x)
+    assert len(log_px.shape )==1
+    gradients = torch.autograd.grad(outputs=log_px, inputs=x,
+                                    grad_outputs=torch.ones(log_px.size()).to(device),
+                                    create_graph=True, retain_graph=True, only_inputs=True)[0]
+    gradients = gradients.view(gradients.size(0), -1)
+    torch.set_grad_enabled(torch_grad_enabled)
+    return gradients
 
