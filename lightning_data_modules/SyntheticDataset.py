@@ -107,7 +107,7 @@ class GaussianBubbles(SyntheticDataset):
         def gmm_score(x, mus, sigma):
             return grad_gmm_density(x, mus, sigma) / gmm_density(x, mus, sigma)
 
-        mus = self.centres
+        mus = self.centres.type_as(batch)
         sigma = 0.2
         scores = [gmm_score(x, mus, sigma + sigma_t) for (x, sigma_t) in zip (batch, sigmas_t)]
         return torch.stack(scores, dim=0)
