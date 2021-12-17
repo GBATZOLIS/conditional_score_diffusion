@@ -19,7 +19,7 @@ data_m.setup()
 gaussian_bubbles = data_m.data
 #%%
 d=2
-n=1000
+n=500
 dx = 2*d/n
 c=[0,0]
 x = np.linspace(-d + c[0], d + c[0], n)
@@ -30,10 +30,17 @@ XYpairs = np.stack([ X.reshape(-1), Y.reshape(-1) ], axis=1)
 #%%
 XYpairs_tensor = torch.from_numpy(XYpairs)
 XYpairs_tensor.requires_grad=True
-#s = score(XYpairs_tensor).detach().numpy()
-s=gaussian_bubbles.ground_truth_score(XYpairs_tensor, sigma_t=8).detach().numpy()
+sigmas_t = torch.tensor([0]*len(XYpairs_tensor))
+s=gaussian_bubbles.ground_truth_score(XYpairs_tensor, sigmas_t=sigmas_t).detach().numpy()
 vector_X=s[:,0].reshape(n,n)
 vector_Y=s[:,1].reshape(n,n)
+#%%
+XYpairs_tensor = torch.from_numpy(XYpairs)
+XYpairs_tensor.requires_grad=True
+sigmas_t = torch.tensor([0]*len(XYpairs_tensor))
+s_backprop=gaussian_bubbles.ground_truth_score_backprop(XYpairs_tensor, sigmas_t=sigmas_t).detach().numpy()
+vector_X_backprop=s_backprop[:,0].reshape(n,n)
+vector_Y_backprop=s_backprop[:,1].reshape(n,n)
 # %%
 plt.figure(figsize=(10, 10))
 plt.streamplot(X,Y,vector_X,vector_Y)
@@ -42,7 +49,12 @@ plt.title('Ground Truth')
 plt.savefig('figures/plot', dpi=300)
 # %%
 print("Curl:", np.mean(np.abs(curl(vector_X, vector_Y, dx))))
-
+# %%
+plt.figure(figsize=(10, 10))
+plt.streamplot(X,Y,vector_X_backprop,vector_Y_backprop)
+plt.grid()
+plt.title('Ground Truth')
+plt.savefig('figures/plot', dpi=300)
 # %%
 plt.figure(figsize=(10, 10))
 Z=gmm.log_prob(XYpairs_tensor).detach().numpy().reshape(n,n)
