@@ -1,0 +1,32 @@
+Currently Loaded Modulefiles:
+  1) dot                                8) gcc-5.4.0-gcc-4.8.5-fis24gg
+  2) slurm                              9) openmpi-1.10.7-gcc-5.4.0-jdc7f4f
+  3) turbovnc/2.0.1                    10) cmake/latest
+  4) vgl/2.5.1/64                      11) rhel7/default-gpu
+  5) singularity/current               12) zsh-5.3.1-gcc-5.4.0-u6oz7fw
+  6) rhel7/global                      13) cuda/11.2
+  7) cuda/8.0                          14) cuda/11.4
+/var/spool/slurm/slurmd/job51480701/slurm_script: line 8: nvidia-smi: command not found
+Traceback (most recent call last):
+  File "/rds/user/js2164/hpc-work/repos/score_sde_pytorch/main.py", line 30, in <module>
+    app.run(main)
+  File "/rds/user/js2164/hpc-work/conda_envs/score_sde/lib/python3.9/site-packages/absl/app.py", line 312, in run
+    _run_main(main, args)
+  File "/rds/user/js2164/hpc-work/conda_envs/score_sde/lib/python3.9/site-packages/absl/app.py", line 258, in _run_main
+    sys.exit(main(argv))
+  File "/rds/user/js2164/hpc-work/repos/score_sde_pytorch/main.py", line 21, in main
+    run_lib.train(FLAGS.config, FLAGS.log_path, FLAGS.checkpoint_path)
+  File "/rds/user/js2164/hpc-work/repos/score_sde_pytorch/run_lib.py", line 58, in train
+    trainer = pl.Trainer(gpus=config.training.gpus,
+  File "/rds/user/js2164/hpc-work/conda_envs/score_sde/lib/python3.9/site-packages/pytorch_lightning/trainer/connectors/env_vars_connector.py", line 38, in insert_env_defaults
+    return fn(self, **kwargs)
+  File "/rds/user/js2164/hpc-work/conda_envs/score_sde/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 426, in __init__
+    gpu_ids, tpu_cores = self._parse_devices(gpus, auto_select_gpus, tpu_cores)
+  File "/rds/user/js2164/hpc-work/conda_envs/score_sde/lib/python3.9/site-packages/pytorch_lightning/trainer/trainer.py", line 1525, in _parse_devices
+    gpu_ids = device_parser.parse_gpu_ids(gpus)
+  File "/rds/user/js2164/hpc-work/conda_envs/score_sde/lib/python3.9/site-packages/pytorch_lightning/utilities/device_parser.py", line 89, in parse_gpu_ids
+    return _sanitize_gpu_ids(gpus)
+  File "/rds/user/js2164/hpc-work/conda_envs/score_sde/lib/python3.9/site-packages/pytorch_lightning/utilities/device_parser.py", line 151, in _sanitize_gpu_ids
+    raise MisconfigurationException(
+pytorch_lightning.utilities.exceptions.MisconfigurationException: You requested GPUs: [0]
+ But your machine only has: []
