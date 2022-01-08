@@ -328,24 +328,40 @@ class PairedVisualizationCallback(Callback):
         for dim in [1, 2, 3]:
             self.generate_paired_video(pl_module, y, x, cond_samples, dim, batch_idx, sampling_scheme)
 
+
     def on_validation_batch_end(self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx):
-        current_epoch = pl_module.current_epoch
+        if pl_module.current_epoch % 200 != 0 and pl_module.current_epoch!=0:
+            y, x = batch
 
-        if batch_idx!=2 or current_epoch == 0 or current_epoch % 50 != 0:
-            return
-        
-        y, x = batch
+            #sample using the predictor - corrector sampling procedure
+            self.results['num_images'] += y.size(0)
+            reduction_dims=[i+1 for i in range(len(y.shape)-1)]
+            cond_samples, _ = pl_module.sample(y.to(pl_module.device), show_evolution=self.show_evolution, p_steps=2000)
+            mae = torch.mean(torch.abs(x.to('cpu')-cond_samples.to('cpu')), dim=reduction_dims)
+            mse = torch.mean(torch.square(x.to('cpu')-cond_samples.to('cpu')), dim=reduction_dims)
+            self.results['mae'].append(mae)
+            self.results['mse'].append(mse)
+            
+            #pl_module.logger.experiment.add_scalar('val_rec_loss_batch_%d_pc' % batch_idx, val_rec_loss, pl_module.current_epoch)
+            if batch_idx == 0:
+                self.visualise3D(y, cond_samples, x, pl_module, batch_idx, sampling_scheme='pc')
 
-        #sample using the predictor - corrector sampling procedure     
-        cond_samples, _ = pl_module.sample(y.to(pl_module.device), show_evolution=self.show_evolution, p_steps=2000)
-        val_rec_loss = torch.mean(torch.abs(x.to(pl_module.device)-cond_samples))
-        pl_module.logger.experiment.add_scalar('val_rec_loss_batch_%d_pc' % batch_idx, val_rec_loss, pl_module.current_epoch)
-        self.visualise3D(y, cond_samples, x, pl_module, batch_idx, sampling_scheme='pc')
+            #sample using the predictor-only sampling procedure
+            #cond_samples, _ = pl_module.sample(y.to(pl_module.device), show_evolution=self.show_evolution, p_steps=2000, corrector='conditional_none')
+            #val_rec_loss = torch.mean(torch.abs(x.to(pl_module.device)-cond_samples))
+            #pl_module.logger.experiment.add_scalar('val_rec_loss_batch_%d_p' % batch_idx, val_rec_loss, pl_module.current_epoch)
+            #self.visualise3D(y, cond_samples, x, pl_module, batch_idx, sampling_scheme='p')
 
-        #sample using the predictor-only sampling procedure
-        cond_samples, _ = pl_module.sample(y.to(pl_module.device), show_evolution=self.show_evolution, p_steps=2000, corrector='conditional_none')
-        val_rec_loss = torch.mean(torch.abs(x.to(pl_module.device)-cond_samples))
-        pl_module.logger.experiment.add_scalar('val_rec_loss_batch_%d_p' % batch_idx, val_rec_loss, pl_module.current_epoch)
-        self.visualise3D(y, cond_samples, x, pl_module, batch_idx, sampling_scheme='p')
 
-        
+
+    def on_validation_epoch_start(self, trainer, pl_module):
+        if pl_module.current_epoch % 200 != 0 and pl_module.current_epoch!=0:
+            self.results = {'num_images':0, 'mae':[], 'mse':[]}
+
+    def on_validation_epoch_end(self, trainer, pl_module):
+        if pl_module.current_epoch % 200 != 0 and pl_module.current_epoch!=0:
+            mae = torch.mean(torch.cat(self.results['mae']))
+            mse = torch.mean(torch.cat(self.results['mse']))
+            psnr = 10*torch.log10(1/mse)
+            pl_module.logger.experiment.add_scalar('val_mae_pc', mae, pl_module.current_epoch)
+            pl_module.logger.experiment.add_scalar('val_psnr_pc', psnr, pl_module.current_epoch)
