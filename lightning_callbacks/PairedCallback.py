@@ -330,7 +330,7 @@ class PairedVisualizationCallback(Callback):
 
 
     def on_validation_batch_end(self, trainer, pl_module, outputs, batch, batch_idx, dataloader_idx):
-        if pl_module.current_epoch % 200 != 0 and pl_module.current_epoch!=0:
+        if pl_module.current_epoch % 200 == 0 and pl_module.current_epoch!=0:
             y, x = batch
 
             #sample using the predictor - corrector sampling procedure
@@ -355,11 +355,11 @@ class PairedVisualizationCallback(Callback):
 
 
     def on_validation_epoch_start(self, trainer, pl_module):
-        if pl_module.current_epoch % 200 != 0 and pl_module.current_epoch!=0:
+        if pl_module.current_epoch % 200 == 0 and pl_module.current_epoch!=0:
             self.results = {'num_images':0, 'mae':[], 'mse':[]}
 
     def on_validation_epoch_end(self, trainer, pl_module):
-        if pl_module.current_epoch % 200 != 0 and pl_module.current_epoch!=0:
+        if pl_module.current_epoch % 200 == 0 and pl_module.current_epoch!=0:
             mae = torch.mean(torch.cat(self.results['mae']))
             mse = torch.mean(torch.cat(self.results['mse']))
             psnr = 10*torch.log10(1/mse)
