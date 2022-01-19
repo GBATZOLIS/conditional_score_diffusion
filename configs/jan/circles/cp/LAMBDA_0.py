@@ -8,5 +8,6 @@ def get_config():
   # training
   training = config.training
   training.LAMBDA=0
+  training.adaptive = False
 
   return config
