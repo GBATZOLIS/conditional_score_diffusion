@@ -35,7 +35,7 @@ def get_config():
   training.continuous = True
   training.sde = 'vesde'
   # callbacks
-  training.visualization_callback = '2DCurlVisualization'
+  training.visualization_callback = '2DVisualization'
 
   # validation
   validation = config.validation

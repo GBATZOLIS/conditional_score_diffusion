@@ -25,3 +25,8 @@ dist/
 lightning_logs/
 run_log/
 logs/
+
+
+#Slurm out files
+slurm*
+machine.file*
