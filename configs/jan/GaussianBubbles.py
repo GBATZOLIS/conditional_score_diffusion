@@ -44,8 +44,8 @@ def get_config():
   training.snapshot_freq_for_preemption = 5000
   ## produce samples at each snapshot.
   training.snapshot_sampling = True
-  training.likelihood_weighting = False
-  training.continuous = False
+  training.likelihood_weighting = True
+  training.continuous = True
   training.reduce_mean = False #look more for that setting
   training.sde = 'vesde'
   # callbacks

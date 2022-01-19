@@ -6,6 +6,7 @@ import torchvision
 from . import utils
 from plot_utils import plot_curl_backprop
 import numpy as np
+from models import utils as mutils
 
 @utils.register_callback(name='configuration')
 class ConfigurationSetterCallback(Callback):
@@ -327,14 +328,15 @@ class FisherDivergence(Callback):
         super().__init__()
 
     def on_validation_batch_start(self, trainer, pl_module, batch, batch_idx, dataloader_idx):
-        if pl_module.current_epoch % 100 == 0:
+        if pl_module.current_epoch % 1 == 0:
             eps=1e-5
             t = torch.rand(batch.shape[0], device=batch.device) * (pl_module.sde.T - eps) + eps
             z = torch.randn_like(batch)
             mean, std = pl_module.sde.marginal_prob(batch, t)
             perturbed_data = mean + std[(...,) + (None,) * len(batch.shape[1:])] * z
-            perturbed_data.requires_grad = True
-            model_score = pl_module.score_model(perturbed_data, t)
+            g2 = pl_module.sde.sde(torch.zeros_like(batch), t)[1] ** 2
+            score_fn = mutils.get_score_fn(pl_module.sde, pl_module.score_model, train=False, continuous=True)
+            model_score = score_fn(perturbed_data, t)
             gt_score = trainer.datamodule.data.ground_truth_score(perturbed_data, std)
-            fisher_div = torch.mean(torch.linalg.norm(gt_score - model_score, dim=1)**2)
+            fisher_div = torch.mean(g2 * torch.linalg.norm(gt_score - model_score, dim=1)**2)
             pl_module.log('fisher_divergence', fisher_div, on_step=False, on_epoch=True, prog_bar=True, logger=True)

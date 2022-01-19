@@ -33,8 +33,8 @@ def get_config():
   training.batch_size = 500
   training.num_epochs = 25000 #7000
   training.n_iters = int(1e100)  
-  training.likelihood_weighting = False
-  training.continuous = False
+  training.likelihood_weighting = True
+  training.continuous = True
   training.sde = 'vesde'
   training.LAMBDA = 0.0
   # callbacks

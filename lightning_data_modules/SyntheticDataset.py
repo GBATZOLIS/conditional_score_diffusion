@@ -37,6 +37,7 @@ class SyntheticDataset(Dataset):
 class GaussianBubbles(SyntheticDataset):
     def __init__(self, config):
         super().__init__(config)
+        self.sde = config.training.sde
     
     def create_dataset(self, config):
         data_samples = config.data.data_samples
@@ -52,9 +53,9 @@ class GaussianBubbles(SyntheticDataset):
         for index in mixtures_indices:
             data.append(distributions[index].sample().to(torch.float32))
         data = torch.stack(data)
-        if normalize:
-            data[:,0] = data[:,0] / torch.max(torch.abs(data[:,0]))
-            data[:,1] = data[:,1] / torch.max(torch.abs(data[:,1]))
+        # if normalize:
+        #     data[:,0] = data[:,0] / torch.max(torch.abs(data[:,0]))
+        #     data[:,1] = data[:,1] / torch.max(torch.abs(data[:,1]))
         return data, mixtures_indices
 
     def calculate_centers(self, num_mixtures):
@@ -70,10 +71,12 @@ class GaussianBubbles(SyntheticDataset):
                     centers=torch.tensor(centers)
                     return centers
 
-    def gmm_log_prob(self, x, sigma_t=0):
+    def gmm_log_prob(self, x, sigma_t=0.):
+        # DONT USE!
         n=self.mixtures
+        sigma = torch.sqrt(.2 ** 2 + sigma_t ** 2)
         mus=torch.tensor(self.calculate_centers(n)).type_as(x)
-        sigmas=torch.tensor([[.2 + sigma_t, .2 + sigma_t]]*n).type_as(x)
+        sigmas=torch.tensor([[sigma, sigma]]*n).type_as(x)
         mix = D.categorical.Categorical(torch.ones(n,).type_as(x))
         comp = D.independent.Independent(D.normal.Normal(
                     mus, sigmas), 1)
@@ -81,6 +84,8 @@ class GaussianBubbles(SyntheticDataset):
         return gmm.log_prob(x)
 
     def ground_truth_score_backprop(self, batch, sigmas_t=None):
+        ''' For sanity check of GT calculations.'''
+        assert self.sde == 'vesde'
         if sigmas_t is None:
             sigmas_t = torch.zeros_like(batch)
         
@@ -93,24 +98,33 @@ class GaussianBubbles(SyntheticDataset):
         return score
 
     def ground_truth_score(self, batch, sigmas_t):
-        def normal_density_2D(x, mu, sigma):
-            const = 2 * np.pi * sigma**2
-            return torch.exp(-torch.linalg.norm(x - mu)**2 / (2 * sigma**2)) / const
-        def grad_normal_density_2D(x, mu, sigma):
-            return normal_density_2D(x, mu, sigma) / (sigma**2) * (x - mu)
-        def gmm_density(x, mus, sigma):
-            mixture_dinsities = [normal_density_2D(x, mu, sigma) for mu in mus]
-            return torch.mean(torch.stack(mixture_dinsities, dim=0))
-        def grad_gmm_density(x, mus ,sigma):
-            grad_mixture_dinsities = [grad_normal_density_2D(x, mu, sigma) for mu in mus]
-            return torch.mean(torch.stack(grad_mixture_dinsities, dim=0), dim=0)
-        def gmm_score(x, mus, sigma):
-            return grad_gmm_density(x, mus, sigma) / gmm_density(x, mus, sigma)
+        '''
+        batch (N, 2)
+        sigmas_t (N,)
+        returns gt score (N,2)
+        '''
+        assert self.sde == 'vesde'
+        def normal_density_2D(xs, mus, sigmas):
+            '''
+            x - vector of points (N,2)
+            mus - vector of means (K,2)
+            sigmas - vector of simgas (N,)
+            returns a vector of probabilites (N,K)
+            '''
+            const = 2 * np.pi * sigmas**2
+            num = torch.exp(- torch.linalg.norm(xs[:, None, :] - mus[None, ...], dim=2)**2 / (2 * sigmas[:,None]**2) )   # (N,K)
+            denum = const[:,None] # (N,1)
+            return num / denum # (N,K)
 
-        mus = self.centres.type_as(batch)
-        sigma = 0.2
-        scores = [gmm_score(x, mus, sigma + sigma_t) for (x, sigma_t) in zip (batch, sigmas_t)]
-        return torch.stack(scores, dim=0)
+        def gmm_score(xs, mus, sigmas):
+            num = torch.sum(normal_density_2D(xs, mus, sigmas)[...,None] * (mus[None, ...] - xs[:, None, :]), dim=1) #(N,2)
+            denum = torch.sum(normal_density_2D(xs, mus, sigmas), dim=1)[...,None] #(N,1)
+            return num / (sigmas[...,None] ** 2 * denum) #(N,2)
+
+        mus = self.centres.type_as(batch) #(K,2)
+        sigmas = torch.sqrt(torch.tensor([0.2 ** 2] * batch.shape[0]).type_as(sigmas_t) + sigmas_t ** 2) # (N,)
+        scores = gmm_score(batch, mus, sigmas)
+        return scores
     
 
 class Circles(SyntheticDataset):

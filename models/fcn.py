@@ -11,6 +11,7 @@ class FCN(pl.LightningModule):
         hidden_layers = config.model.hidden_layers
         hidden_nodes = config.model.hidden_nodes
         dropout = config.model.dropout
+        self.embedding_type = 'None'
 
         input_size = state_size + 1 #+1 because of the time dimension.
         output_size = state_size

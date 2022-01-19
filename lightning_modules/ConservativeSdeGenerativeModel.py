@@ -19,11 +19,17 @@ class ConservativeSdeGenerativeModel(BaseSdeGenerativeModel):
     def __init__(self, config, *args, **kwargs):
         super().__init__(config)
         self.LAMBDA = config.training.LAMBDA
+        self.adaptive = config.training.adaptive
+        if self.adaptive:
+            self.num_epochs = config.training.adaptive
 
 
     def training_step(self, batch, batch_idx):
         curl_penalty = self.curl_penalty(batch)
-        loss = self.train_loss_fn(self.score_model, batch) + 0.01*(self.current_epoch * 1e-3)**2 *curl_penalty
+        if self.adaptive:
+            loss = self.train_loss_fn(self.score_model, batch) + self.LAMBDA * (self.current_epoch/self.num_epochs)  * curl_penalty
+        else:
+            loss = self.train_loss_fn(self.score_model, batch) + self.LAMBDA  * curl_penalty
         self.log('curl_penalty', curl_penalty, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         return loss
@@ -43,9 +49,12 @@ class ConservativeSdeGenerativeModel(BaseSdeGenerativeModel):
 
         dvy_dx = compute_grad(self.vy, perturbed_data, t)[:,0]
         dvx_dy = compute_grad(self.vx, perturbed_data, t)[:,1]
-        return torch.mean((dvy_dx - dvx_dy)**2)
+        return torch.mean(self.weight(perturbed_data, t) * (dvy_dx - dvx_dy)**2)
 
-    def vx(self, x,t):
+    def vx(self, x, t):
         return self.score_model(x,t)[:,0]
-    def vy(self, x,t):
+    def vy(self, x, t):
         return self.score_model(x,t)[:,1]
+    def weight(self, batch, t):
+        # return 0.01*(self.current_epoch * 1e-3)**2 *
+        return self.sde.sde(torch.zeros_like(batch), t)[1] ** 2

@@ -18,7 +18,7 @@
             "program": "${file}",
             "args": [
                 "--config",
-                "configs/jan/GaussianBubbles.py",
+                "configs/jan/circles/cp/LAMBDA_1.py",
                 "--log_path",
                 "./test_logs"
             ],
