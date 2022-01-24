@@ -18,63 +18,26 @@
             "program": "${file}",
             "args": [
                 "--config",
-                "configs/jan/circles/Circles_potential.py",
+                "configs/jan/circles/potential/circles_potential.py",
                 "--log_path",
-                "./test_logs"
+                "./test_logs",
+                "--debug",
+                "True"
             ],
             "console": "integratedTerminal"
         },
         {
-            "name": "Test_CPU",
+            "name": "Resume_Test",
             "type": "python",
             "request": "launch",
             "program": "${file}",
             "args": [
                 "--config",
-                "configs/jan/CurlPenalty_cpu.py",
+                "configs/jan/circles/potential/circles_potential.py",
                 "--log_path",
-                "./test_logs"
-            ],
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "Synthetic1D",
-            "type": "python",
-            "request": "launch",
-            "program": "${file}",
-            "args": [
-                "--config",
-                "/home/js2164/jan/repos/diffusion_score/configs/jan/holiday/Synthetic1DDataset_Song.py",
-                "--log_path",
-                "./1D"
-            ],
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "CelebA",
-            "type": "python",
-            "request": "launch",
-            "program": "${file}",
-            "args": [
-                "--config",
-                "configs/ve/my/ddpm/celeba_64.py",
-                "--data_path",
-                "/store/CIA/js2164/data/celeba",
-                "--log_path",
-                "./"
-            ],
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "Potential_Learning",
-            "type": "python",
-            "request": "launch",
-            "program": "${file}",
-            "args": [
-                "--config",
-                "/home/js2164/jan/repos/diffusion_score/configs/jan/holiday/Circles_potential.py",
-                "--log_path",
-                "./"
+                "./test_logs",
+                "--checkpoint_path",
+                "logs/curl_penalty_new/lightning_logs/potential/checkpoints/epoch=6249-step=499999.ckpt"
             ],
             "console": "integratedTerminal"
         }

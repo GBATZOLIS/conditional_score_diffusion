@@ -42,7 +42,7 @@ def get_default_configs():
   sampling.n_steps_each = 1
   sampling.noise_removal = True
   sampling.probability_flow = False
-  sampling.snr = 0.15 #0.075 #0.15 in VE sde (you typically need to play with this term - more details in the main paper)
+  sampling.snr = 0.15
 
   # evaluation
   config.eval = evaluate = ml_collections.ConfigDict()

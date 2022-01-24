@@ -4,7 +4,7 @@ from utils import scatter, plot, compute_grad, create_video, hist
 from models.ema import ExponentialMovingAverage
 import torchvision
 from . import utils
-from plot_utils import plot_curl_backprop
+from plot_utils import plot_curl_backprop, plot_streamlines
 import numpy as np
 from models import utils as mutils
 
@@ -162,50 +162,6 @@ class ImageVisualizationCallback(Callback):
         #to be implemented - has already been implemented for the conditional case
         return
 
-@utils.register_callback(name='2DCurlVisualization')
-class TwoDimVizualizer(Callback):
-    def __init__(self, show_evolution=False):
-        super().__init__()
-        self.evolution = show_evolution
-
-    def on_train_start(self, trainer, pl_module):
-        # pl_module.logxger.log_hyperparams(params=pl_module.config.to_dict())
-        samples, _ = pl_module.sample()
-        self.visualise_samples(samples, pl_module)
-        self.visualise_curl(pl_module)
-
-    def on_validation_epoch_end(self,trainer, pl_module):
-        if pl_module.current_epoch % 500 == 0 \
-            and pl_module.current_epoch % 2500 != 0:
-            samples, _ = pl_module.sample()
-            self.visualise_samples(samples, pl_module)
-            self.visualise_curl(pl_module)
-        if self.evolution and pl_module.current_epoch % 2500 == 0:
-            samples, sampling_info = pl_module.sample(show_evolution=True)
-            evolution = sampling_info['evolution']
-            self.visualise_evolution(evolution, pl_module)
-
-    def visualise_curl(self, pl_module):
-        score = pl_module.score_model
-        image=plot_curl_backprop(score, 'curl')
-        pl_module.logger.experiment.add_image('curl', image, pl_module.current_epoch)
-
-    def visualise_samples(self, samples, pl_module):
-        # log sampled images
-        samples_np =  samples.cpu().numpy()
-        image = scatter(samples_np[:,0],samples_np[:,1], 
-                        title='samples epoch: ' + str(pl_module.current_epoch))
-        pl_module.logger.experiment.add_image('samples', image, pl_module.current_epoch)
-    
-    def visualise_evolution(self, evolution, pl_module):
-        title = 'samples epoch: ' + str(pl_module.current_epoch)
-        video_tensor = create_video(evolution, 
-                                    title=title,
-                                    xlim=[-1,1],
-                                    ylim=[-1,1])
-        tag='Evolution_epoch_%d' % pl_module.current_epoch
-        pl_module.logger.experiment.add_video(tag=tag, vid_tensor=video_tensor, fps=video_tensor.size(1)//20)
-
 
 @utils.register_callback(name='GradientVisualization')
 class GradientVisualizer(Callback):
@@ -231,7 +187,7 @@ class GradientVisualizer(Callback):
                         )
         pl_module.logger.experiment.add_image('grad_norms', image, pl_module.current_epoch)
 
-@utils.register_callback(name='2DVisualization')
+@utils.register_callback(name='2DSamplesVisualization')
 class TwoDimVizualizer(Callback):
     def __init__(self, show_evolution=False):
         super().__init__()
@@ -241,19 +197,21 @@ class TwoDimVizualizer(Callback):
         # pl_module.logxger.log_hyperparams(params=pl_module.config.to_dict())
         samples, _ = pl_module.sample()
         self.visualise_samples(samples, pl_module)
+        # if self.evolution:
+        #     samples, sampling_info = pl_module.sample(show_evolution=True)
+        #     evolution = sampling_info['evolution']
+        #     self.visualise_evolution(evolution, pl_module)
 
     def on_validation_epoch_end(self,trainer, pl_module):
-        if pl_module.current_epoch % 500 == 0 \
-            and pl_module.current_epoch % 2500 != 0:
+        if pl_module.current_epoch % 500 == 0:
             samples, _ = pl_module.sample()
             self.visualise_samples(samples, pl_module)
-        if self.evolution and pl_module.current_epoch % 2500 == 0:
+        if self.evolution and pl_module.current_epoch % 2500 == 0 and pl_module.current_epoch != 0:
             samples, sampling_info = pl_module.sample(show_evolution=True)
             evolution = sampling_info['evolution']
             self.visualise_evolution(evolution, pl_module)
 
     def visualise_samples(self, samples, pl_module):
-        # log sampled images
         samples_np =  samples.cpu().numpy()
         image = scatter(samples_np[:,0],samples_np[:,1], 
                         title='samples epoch: ' + str(pl_module.current_epoch))
@@ -268,6 +226,79 @@ class TwoDimVizualizer(Callback):
         tag='Evolution_epoch_%d' % pl_module.current_epoch
         pl_module.logger.experiment.add_video(tag=tag, vid_tensor=video_tensor, fps=video_tensor.size(1)//20)
 
+@utils.register_callback(name='2DCurlVisualization')
+class CurlVizualizer(Callback):
+    def __init__(self, show_evolution=False):
+        super().__init__()
+        self.evolution = show_evolution
+
+    def on_train_start(self, trainer, pl_module):
+        self.visualise_curl(pl_module)
+        if self.evolution:
+            self.visualise_curl_evolution(pl_module)
+
+    def on_validation_epoch_end(self,trainer, pl_module):
+        if pl_module.current_epoch % 500 == 0:
+            self.visualise_curl(pl_module)
+        if self.evolution and pl_module.current_epoch % 2500 == 0:
+            self.visualise_curl_evolution(pl_module)
+
+    def visualise_curl(self, pl_module):
+        score = mutils.get_score_fn(pl_module.sde, pl_module.score_model, train=False, continuous=True)
+        image=plot_curl_backprop(score, 'curl')
+        pl_module.logger.experiment.add_image('curl', image, pl_module.current_epoch)
+    
+    def visualise_curl_evolution(self, pl_module):
+        score = mutils.get_score_fn(pl_module.sde, pl_module.score_model, train=False, continuous=True)
+        times=[0., .25, .5, .75, 1]
+        images=[]
+        for t in times:
+            image=plot_curl_backprop(score, 'curl at time ' + str(t), t)
+            images.append(image)
+        grid = torchvision.utils.make_grid(images)
+        pl_module.logger.experiment.add_image('curl evolution', grid, pl_module.current_epoch)
+        
+        # video_tensor = torch.stack(images).unsqueeze(0)
+        # tag='Curl_evolution_epoch_%d' % pl_module.current_epoch
+        # pl_module.logger.experiment.add_video(tag=tag, vid_tensor=video_tensor, fps=video_tensor.size(1))
+        
+
+
+@utils.register_callback(name='2DVectorFieldVisualization')
+class VectorFieldVizualizer(Callback):
+    def __init__(self, show_evolution=False):
+        super().__init__()
+        self.evolution = show_evolution
+
+    def on_train_start(self, trainer, pl_module):
+        self.visualise_vector_filed(pl_module)
+        if self.evolution:
+            self.visualise_vector_field_evolution(pl_module)
+
+    def on_validation_epoch_end(self, trainer, pl_module):
+        if pl_module.current_epoch % 500 == 0:
+            self.visualise_vector_filed(pl_module)
+        if pl_module.current_epoch % 2500 == 0:
+            self.visualise_vector_field_evolution(pl_module)
+
+    def visualise_vector_filed(self, pl_module):
+        score = mutils.get_score_fn(pl_module.sde, pl_module.score_model, train=False, continuous=True)
+        image=plot_streamlines(score, 'stream lines')
+        pl_module.logger.experiment.add_image('stream lines', image, pl_module.current_epoch)
+    
+    def visualise_vector_field_evolution(self, pl_module):
+        score = mutils.get_score_fn(pl_module.sde, pl_module.score_model, train=False, continuous=True)
+        times=[0., .25, .5, .75, 1]
+        images=[]
+        for t in times:
+            image=plot_streamlines(score, 'stream lines at time ' + str(t), t)
+            images.append(image)
+        grid = torchvision.utils.make_grid(images)
+        pl_module.logger.experiment.add_image('stream lines evolution', grid, pl_module.current_epoch)
+        
+        # video_tensor = torch.stack(images).unsqueeze(0)
+        # tag='Stream_lines_evolution_epoch_%d' % pl_module.current_epoch
+        # pl_module.logger.experiment.add_video(tag=tag, vid_tensor=video_tensor, fps=video_tensor.size(1))
 
 
 @utils.register_callback(name='Conditional2DVisualization')
@@ -340,3 +371,14 @@ class FisherDivergence(Callback):
             gt_score = trainer.datamodule.data.ground_truth_score(perturbed_data, std)
             fisher_div = torch.mean(g2 * torch.linalg.norm(gt_score - model_score, dim=1)**2)
             pl_module.log('fisher_divergence', fisher_div, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+
+
+def sample_model_score(batch, pl_module):
+    eps=1e-5
+    t = torch.rand(batch.shape[0], device=batch.device) * (pl_module.sde.T - eps) + eps
+    z = torch.randn_like(batch)
+    mean, std = pl_module.sde.marginal_prob(batch, t)
+    perturbed_data = mean + std[(...,) + (None,) * len(batch.shape[1:])] * z
+    g2 = pl_module.sde.sde(torch.zeros_like(batch), t)[1] ** 2
+    score_fn = mutils.get_score_fn(pl_module.sde, pl_module.score_model, train=False, continuous=True)
+    return score_fn(perturbed_data, t)
