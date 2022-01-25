@@ -20,6 +20,7 @@ class ConservativeSdeGenerativeModel(BaseSdeGenerativeModel):
         super().__init__(config)
         self.LAMBDA = config.training.LAMBDA
         self.adaptive = config.training.adaptive
+        self.curl_penalty_type = config.model.curl_penalty_type
         if self.adaptive:
             self.num_epochs = config.training.adaptive
 
@@ -40,6 +41,7 @@ class ConservativeSdeGenerativeModel(BaseSdeGenerativeModel):
         mean, std = self.sde.marginal_prob(batch, t)
         perturbed_data = mean + std[(...,) + (None,) * len(batch.shape[1:])] * z
         perturbed_data.requires_grad = True
+        # MULTI DIM
         #i = torch.randint(0, perturbed_data.shape[1],(1,)).item()
         #j=i
         #while j==i:
@@ -49,7 +51,12 @@ class ConservativeSdeGenerativeModel(BaseSdeGenerativeModel):
 
         dvy_dx = compute_grad(self.vy, perturbed_data, t)[:,0]
         dvx_dy = compute_grad(self.vx, perturbed_data, t)[:,1]
-        return torch.mean(self.weight(perturbed_data, t) * (dvy_dx - dvx_dy)**2)
+        curl =  (dvy_dx - dvx_dy)
+        if self.curl_penalty_type == 'L2':
+            curl_penalty_val = torch.mean(self.weight(perturbed_data, t) * curl**2)
+        elif self.curl_penalty_type == 'Linfty':
+            curl_penalty_val = torch.max(self.weight(perturbed_data, t) * torch.abs(curl))
+        return curl_penalty_val
 
     def vx(self, x, t):
         return self.score_model(x,t)[:,0]

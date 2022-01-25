@@ -8,6 +8,7 @@ def get_config():
   # training
   training = config.training
   training.LAMBDA=10
+  config.model.curl_penalty_type = 'L2'
   training.adaptive = False
 
   return config

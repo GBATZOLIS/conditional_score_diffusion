@@ -64,15 +64,15 @@ def plot_curl(model, title='Curl'):
     plt.close()
     return image
 
-def plot_curl_backprop(model, title='Curl', t=0.):
-    model = copy.deepcopy(model).to('cpu')
-    model = model.eval()
+def plot_curl_backprop(score_fn, title='Curl', t=0.):
+    #model = copy.deepcopy(model).to('cpu')
+    #model = model.eval()
     X,Y = generate_grid()
     n = len(X[0])
     XYpairs = np.stack([ X.reshape(-1), Y.reshape(-1) ], axis=1)
     xs = torch.tensor(XYpairs, dtype=torch.float, requires_grad=True, device='cpu')
     ts = torch.tensor([t] * n**2, dtype=torch.float, device='cpu')
-    Z=curl_backprop(model,xs, ts).detach().numpy().reshape(n,n)
+    Z=curl_backprop(score_fn,xs, ts).detach().numpy().reshape(n,n)
     plt.figure(figsize=(10, 10))
     plt.contourf(X, Y, np.abs(Z))
     plt.colorbar()

@@ -38,7 +38,7 @@ def get_config():
   training.sde = 'vesde'
   training.LAMBDA = 0.0
   # callbacks
-  training.visualization_callback = ['2DVisualization', '2DCurlVisualization']
+  training.visualization_callback = ['2DSamplesVisualization', '2DCurlVisualization', '2DVectorFieldVisualization']
 
   # validation
   validation = config.validation
@@ -86,6 +86,7 @@ def get_config():
   model.num_scales = 1000
   model.ema_rate = 0.9999
 
+  model.curl_penalty_type='L2'
   # optimization
   optim = config.optim
   optim.weight_decay = 0

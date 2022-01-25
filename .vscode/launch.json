@@ -18,7 +18,7 @@
             "program": "${file}",
             "args": [
                 "--config",
-                "configs/jan/circles/potential/circles_potential.py",
+                "configs/jan/circles/curl_penalty/LAMBDA_10.py",
                 "--log_path",
                 "./test_logs",
                 "--debug",
