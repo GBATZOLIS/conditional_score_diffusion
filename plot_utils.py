@@ -23,8 +23,8 @@ def extract_vector_field(score_model, X, Y, t=0.):
     xs = torch.tensor(XYpairs, dtype=torch.float, requires_grad=True)
     ts = torch.tensor([t] * n**2, dtype=torch.float)
     out = score_model(xs, ts).view(n,n,-1)
-    out_X = out[:,:,0].detach().numpy()
-    out_Y = out[:,:,1].detach().numpy()
+    out_X = out[:,:,0].cpu().detach().numpy()
+    out_Y = out[:,:,1].cpu().detach().numpy()
     return out_X, out_Y
 
 def plot_streamlines(model, title='Stream plot', t=0.):
@@ -72,7 +72,7 @@ def plot_curl_backprop(score_fn, title='Curl', t=0.):
     XYpairs = np.stack([ X.reshape(-1), Y.reshape(-1) ], axis=1)
     xs = torch.tensor(XYpairs, dtype=torch.float, requires_grad=True, device='cpu')
     ts = torch.tensor([t] * n**2, dtype=torch.float, device='cpu')
-    Z=curl_backprop(score_fn,xs, ts).detach().numpy().reshape(n,n)
+    Z=curl_backprop(score_fn,xs, ts).cpu().detach().numpy().reshape(n,n)
     plt.figure(figsize=(10, 10))
     plt.contourf(X, Y, np.abs(Z))
     plt.colorbar()

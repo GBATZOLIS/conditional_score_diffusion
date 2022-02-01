@@ -21,8 +21,8 @@
                 "configs/jan/circles/potential/circles_potential.py",
                 "--log_path",
                 "./test_logs",
-                "--debug",
-                "False"
+                //"--debug",
+                //"True"
             ],
             "console": "integratedTerminal"
         },
