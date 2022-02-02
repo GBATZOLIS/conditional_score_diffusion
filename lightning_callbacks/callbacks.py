@@ -194,30 +194,35 @@ class TwoDimVizualizer(Callback):
         self.evolution = show_evolution
 
     def on_train_start(self, trainer, pl_module):
-        # pl_module.logxger.log_hyperparams(params=pl_module.config.to_dict())
         samples, _ = pl_module.sample()
         self.visualise_samples(samples, pl_module)
-        # if self.evolution:
-        #     samples, sampling_info = pl_module.sample(show_evolution=True)
-        #     evolution = sampling_info['evolution']
-        #     self.visualise_evolution(evolution, pl_module)
+        if self.evolution:
+             self.visualise_evolution(pl_module)
 
     def on_validation_epoch_end(self,trainer, pl_module):
         if pl_module.current_epoch % 500 == 0:
             samples, _ = pl_module.sample()
             self.visualise_samples(samples, pl_module)
         if self.evolution and pl_module.current_epoch % 2500 == 0 and pl_module.current_epoch != 0:
-            samples, sampling_info = pl_module.sample(show_evolution=True)
-            evolution = sampling_info['evolution']
-            self.visualise_evolution(evolution, pl_module)
+            self.visualise_evolution(pl_module)
 
     def visualise_samples(self, samples, pl_module):
         samples_np =  samples.cpu().numpy()
         image = scatter(samples_np[:,0],samples_np[:,1], 
                         title='samples epoch: ' + str(pl_module.current_epoch))
         pl_module.logger.experiment.add_image('samples', image, pl_module.current_epoch)
+        return image
+
+    def visualise_evolution(self, pl_module):
+        times=[0., .25, .5, .75, 1]
+        images=[]
+        for t in times:
+            image=self.visualise_samples(pl_module, 'samples at time ' + str(t), t)
+            images.append(image)
+        grid = torchvision.utils.make_grid(images)
+        pl_module.logger.experiment.add_image('samples evolution', grid, pl_module.current_epoch)
     
-    def visualise_evolution(self, evolution, pl_module):
+    def visualise_evolution_video(self, evolution, pl_module):
         title = 'samples epoch: ' + str(pl_module.current_epoch)
         video_tensor = create_video(evolution, 
                                     title=title,
