@@ -244,16 +244,14 @@ class CurlVizualizer(Callback):
             self.visualise_curl_evolution(pl_module)
 
     def visualise_curl(self, pl_module):
-        score = mutils.get_score_fn(pl_module.sde, pl_module.score_model, train=False, continuous=True)
-        image=plot_curl_backprop(score, 'curl')
+        image=plot_curl_backprop(pl_module, 'curl')
         pl_module.logger.experiment.add_image('curl', image, pl_module.current_epoch)
     
     def visualise_curl_evolution(self, pl_module):
-        score = mutils.get_score_fn(pl_module.sde, pl_module.score_model, train=False, continuous=True)
         times=[0., .25, .5, .75, 1]
         images=[]
         for t in times:
-            image=plot_curl_backprop(score, 'curl at time ' + str(t), t)
+            image=plot_curl_backprop(pl_module, 'curl at time ' + str(t), t)
             images.append(image)
         grid = torchvision.utils.make_grid(images)
         pl_module.logger.experiment.add_image('curl evolution', grid, pl_module.current_epoch)
@@ -282,16 +280,14 @@ class VectorFieldVizualizer(Callback):
             self.visualise_vector_field_evolution(pl_module)
 
     def visualise_vector_filed(self, pl_module):
-        score = mutils.get_score_fn(pl_module.sde, pl_module.score_model, train=False, continuous=True)
-        image=plot_streamlines(score, 'stream lines')
+        image=plot_streamlines(pl_module, 'stream lines')
         pl_module.logger.experiment.add_image('stream lines', image, pl_module.current_epoch)
     
     def visualise_vector_field_evolution(self, pl_module):
-        score = mutils.get_score_fn(pl_module.sde, pl_module.score_model, train=False, continuous=True)
         times=[0., .25, .5, .75, 1]
         images=[]
         for t in times:
-            image=plot_streamlines(score, 'stream lines at time ' + str(t), t)
+            image=plot_streamlines(pl_module, 'stream lines at time ' + str(t), t)
             images.append(image)
         grid = torchvision.utils.make_grid(images)
         pl_module.logger.experiment.add_image('stream lines evolution', grid, pl_module.current_epoch)

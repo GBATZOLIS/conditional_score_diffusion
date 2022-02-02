@@ -26,6 +26,8 @@ lightning_logs/
 run_log/
 logs/
 
+#Wilkes submission scripts
+wilkes_scripts/main.sh
 
 #Slurm out files
 slurm*

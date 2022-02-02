@@ -142,9 +142,6 @@ def get_model_fn(model, train=False):
     Returns:
       A tuple of (model output, new mutable states)
     """
-    # Is this ok?
-    x=x.to(model.device)
-    labels=labels.to(model.device)
     if not train:
       model.eval()
       return model(x, labels)
@@ -253,7 +250,6 @@ def get_score_fn(sde, model, conditional=False, train=False, continuous=False):
           std = labels = sde.marginal_prob(torch.zeros_like(x), t)[1]
           time_embedding = torch.log(labels) if model.embedding_type == 'fourier' else labels
           score = model_fn(x, time_embedding)
-          std=std.to(score.device)
           score = score / std[(...,)+(None,)*len(x.shape[1:])]
         else:
           # For VE-trained models, t=0 corresponds to the lowest noise level
