@@ -189,9 +189,10 @@ class GradientVisualizer(Callback):
 
 @utils.register_callback(name='2DSamplesVisualization')
 class TwoDimVizualizer(Callback):
+    # SHOW EVOLUTION DOES NOT WORK AT THE MOMENT !
     def __init__(self, show_evolution=False):
         super().__init__()
-        self.evolution = show_evolution
+        self.evolution = False #show_evolution
 
     def on_train_start(self, trainer, pl_module):
         samples, _ = pl_module.sample()

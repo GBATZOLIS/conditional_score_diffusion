@@ -91,3 +91,7 @@ def plot_curl_backprop(pl_module, title='Curl', t=0.):
     image = transforms.ToTensor()(image)
     plt.close()
     return image
+
+# def plot_samples(pl_module, title='Samples', t=0):
+#     device = pl_module.device
+#     score_fn = get_score_fn(pl_module.sde, pl_module.score_model, train=False, continuous=True)

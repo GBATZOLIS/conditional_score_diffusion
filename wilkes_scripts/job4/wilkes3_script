@@ -54,8 +54,7 @@ module load rhel8/default-amp              # REQUIRED - loads the basic environm
 #! Insert additional module load commands after this line if needed:
 
 #! Full path to application executable: 
-application="/home/js2164/rds/hpc-work/repos/score_sde_pytorch/wilkes_scripts/main.sh"
-
+application="/home/js2164/rds/hpc-work/repos/score_sde_pytorch/wilkes_scripts/job4/main.sh"
 #! Run options for the application:
 options=""
 

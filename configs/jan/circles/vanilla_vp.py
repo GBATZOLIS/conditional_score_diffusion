@@ -28,15 +28,16 @@ def get_config():
 
   # training
   training = config.training
+  training.gpus = 1
+  training.lightning_module = 'base' 
   training.batch_size = 500
-  training.num_epochs = int(1e5)
-  training.n_iters = int(1e20)
+  training.num_epochs = int(1e10)
+  training.n_iters = int(1e100)  
   training.likelihood_weighting = True
   training.continuous = True
-  training.sde = 'vesde'
+  training.sde = 'vpsde'
   # callbacks
-  training.visualization_callback = ['2DSamplesVisualization', '2DVectorFieldVisualization']
-  training.show_evolution = True 
+  training.visualization_callback = ['2DSamplesVisualization', '2DCurlVisualization', '2DVectorFieldVisualization']
 
   # validation
   validation = config.validation
@@ -50,7 +51,7 @@ def get_config():
   sampling.n_steps_each = 1
   sampling.noise_removal = True
   sampling.probability_flow = False
-  sampling.snr = 0.075 #0.15 in VE sde (you typically need to play with this term - more details in the main paper)
+  sampling.snr = 0.15 #0.15 in VE sde (you typically need to play with this term - more details in the main paper)
 
   # data
   config.data = data = ml_collections.ConfigDict()
@@ -70,14 +71,15 @@ def get_config():
   # model
   config.model = model = ml_collections.ConfigDict()
   model.checkpoint_path = None
+  # sde
   model.sigma_max = 4
   model.sigma_min = 0.01
   model.beta_min = 0.1
   model.beta_max = 25
-
-  model.name = 'fcn_potential'
+  # network
+  model.name = 'fcn'
   model.state_size = data.dim
-  model.hidden_layers = 1
+  model.hidden_layers = 3
   model.hidden_nodes = 128
   model.dropout = 0.25
   model.scale_by_sigma = False
