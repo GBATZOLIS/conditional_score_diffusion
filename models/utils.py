@@ -233,24 +233,24 @@ def get_score_fn(sde, model, conditional=False, train=False, continuous=False):
           # continuously-trained models.
           labels = t * (sde.N - 1)
           score = model_fn(x, labels)
-          std = sde.marginal_prob(torch.zeros_like(x), t)[1]
+          #std = sde.marginal_prob(torch.zeros_like(x), t)[1]
         else:
           # For VP-trained models, t=0 corresponds to the lowest noise level
           labels = t * (sde.N - 1)
           score = model_fn(x, labels)
-          std = sde.sqrt_1m_alphas_cumprod.type_as(labels)[labels.long()]
+          #std = sde.sqrt_1m_alphas_cumprod.type_as(labels)[labels.long()]
 
-        score = score / std[(...,)+(None,)*len(x.shape[1:])] #-> why do they scale the output of the network by std ??
+        #score = score / std[(...,)+(None,)*len(x.shape[1:])] #-> why do they scale the output of the network by std ??
         return score
 
     elif isinstance(sde, sde_lib.VESDE) or isinstance(sde, sde_lib.cVESDE):
       def score_fn(x, t):
         if continuous:
           #raise NotImplementedError('Continuous training for VE SDE is not checked. Division by std should be included. Not completed yet.')
-          std = labels = sde.marginal_prob(torch.zeros_like(x), t)[1]
+          #std = labels = sde.marginal_prob(torch.zeros_like(x), t)[1]
           time_embedding = torch.log(labels) if model.embedding_type == 'fourier' else labels
           score = model_fn(x, time_embedding)
-          score = score / std[(...,)+(None,)*len(x.shape[1:])]
+          #score = score / std[(...,)+(None,)*len(x.shape[1:])]
         else:
           # For VE-trained models, t=0 corresponds to the lowest noise level
           labels = t*(sde.N - 1)
@@ -260,6 +260,14 @@ def get_score_fn(sde, model, conditional=False, train=False, continuous=False):
           score = score / std[(...,)+(None,)*len(x.shape[1:])]
 
         return score
+    elif isinstance(sde, sde_lib.SNRSDE):
+        assert continuous
+        def score_fn(x, t):
+          #labels = t * (sde.N - 1)
+          score = model_fn(x, t)
+          #std = sde.marginal_prob(torch.zeros_like(x), t)[1]
+          #score = score / std[(...,)+(None,)*len(x.shape[1:])] #-> why do they scale the output of the network by std ??
+          return score
 
     else:
       raise NotImplementedError(f"SDE class {sde.__class__.__name__} not yet supported.")

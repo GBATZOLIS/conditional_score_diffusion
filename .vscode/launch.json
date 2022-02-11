@@ -18,7 +18,7 @@
             "program": "${file}",
             "args": [
                 "--config",
-                "configs/jan/celebA/potential_holiday.py",
+                "configs/jan/circles/snrsde.py",
                 "--log_path",
                 "./test_logs",
                 //"--debug",

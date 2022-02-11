@@ -143,6 +143,74 @@ class cSDE(SDE): #conditional setting. Allow for conditional time-dependent scor
 
 
 
+class SNRSDE(SDE):
+  def __init__(self, N, gamma=None, a=2, b=3, c=6, minus_log_SNR_0 = -10, minus_log_SNR_1 = 5):
+    super().__init__(N)
+    if gamma is None:
+      gamma = lambda t: a * t + b * t**c
+      d_gamma = lambda t: a + b*c * t**(c-1)
+    else:
+      #Use atuograd
+      pass
+    # Gamma has to be normalized to have correct start and end points (cf. Appendix D of VDM paper)
+    normalizing_consant = (minus_log_SNR_1 - minus_log_SNR_0)/(gamma(1)-gamma(0))
+    log_SNR = lambda t: - (minus_log_SNR_0 +  normalizing_consant * (gamma(t) - gamma(0)))
+    self.d_log_SNR = lambda t: -normalizing_consant * d_gamma(t)
+    self.log_SNR = log_SNR
+  
+  @property
+  def T(self):
+    return 1
+
+  def sde(self, x, t):
+    SNR = lambda t: torch.exp(self.log_SNR(t))
+    d_log_SNR = self.d_log_SNR
+    std = torch.sqrt(1 / (1 + SNR(t)))
+    drift = 0.5 * std[(...,)+(None,)*len(x.shape[1:])]**2 * d_log_SNR(t)[(...,)+(None,)*len(x.shape[1:])] * x
+    diffusion_squared = - std**2 * d_log_SNR(t)
+    diffusion = torch.sqrt(diffusion_squared)
+    return drift, diffusion
+
+  def marginal_prob(self, x, t): 
+    SNR = lambda t: torch.exp(self.log_SNR(t))
+    alpha = torch.sqrt(SNR(t) / (1 + SNR(t)))[(...,)+(None,)*len(x.shape[1:])]
+    mean = alpha * x
+    std = torch.sqrt(1 / (1 + SNR(t)))
+    return mean, std
+
+  def prior_sampling(self, shape):
+    return torch.randn(*shape)
+
+  def prior_logp(self, z):
+    shape = z.shape
+    N = np.prod(shape[1:])
+    logps = -N / 2. * np.log(2 * np.pi) - torch.sum(z ** 2, dim=(1, 2, 3)) / 2.
+    return logps
+
+class VVSDE(SDE):
+  """Construct a Variance Vanishing SDE.
+  Args:
+    N: number of discretization steps
+  """
+  def __init__(self, N):
+      super().__init__(N)
+  
+  @property
+  def T(self):
+    return 1
+
+  def sde(self, x, t):
+    return super().sde(x, t)
+
+  def marginal_prob(self, x, t):
+    return super().marginal_prob(x, t)
+
+  def prior_sampling(self, shape):
+    return super().prior_sampling(shape)
+
+  def prior_logp(self, z):
+    return super().prior_logp(z)
+
 class VPSDE(SDE):
   def __init__(self, beta_min=0.1, beta_max=20, N=1000):
     """Construct a Variance Preserving SDE.
@@ -167,13 +235,13 @@ class VPSDE(SDE):
 
   def sde(self, x, t):
     beta_t = self.beta_0 + t * (self.beta_1 - self.beta_0)
-    drift = -0.5 * beta_t[:, None, None, None] * x
+    drift = -0.5 * beta_t[(...,)+(None,)*len(x.shape[1:])] * x
     diffusion = torch.sqrt(beta_t)
     return drift, diffusion
 
   def marginal_prob(self, x, t): #perturbation kernel
     log_mean_coeff = -0.25 * t ** 2 * (self.beta_1 - self.beta_0) - 0.5 * t * self.beta_0
-    mean = torch.exp(log_mean_coeff[:, None, None, None]) * x
+    mean = torch.exp(log_mean_coeff[(...,)+(None,)*len(x.shape[1:])]) * x
     std = torch.sqrt(1. - torch.exp(2. * log_mean_coeff))
     return mean, std
 
@@ -192,7 +260,7 @@ class VPSDE(SDE):
     beta = self.discrete_betas.to(x.device)[timestep]
     alpha = self.alphas.to(x.device)[timestep]
     sqrt_beta = torch.sqrt(beta)
-    f = torch.sqrt(alpha)[:, None, None, None] * x - x
+    f = torch.sqrt(alpha)[(...,)+(None,)*len(x.shape[1:])] * x - x
     G = sqrt_beta
     return f, G
 
@@ -216,14 +284,14 @@ class subVPSDE(SDE):
 
   def sde(self, x, t):
     beta_t = self.beta_0 + t * (self.beta_1 - self.beta_0)
-    drift = -0.5 * beta_t[:, None, None, None] * x
+    drift = -0.5 * beta_t[(...,)+(None,)*len(x.shape[1:])] * x
     discount = 1. - torch.exp(-2 * self.beta_0 * t - (self.beta_1 - self.beta_0) * t ** 2)
     diffusion = torch.sqrt(beta_t * discount)
     return drift, diffusion
 
   def marginal_prob(self, x, t):
     log_mean_coeff = -0.25 * t ** 2 * (self.beta_1 - self.beta_0) - 0.5 * t * self.beta_0
-    mean = torch.exp(log_mean_coeff)[:, None, None, None] * x
+    mean = torch.exp(log_mean_coeff)[(...,)+(None,)*len(x.shape[1:])] * x
     std = 1 - torch.exp(2. * log_mean_coeff)
     return mean, std
 
