@@ -13,13 +13,13 @@ conda activate score_sde
 REPO=/rds/user/js2164/hpc-work/repos/score_sde_pytorch/
 #REPO=/home/js2164/jan/repos/diffusion_score/
 
-CONFIG=configs/jan/circles/vanilla_vp.py
-#configs/jan/circles/vanilla_vp.py
+CONFIG=configs/jan/circles/vanilla_ve.py
 #configs/jan/celebA/hpc.py
 #configs/jan/circles/potential/circles_potential.py
 #configs/jan/circles/curl_penalty/LAMBDA.py
 
-LOG=logs/dim_reduce
+LOG=logs/circles_new
+#logs/snrsde
 #logs/circles_new
 #logs/celebA
 

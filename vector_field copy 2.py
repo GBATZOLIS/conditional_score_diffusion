@@ -98,7 +98,7 @@ def compute_grad(f, x):
 # %%
 torch.mean(curl_backprop(score, XYpairs_tensor)**2).item()
 # %%
-model = BaseSdeGenerativeModel.load_from_checkpoint('/home/js2164/jan/repos/diffusion_score/logs/gaussian_bubbles/lightning_logs/version_2/checkpoints/epoch=3673-step=293919.ckpt')
+model = BaseSdeGenerativeModel.load_from_checkpoint('logs/snrsde/lightning_logs/version_3/checkpoints/epoch=3877-step=310239.ckpt')
 score = model.score_model
 score = score.eval()
 model.configure_sde(config)

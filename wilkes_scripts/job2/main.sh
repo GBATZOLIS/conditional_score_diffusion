@@ -13,11 +13,12 @@ conda activate score_sde
 REPO=/rds/user/js2164/hpc-work/repos/score_sde_pytorch/
 #REPO=/home/js2164/jan/repos/diffusion_score/
 
-CONFIG=configs/jan/circles/potential/circles_potential.py
+CONFIG=configs/jan/gaussian/vesde.py
 #configs/jan/celebA/hpc.py
 #configs/jan/circles/potential/circles_potential.py
 #configs/jan/circles/curl_penalty/LAMBDA.py
-LOG=logs/circles_new
+
+LOG=logs/gaussian
 #logs/circles_new
 #logs/celebA
 
@@ -28,3 +29,4 @@ cd $REPO
 python main.py --config $CONFIG \
                --log_path $LOG \
                #--checkpoint_path $CHECKPOINT
+               

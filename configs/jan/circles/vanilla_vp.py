@@ -90,7 +90,7 @@ def get_config():
   optim = config.optim
   optim.weight_decay = 0
   optim.optimizer = 'Adam'
-  optim.lr = 2e-5
+  optim.lr = 2e-4 #2e-5
   optim.beta1 = 0.9
   optim.eps = 1e-8
   optim.warmup = 5000
