@@ -18,7 +18,7 @@
             "program": "${file}",
             "args": [
                 "--config",
-                "configs/jan/circles/snrsde.py",
+                "configs/jan/circles/curl_penalty/LAMBDA.py",
                 "--log_path",
                 "./test_logs",
                 //"--debug",

@@ -282,7 +282,7 @@ class VectorFieldVizualizer(Callback):
     def on_validation_epoch_end(self, trainer, pl_module):
         if pl_module.current_epoch % 500 == 0:
             self.visualise_vector_filed(pl_module)
-        if pl_module.current_epoch % 2500 == 0:
+        if self.evolution and pl_module.current_epoch % 2500 == 0:
             self.visualise_vector_field_evolution(pl_module)
 
     def visualise_vector_filed(self, pl_module):

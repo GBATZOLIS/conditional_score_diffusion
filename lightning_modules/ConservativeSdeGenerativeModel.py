@@ -64,4 +64,5 @@ class ConservativeSdeGenerativeModel(BaseSdeGenerativeModel):
         return self.score_model(x,t)[:,1]
     def weight(self, batch, t):
         # return 0.01*(self.current_epoch * 1e-3)**2 *
-        return self.sde.sde(torch.zeros_like(batch), t)[1] ** 2
+        diffusion = self.sde.sde(torch.zeros_like(batch), t)[1]
+        return diffusion ** 2
