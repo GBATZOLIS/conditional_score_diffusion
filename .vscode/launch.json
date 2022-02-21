@@ -18,7 +18,7 @@
             "program": "${file}",
             "args": [
                 "--config",
-                "configs/jan/circles/curl_penalty/LAMBDAS/LAMBDA_1.py",
+                "configs/jan/celebA/holiday/run.py",
                 "--log_path",
                 "./test_logs",
                 //"--debug",

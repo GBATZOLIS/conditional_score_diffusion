@@ -2,13 +2,13 @@ import ml_collections
 import torch
 import math
 import numpy as np
-from configs.jan.celebA.default import get_default_configs
+import configs.jan.celebA.default as default
 
 
 def get_config():
-  config = get_default_configs()
+  config = default.get_config()
 
   data = config.data
-  data.base_dir = '/rds/user/js2164/hpc-work/data'
+  data.base_dir = '/store/CIA/js2164/data/'
   data.dataset = 'celeba'
   return config

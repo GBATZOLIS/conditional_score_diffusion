@@ -26,7 +26,7 @@ def get_exact_paths(config, phase):
             GT_file = 'DIV2K-teFullMod8.pklv4'
         else:
             return NotImplementedError('%s is not supported.' % phase)
-    elif config.data.dataset == 'celebA-HQ-160':
+    elif config.data.dataset == 'celebA-HQ-160' or config.data.dataset =='celeba':
         if phase == 'train':
             LQ_file = 'CelebAHq_160_MBic_tr_X8.pklv4'
             GT_file = 'CelebAHq_160_MBic_tr.pklv4'
@@ -47,6 +47,35 @@ def get_exact_paths(config, phase):
 
     return {'LQ':full_path_LQ, 'GT':full_path_GT}
 
+class PKLDataset(data.Dataset):
+    def __init__(self, config, phase):
+        super(PKLDataset, self).__init__()
+        self.image_size = config.data.image_size #target image size for this scale
+        hr_file_path = get_exact_paths(config, phase)['GT']
+        self.images = self.load_pkls(hr_file_path, n_max=int(1e9))
+
+    def load_pkls(self, path, n_max):
+        assert os.path.isfile(path), path
+        images = []
+        with open(path, "rb") as f:
+            images += pickle.load(f)
+        assert len(images) > 0, path
+        images = images[:n_max]
+        images = [np.transpose(image, [2, 0, 1]) for image in images]
+        return images
+
+    def __len__(self):
+        return len(self.images)
+
+    def __getitem__(self, item):
+        img = self.images[item]
+        img = img / 255.0
+        img = torch.Tensor(img)
+        resize = Resize(self.image_size, interpolation=InterpolationMode.BICUBIC)
+        img = resize(img)
+        return img
+
+
 class LRHR_PKLDataset(data.Dataset):
     def __init__(self, config, phase):
         super(LRHR_PKLDataset, self).__init__()
@@ -57,8 +86,8 @@ class LRHR_PKLDataset(data.Dataset):
         hr_file_path = get_exact_paths(config, phase)['GT']
         lr_file_path = get_exact_paths(config, phase)['LQ']
 
-        self.use_flip = config.data.use_flip
-        self.use_rot = config.data.use_rot
+        self.use_flip = config.data.use_flip if phase == 'train' else False
+        self.use_rot = config.data.use_rot if phase == 'train' else False
         self.use_crop = config.data.use_crop
         self.upscale_lr = config.data.upscale_lr
 
@@ -242,6 +271,11 @@ class General_PKLDataset(data.Dataset):
         hr_file_path = get_exact_paths(config, phase)['GT']
         self.hr_images = self.load_pkls(hr_file_path, n_max=int(1e9))
 
+        if phase == 'test':
+            self.use_seed = config.eval.use_seed
+        else:
+            self.use_seed = False
+
     def load_pkls(self, path, n_max):
         assert os.path.isfile(path), path
         images = []
@@ -280,12 +314,16 @@ class General_PKLDataset(data.Dataset):
             return gray, hr
 
         elif self.task == 'inpainting':
+            if self.use_seed:
+                np.random.seed(item)
+
             masked_img = hr.clone()
             mask_size = int(np.sqrt(self.mask_coverage * hr.shape[1] * hr.shape[2]))
             size_x, size_y = masked_img.shape[1], masked_img.shape[2]
             start_x = np.random.randint(low=0, high=(size_x - mask_size) + 1) if size_x > mask_size else 0
             start_y = np.random.randint(low=0, high=(size_y - mask_size) + 1) if size_y > mask_size else 0
             masked_img[:, start_x:start_x + mask_size, start_y:start_y + mask_size] = 0.
+            
             return masked_img, hr
 
 
@@ -452,3 +490,30 @@ class PairedDataModule(pl.LightningDataModule):
     def test_dataloader(self): 
         return DataLoader(self.test_dataset, batch_size = self.test_batch, shuffle=False, num_workers=self.test_workers) 
 
+@utils.register_lightning_datamodule(name='unpaired_PKLDataset')
+class UnpairedDataModule(pl.LightningDataModule):
+    def __init__(self, config):
+        super().__init__()
+        #DataLoader arguments
+        self.config = config
+        self.train_workers = config.training.workers
+        self.val_workers = config.eval.workers
+        self.test_workers = config.eval.workers
+
+        self.train_batch = config.training.batch_size
+        self.val_batch = config.eval.batch_size
+        self.test_batch = config.eval.batch_size
+
+    def setup(self, stage=None): 
+        self.train_dataset = PKLDataset(self.config, phase='train')
+        self.val_dataset = PKLDataset(self.config, phase='val')
+        self.test_dataset = PKLDataset(self.config, phase='test')
+
+    def train_dataloader(self):
+        return DataLoader(self.train_dataset, batch_size = self.train_batch, shuffle=True, num_workers=self.train_workers) 
+  
+    def val_dataloader(self):
+        return DataLoader(self.val_dataset, batch_size = self.val_batch, shuffle=False, num_workers=self.val_workers) 
+  
+    def test_dataloader(self): 
+        return DataLoader(self.test_dataset, batch_size = self.test_batch, shuffle=False, num_workers=self.test_workers) 

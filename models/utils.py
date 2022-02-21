@@ -247,9 +247,9 @@ def get_score_fn(sde, model, conditional=False, train=False, continuous=False):
       def score_fn(x, t):
         if continuous:
           #raise NotImplementedError('Continuous training for VE SDE is not checked. Division by std should be included. Not completed yet.')
-          std = labels = sde.marginal_prob(torch.zeros_like(x), t)[1]
-          time_embedding = torch.log(labels) if model.embedding_type == 'fourier' else labels
-          score = model_fn(x, time_embedding)
+          #std = labels = sde.marginal_prob(torch.zeros_like(x), t)[1]
+          #time_embedding = torch.log(labels) if model.embedding_type == 'fourier' else labels
+          score = model_fn(x, t)
           #score = score / std[(...,)+(None,)*len(x.shape[1:])]
         else:
           # For VE-trained models, t=0 corresponds to the lowest noise level

@@ -57,7 +57,7 @@ def get_config():
   data.base_dir = '/rds/user/js2164/hpc-work/data'
   data.dataset = 'celeba/img_align_celeba'
   data.task = 'generation'
-  data.datamodule = 'General_PKLDataset'
+  data.datamodule = 'unpaired_PKLDataset'
   data.scale = 4 #?
   data.use_data_mean = False
   data.create_dataset = False
