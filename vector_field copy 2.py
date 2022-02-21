@@ -33,7 +33,7 @@ X,Y = np.meshgrid(x,y)
 XYpairs = np.stack([ X.reshape(-1), Y.reshape(-1) ], axis=1)#%%
 XYpairs_tensor = torch.from_numpy(XYpairs)
 XYpairs_tensor.requires_grad=True
-sigmas_t = torch.tensor([1.]*len(XYpairs_tensor))
+sigmas_t = torch.tensor([0.]*len(XYpairs_tensor))
 s=gaussian_bubbles.ground_truth_score(XYpairs_tensor, sigmas_t=sigmas_t).detach().numpy()
 vector_X=s[:,0].reshape(n,n)
 vector_Y=s[:,1].reshape(n,n)
@@ -105,14 +105,14 @@ model.configure_sde(config)
 score_fn = get_score_fn(model.sde, score, train=False, continuous=True)
 # %%
 xs = torch.tensor(XYpairs, dtype=torch.float)
-ts = torch.tensor([1.] * n**2, dtype=torch.float)
+ts = torch.tensor([0.] * n**2, dtype=torch.float)
 sigmas = model.sde.marginal_prob(torch.zeros_like(xs), ts)[1]
 out_flat = score(xs, sigmas)
 out = out_flat.view(n,n,-1)
 out_X = out[... ,0].detach().numpy()
 out_Y = out[... ,1].detach().numpy()
 out_np = out.detach().numpy()
-s_approx = out_flat / sigmas[..., None]
+s_approx = out_flat
 # %%
 plt.figure(figsize=(10, 10))
 plt.streamplot(X,Y,vector_X,vector_Y)
@@ -138,6 +138,8 @@ consine_similarity = torch.nn.CosineSimilarity()
 out_flat = score(xs, ts)
 s_tensor = torch.from_numpy(s)
 torch.mean(consine_similarity(s_tensor, out_flat))
+#%%
+torch.mean(torch.linalg.norm(s_tensor - out_flat, dim=1)**2)
 # %%
 batch = xs
 eps = 1e-5

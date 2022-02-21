@@ -23,20 +23,14 @@ def get_config():
   training.log_freq = 250
   training.eval_freq = 2500
   #------              --------
+
+  training.sde = 'vesde'
   
   training.visualization_callback = 'base'
   training.show_evolution = False
   
   ## store additional checkpoints for preemption in cloud computing environments
   training.snapshot_freq_for_preemption = 5000 #to be removed
-
-  ## produce samples at each snapshot.
-  training.snapshot_sampling = True
-  training.likelihood_weighting = False
-  training.continuous = False
-  training.reduce_mean = True 
-  training.sde = 'snrsde'
-  
 
   # sampling
   sampling = config.sampling 
@@ -121,7 +115,6 @@ def get_config():
   model.conv_size = 3
   model.input_channels = data.num_channels
   model.output_channels = data.num_channels
-
 
   # optimization
   config.optim = optim = ml_collections.ConfigDict()

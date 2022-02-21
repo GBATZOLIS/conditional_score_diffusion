@@ -14,6 +14,7 @@ flags.DEFINE_enum("mode", "train", ["train", "test", "multi_scale_test", "comput
 flags.DEFINE_string("eval_folder", "eval",
                     "The folder name for storing evaluation results")
 flags.DEFINE_boolean("debug", False, "Use GPU?")
+flags.DEFINE_string("log_name", None, "Log name")
 flags.mark_flags_as_required(["config", "mode", "log_path"])
 
 
@@ -21,7 +22,7 @@ def main(argv):
   if FLAGS.debug:
     FLAGS.config.training.gpus = 0
   if FLAGS.mode == 'train':
-    run_lib.train(FLAGS.config, FLAGS.log_path, FLAGS.checkpoint_path)
+    run_lib.train(FLAGS.config, FLAGS.log_path, FLAGS.checkpoint_path, FLAGS.log_name)
   elif FLAGS.mode == 'test':
     run_lib.test(FLAGS.config, FLAGS.log_path, FLAGS.checkpoint_path)
   elif FLAGS.mode == 'multi_scale_test':

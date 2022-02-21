@@ -29,7 +29,8 @@ import matplotlib.pyplot as plt
 
 from tqdm import tqdm
 
-def train(config, log_path, checkpoint_path):
+def train(config, log_path, checkpoint_path, log_name=None):
+    print('RESUMING: ' + str(checkpoint_path))
     if config.data.create_dataset:
       create_dataset.create_dataset(config)
 
@@ -37,7 +38,7 @@ def train(config, log_path, checkpoint_path):
     callbacks = get_callbacks(config)
     LightningModule = create_lightning_module(config)
 
-    logger = pl.loggers.TensorBoardLogger(log_path, name='lightning_logs')
+    logger = pl.loggers.TensorBoardLogger(log_path, name='', version=log_name)
 
     if checkpoint_path is not None or config.model.checkpoint_path is not None:
       if config.model.checkpoint_path is not None and checkpoint_path is None:

@@ -35,7 +35,7 @@ def get_config():
   training.likelihood_weighting = False
   training.continuous = False
   training.reduce_mean = True 
-  training.sde = 'vesde'
+  training.sde = 'snrsde'
   
 
   # sampling
@@ -97,7 +97,7 @@ def get_config():
   model.dropout = 0.1
   model.embedding_type = 'fourier'
 
-  model.name = 'ddpm'
+  model.name = 'ddpm_potential'
   model.scale_by_sigma = True
   model.ema_rate = 0.999
   model.normalization = 'GroupNorm'
