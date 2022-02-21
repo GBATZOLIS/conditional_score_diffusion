@@ -23,18 +23,14 @@ def get_config():
   training.log_freq = 250
   training.eval_freq = 2500
   #------              --------
+
+  training.sde = 'vesde'
   
   training.visualization_callback = 'base'
   training.show_evolution = False
   
   ## store additional checkpoints for preemption in cloud computing environments
   training.snapshot_freq_for_preemption = 5000 #to be removed
-
-  ## produce samples at each snapshot.
-  training.snapshot_sampling = True
-  training.reduce_mean = True 
-  training.sde = 'vesde'
-  
 
   # sampling
   sampling = config.sampling 
@@ -61,7 +57,7 @@ def get_config():
   data.base_dir = '/rds/user/js2164/hpc-work/data'
   data.dataset = 'celeba/img_align_celeba'
   data.task = 'generation'
-  data.datamodule = 'image'
+  data.datamodule = 'General_PKLDataset'
   data.scale = 4 #?
   data.use_data_mean = False
   data.create_dataset = False
@@ -95,7 +91,7 @@ def get_config():
   model.dropout = 0.1
   model.embedding_type = 'fourier'
 
-  model.name = 'ddpm_potential'
+  model.name = 'ddpm'
   model.scale_by_sigma = True
   model.ema_rate = 0.999
   model.normalization = 'GroupNorm'
@@ -119,7 +115,6 @@ def get_config():
   model.conv_size = 3
   model.input_channels = data.num_channels
   model.output_channels = data.num_channels
-
 
   # optimization
   config.optim = optim = ml_collections.ConfigDict()
