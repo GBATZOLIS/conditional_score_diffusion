@@ -13,7 +13,7 @@ conda activate score_sde
 REPO=/rds/user/js2164/hpc-work/repos/score_sde_pytorch/
 #REPO=/home/js2164/jan/repos/diffusion_score/
 
-CONFIG=configs/jan/celebA/hpc/hpc.py
+CONFIG=configs/jan/celebA/hpc/run.py
 #configs/jan/circles/vanilla_vp.py
 #configs/jan/celebA/potential_hpc.py
 #configs/jan/celebA/hpc.py

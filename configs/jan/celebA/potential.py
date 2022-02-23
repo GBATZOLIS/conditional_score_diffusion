@@ -9,6 +9,9 @@ def get_config():
   config = default.get_config()
 
   data =  config.data
+  sampling = config.sampling
+
+  sampling.corrector = 'none'
 
   # model
   config.model = model = ml_collections.ConfigDict()
