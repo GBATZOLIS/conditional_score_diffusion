@@ -4,6 +4,16 @@ import torch
 
 def get_default_configs():
   config = ml_collections.ConfigDict()
+
+  # logging
+  config.logging = logging = ml_collections.ConfigDict()
+  logging.log_path = None
+  logging.log_name = None
+  logging.top_k = None
+  logging.every_n_epochs = None
+  logging.envery_timedelta = None
+
+
    # training
   config.training = training = ml_collections.ConfigDict()
   training.lightning_module = 'base'

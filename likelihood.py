@@ -23,21 +23,33 @@ from scipy import integrate
 from models import utils as mutils
 
 
-def get_div_fn(fn):
+def get_div_fn(fn, exact=False):
   """Create the divergence function of `fn` using the Hutchinson-Skilling trace estimator."""
-
-  def div_fn(x, t, eps):
-    with torch.enable_grad():
-      x.requires_grad_(True)
-      fn_eps = torch.sum(fn(x, t) * eps)
-      grad_fn_eps = torch.autograd.grad(fn_eps, x)[0]
-    x.requires_grad_(False)
-    return torch.sum(grad_fn_eps * eps, dim=tuple(range(1, len(x.shape))))
+  if exact:
+    def div_fn(x,t,eps):
+      with torch.enable_grad():
+        x.requires_grad_(True)
+        grads=[]
+        for i, v in enumerate(torch.eye(x.shape[1], device=x.device)):
+          gradients = torch.autograd.grad(outputs=fn(x,t), inputs=x,
+                              grad_outputs=v.repeat(x.shape[0],1),
+                              create_graph=True, retain_graph=True, only_inputs=True)[0][:,i]
+          grads.append(gradients)
+      grads = torch.stack(grads,dim=1)
+      return torch.sum(grads, dim=1)
+  else: 
+    def div_fn(x, t, eps):
+      with torch.enable_grad():
+        x.requires_grad_(True)
+        fn_eps = torch.sum(fn(x, t) * eps)
+        grad_fn_eps = torch.autograd.grad(fn_eps, x)[0]
+      x.requires_grad_(False)
+      return torch.sum(grad_fn_eps * eps, dim=tuple(range(1, len(x.shape))))
 
   return div_fn
 
 
-def get_likelihood_fn(sde, inverse_scaler, hutchinson_type='Rademacher',
+def get_likelihood_fn(sde, inverse_scaler=None, exact=False, t=0.0, hutchinson_type='Rademacher', 
                       rtol=1e-5, atol=1e-5, method='RK45', eps=1e-5):
   """Create a function to compute the unbiased log-likelihood estimate of a given data point.
 
@@ -64,7 +76,7 @@ def get_likelihood_fn(sde, inverse_scaler, hutchinson_type='Rademacher',
     return rsde.sde(x, t)[0]
 
   def div_fn(model, x, t, noise):
-    return get_div_fn(lambda xx, tt: drift_fn(model, xx, tt))(x, t, noise)
+    return get_div_fn(lambda xx, tt: drift_fn(model, xx, tt), exact)(x, t, noise)
 
   def likelihood_fn(model, data):
     """Compute an unbiased estimate to the log-likelihood in bits/dim.
@@ -95,18 +107,23 @@ def get_likelihood_fn(sde, inverse_scaler, hutchinson_type='Rademacher',
         logp_grad = mutils.to_flattened_numpy(div_fn(model, sample, vec_t, epsilon))
         return np.concatenate([drift, logp_grad], axis=0)
 
+      # ACHTUNG: set t=0 for default behaviour!! 
+      # JAN: Why appending zeros?
       init = np.concatenate([mutils.to_flattened_numpy(data), np.zeros((shape[0],))], axis=0)
-      solution = integrate.solve_ivp(ode_func, (eps, sde.T), init, rtol=rtol, atol=atol, method=method)
+      solution = integrate.solve_ivp(ode_func, (t + eps, sde.T), init, rtol=rtol, atol=atol, method=method)
       nfe = solution.nfev
       zp = solution.y[:, -1]
       z = mutils.from_flattened_numpy(zp[:-shape[0]], shape).to(data.device).type(torch.float32)
       delta_logp = mutils.from_flattened_numpy(zp[-shape[0]:], (shape[0],)).to(data.device).type(torch.float32)
       prior_logp = sde.prior_logp(z)
-      bpd = -(prior_logp + delta_logp) / np.log(2)
-      N = np.prod(shape[1:])
-      bpd = bpd / N
+      bpd = -(prior_logp + delta_logp) #/ np.log(2)
+      #N = np.prod(shape[1:])
+      #bpd = bpd / N
       # A hack to convert log-likelihoods to bits/dim
-      offset = 7. - inverse_scaler(-1.)
+      if inverse_scaler is not None:
+        offset = 7. - inverse_scaler(-1.)
+      else:
+        offset = 0
       bpd = bpd + offset
       return bpd, z, nfe
 

@@ -11,6 +11,26 @@ import numpy as np
 import cv2
 import math
 from sklearn.neighbors import KernelDensity
+from models.utils import get_score_fn
+
+def generate_grid(n=500, d=2, c=[0,0]):
+    x = np.linspace(-d + c[0], d + c[0], n)
+    y = np.linspace(-d + c[1], d + c[1], n)
+    # Meshgrid
+    X,Y = np.meshgrid(x,y)
+    return X, Y
+
+def extract_vector_field(pl_module, X, Y, t=0.):
+    device = pl_module.device
+    score_fn = get_score_fn(pl_module.sde, pl_module.score_model, train=False, continuous=True)
+    n = len(X[0])
+    XYpairs = np.stack([ X.reshape(-1), Y.reshape(-1) ], axis=1)
+    xs = torch.tensor(XYpairs, dtype=torch.float, requires_grad=True, device=device)
+    ts = torch.tensor([t] * n**2, dtype=torch.float, device=device)
+    out = score_fn(xs, ts).view(n,n,-1)
+    out_X = out[:,:,0].cpu().detach().numpy()
+    out_Y = out[:,:,1].cpu().detach().numpy()
+    return out_X, out_Y
 
 def hist(data):
   s=data.detach().cpu().numpy().squeeze()
@@ -42,6 +62,7 @@ def scatter(x, y, **kwargs):
     ylim = kwargs['ylim']
     plt.ylim(ylim)
   plt.scatter(x, y)
+  plt.gca().set_aspect('equal')
   buf = io.BytesIO()
   plt.savefig(buf, format='jpeg')
   buf.seek(0)
@@ -71,37 +92,81 @@ def create_video(evolution, **kwargs):
   video_tensor = torch.stack(video_tensor)
   return video_tensor.unsqueeze(0)
 
-def compute_grad(f,x,t):
+def compute_grad(f,x):
   """
   Args:
-      - f - function 
-      - x - tensor shape (B, ...) where B is batch size
+      - fx - function 
+      - x - inputs
   Retruns:
       - grads - tensor of gradients for each x
   """
-  torch_grad_enabled =torch.is_grad_enabled()
-  torch.set_grad_enabled(True)
-  device = x.device
-  ftx =f(x,t)
-  assert len(ftx.shape)==1
-  gradients = torch.autograd.grad(outputs=ftx, inputs=x,
-                                  grad_outputs=torch.ones(ftx.size()).to(device),
-                                  create_graph=True, retain_graph=True, only_inputs=True)[0]
-  gradients = gradients.view(gradients.size(0), -1)
-  torch.set_grad_enabled(torch_grad_enabled)
+  with torch.enable_grad():
+    x = x.requires_grad_(True)
+    out = f(x)
+    gradients = torch.autograd.grad(outputs=out, inputs=x,
+                            grad_outputs=torch.ones(out.size()).to(x.device),
+                            create_graph=True, retain_graph=True, only_inputs=True)[0]
+    gradients = gradients.view(gradients.size(0), -1)
   return gradients
 
-def compute_grad2(f, x):
-    # CLEAN THE NAME UP (MULTIPLE DISPATCH)
-    torch_grad_enabled =torch.is_grad_enabled()
-    torch.set_grad_enabled(True)
-    device = x.device
-    log_px = f(x)
-    assert len(log_px.shape )==1
-    gradients = torch.autograd.grad(outputs=log_px, inputs=x,
-                                    grad_outputs=torch.ones(log_px.size()).to(device),
-                                    create_graph=True, retain_graph=True, only_inputs=True)[0]
-    gradients = gradients.view(gradients.size(0), -1)
-    torch.set_grad_enabled(torch_grad_enabled)
-    return gradients
+def compute_divergence(f, x):
+  """
+  Args:
+    - f - vector field function
+    - x - inputs
+  Returns:
+    - div - divergence of the vector field f at each x
+  """
+  with torch.enable_grad():
+    x = x.requires_grad_(True)
+    out = f(x)
+    grads = []
+    for i, v in enumerate(torch.eye(x.shape[1], device=x.device)):
+        gradients = torch.autograd.grad(outputs=out, inputs=x,
+                            grad_outputs=v.repeat(x.shape[0],1),
+                            create_graph=True, retain_graph=True, only_inputs=True)[0][:,i]
+        grads.append(gradients)
+    grads = torch.stack(grads,dim=1)
+  return torch.sum(grads, dim=1)
 
+
+def compute_curl(f, xs):
+  with torch.enable_grad():
+    dvy_dx = compute_grad(lambda x: f(x)[:,1],xs)[:,0]
+    dvx_dy = compute_grad(lambda x: f(x)[:,0],xs)[:,1]
+    return (dvy_dx - dvx_dy)
+
+
+def fisher_divergence(pl_module, data_module, t=0.01, grid=True):
+  from models.utils import get_score_fn
+  score_fn = get_score_fn(pl_module.sde, pl_module.score_model, train=False, continuous=True)
+  
+  if grid:
+      X, Y = generate_grid(n=25)
+      XYpairs = np.stack([ X.reshape(-1), Y.reshape(-1) ], axis=1)
+      XYpairs_tensor = torch.from_numpy(XYpairs) + 1e-10 # for numerical stability
+      XYpairs_tensor = XYpairs_tensor.float()
+
+      t = torch.tensor([t]*len(XYpairs_tensor))
+
+      s_gt = data_module.dataset.ground_truth_score(XYpairs_tensor , t)
+
+      
+      s_model = score_fn(XYpairs_tensor, t)
+
+      diff = torch.linalg.norm(s_gt - s_model, dim=1) ** 2
+  else:
+      eps=1e-5
+      sde = pl_module.sde
+      x = next(iter(data_module.val_dataloader()))
+      t = torch.rand(x.shape[0], device=x.device) * (sde.T - eps) + eps
+      x_t = sde.perturb(x, t)
+
+      diffusion = sde.sde(torch.zeros_like(x), t)[1]
+
+      s_gt = data_module.dataset.ground_truth_score(x_t , t)
+      s_model = score_fn(x_t, t)
+
+      diff = diffusion**2 * torch.linalg.norm(s_gt - s_model, dim=1) ** 2
+  return diff.mean().item()
+  

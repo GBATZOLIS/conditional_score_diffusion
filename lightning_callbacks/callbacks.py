@@ -4,9 +4,11 @@ from utils import scatter, plot, compute_grad, create_video, hist
 from models.ema import ExponentialMovingAverage
 import torchvision
 from . import utils
-from plot_utils import plot_curl_backprop, plot_streamlines
+from plot_utils import plot_curl_backprop, plot_vector_field
 import numpy as np
 from models import utils as mutils
+from pytorch_lightning.callbacks import ModelCheckpoint
+import datetime
 
 @utils.register_callback(name='configuration')
 class ConfigurationSetterCallback(Callback):
@@ -286,14 +288,14 @@ class VectorFieldVizualizer(Callback):
             self.visualise_vector_field_evolution(pl_module)
 
     def visualise_vector_filed(self, pl_module):
-        image=plot_streamlines(pl_module, 'stream lines')
+        image=plot_vector_field(pl_module, 'stream lines')
         pl_module.logger.experiment.add_image('stream lines', image, pl_module.current_epoch)
     
     def visualise_vector_field_evolution(self, pl_module):
         times=[0., .25, .5, .75, 1]
         images=[]
         for t in times:
-            image=plot_streamlines(pl_module, 'stream lines at time ' + str(t), t)
+            image=plot_vector_field(pl_module, 'stream lines at time ' + str(t), t)
             images.append(image)
         grid = torchvision.utils.make_grid(images)
         pl_module.logger.experiment.add_image('stream lines evolution', grid, pl_module.current_epoch)
@@ -384,3 +386,36 @@ def sample_model_score(batch, pl_module):
     g2 = pl_module.sde.sde(torch.zeros_like(batch), t)[1] ** 2
     score_fn = mutils.get_score_fn(pl_module.sde, pl_module.score_model, train=False, continuous=True)
     return score_fn(perturbed_data, t)
+
+
+# CHECKPOINTS
+@utils.register_callback(name='CheckpointTopK')
+class CheckpointTopK(ModelCheckpoint):
+    def __init__(self, config):
+        super().__init__(dirpath=config.logging.log_path+config.logging.log_name+'/checkpoints/best/',
+                                        monitor='eval_loss_epoch',
+                                        filename='{epoch}--{eval_loss_epoch:.3f}',
+                                        save_last=True,
+                                        save_top_k=config.logging.top_k,
+                                        #train_time_interval=timedelta(hours=1)
+                        )
+
+@utils.register_callback(name='CheckpointEveryNepochs')
+class CheckpointEveryNepochs(ModelCheckpoint):
+    def __init__(self, config):
+        super().__init__(dirpath=config.logging.log_path+config.logging.log_name+'/checkpoints/epochs',
+                                        monitor='eval_loss_epoch',
+                                        filename='{epoch}',
+                                        save_last=False,
+                                        every_n_epochs=config.logging.every_n_epochs
+                        )
+
+@utils.register_callback(name='CheckpointTime')
+class CheckpointTime(ModelCheckpoint):
+    def __init__(self, config):
+        super().__init__(dirpath=config.logging.log_path+config.logging.log_name+'/checkpoints/time',
+                                        monitor='eval_loss_epoch',
+                                        filename=datetime.datetime.now().strftime('%Y-%m-%d %H:%M'),
+                                        save_last=False,
+                                        train_time_interval=config.logging.envery_timedelta
+                        )

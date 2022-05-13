@@ -81,7 +81,7 @@ class BaseSdeGenerativeModel(pl.LightningModule):
         if num_samples is None:
             sampling_shape = self.default_sampling_shape
         else:
-            sampling_shape = [num_samples] +  self.config.data_shape
+            sampling_shape = [num_samples] +  config.data.shape
         sampling_fn = get_sampling_fn(self.config, self.sde, sampling_shape, self.sampling_eps)
 
         return sampling_fn(self.score_model, show_evolution=show_evolution)

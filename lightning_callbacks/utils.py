@@ -24,6 +24,14 @@ def get_callback_by_name(name):
 def get_callbacks(config):
     callbacks=[get_callback_by_name('ema')()] #check if this works for testing as well.
 
+    if config.logging.top_k is not None:
+      callbacks.append(get_callback_by_name('CheckpointTopK')(config))
+    if config.logging.every_n_epochs is not None:
+      callbacks.append(get_callback_by_name('CheckpointEveryNepochs')(config))
+    if config.logging.envery_timedelta is not None:
+      callbacks.append(get_callback_by_name('CheckpointTime')(config))
+    
+
     if config.eval.callback is not None:
       callbacks.append(get_callback_by_name(config.eval.callback)(show_evolution=False, 
                                                                   eval_config=config.eval, 
@@ -42,4 +50,4 @@ def get_callbacks(config):
 
     return callbacks
 
-  
+

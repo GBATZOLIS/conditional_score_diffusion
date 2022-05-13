@@ -12,7 +12,8 @@ import io
 from . import utils
 from torchvision.transforms.functional import normalize
 from sklearn.datasets import make_circles
-from utils import compute_grad2
+import sde_lib
+from utils import compute_grad
 
 class SyntheticDataset(Dataset):
     def __init__(self, config):
@@ -23,6 +24,13 @@ class SyntheticDataset(Dataset):
     def create_dataset(self, config):
         raise NotImplemented
         # return data, labels
+
+    def log_prob(self, xs, ts):
+        raise NotImplemented
+
+    def ground_truth_score(self, xs, ts):
+        log_prob_x = lambda x: self.log_prob(x,ts)
+        return compute_grad(log_prob_x, xs)
 
     def __getitem__(self, index):
         if self.return_labels:
@@ -37,17 +45,18 @@ class SyntheticDataset(Dataset):
 class GaussianBubbles(SyntheticDataset):
     def __init__(self, config):
         super().__init__(config)
-        self.sde = config.training.sde
+        self.sde = sde_lib.VESDE(sigma_min=config.model.sigma_min, sigma_max=config.model.sigma_max, N=config.model.num_scales, data_mean=None)
     
     def create_dataset(self, config):
         data_samples = config.data.data_samples
         self.mixtures = config.data.mixtures
+        self.std=0.2
         n=self.mixtures
         categorical = D.categorical.Categorical(torch.ones(n,)/n)
         distributions = []
         self.centres = self.calculate_centers(n)
         for center in self.centres:
-            distributions.append(D.normal.Normal(loc=center, scale=0.2))
+            distributions.append(D.normal.Normal(loc=center, scale=self.std))
         mixtures_indices = categorical.sample(torch.Size([data_samples]))
         data = []
         for index in mixtures_indices:
@@ -71,60 +80,66 @@ class GaussianBubbles(SyntheticDataset):
                     centers=torch.tensor(centers)
                     return centers
 
-    def gmm_log_prob(self, x, sigma_t=0.):
-        # DONT USE!
-        n=self.mixtures
-        sigma = torch.sqrt(.2 ** 2 + sigma_t ** 2)
-        mus=torch.tensor(self.calculate_centers(n)).type_as(x)
-        sigmas=torch.tensor([[sigma, sigma]]*n).type_as(x)
-        mix = D.categorical.Categorical(torch.ones(n,).type_as(x))
-        comp = D.independent.Independent(D.normal.Normal(
-                    mus, sigmas), 1)
-        gmm = D.mixture_same_family.MixtureSameFamily(mix, comp)
-        return gmm.log_prob(x)
-
-    def ground_truth_score_backprop(self, batch, sigmas_t=None):
-        ''' For sanity check of GT calculations.'''
-        assert self.sde == 'vesde'
-        if sigmas_t is None:
-            sigmas_t = torch.zeros_like(batch)
-        
-        prob_fn = lambda batch: torch.stack(
-                                            [self.gmm_log_prob(x, simga_t) 
-                                                for (x, simga_t) in zip(batch, sigmas_t)], 
-                                            dim=0)
-
-        score = compute_grad2(prob_fn, batch)
-        return score
-
-    def ground_truth_score(self, batch, sigmas_t):
-        '''
-        batch (N, 2)
-        sigmas_t (N,)
-        returns gt score (N,2)
-        '''
-        assert self.sde == 'vesde'
-        def normal_density_2D(xs, mus, sigmas):
+    def log_prob(self, xs, ts):
+    
+        def normal_density_2D(x, mu, sigma):
             '''
-            x - vector of points (N,2)
-            mus - vector of means (K,2)
-            sigmas - vector of simgas (N,)
-            returns a vector of probabilites (N,K)
+            x - vector of points (2,)
+            mus - mean vector (2,)
+            sigmas - standard deviation float
+            returns a float with log_prob
             '''
-            const = 2 * np.pi * sigmas**2
-            num = torch.exp(- torch.linalg.norm(xs[:, None, :] - mus[None, ...], dim=2)**2 / (2 * sigmas[:,None]**2) )   # (N,K)
-            denum = const[:,None] # (N,1)
-            return num / denum # (N,K)
+            const = 2 * np.pi * sigma**2
+            num = torch.exp( - torch.linalg.norm(x - mu)**2 / (2 * sigma**2)  )
+            return num / const
 
-        def gmm_score(xs, mus, sigmas):
-            num = torch.sum(normal_density_2D(xs, mus, sigmas)[...,None] * (mus[None, ...] - xs[:, None, :]), dim=1) #(N,2)
-            denum = torch.sum(normal_density_2D(xs, mus, sigmas), dim=1)[...,None] #(N,1)
-            return num / (sigmas[...,None] ** 2 * denum) #(N,2)
+        sigmas_t = self.sde.marginal_prob(torch.zeros_like(xs), ts)[1]
+        sigmas = torch.sqrt(torch.tensor([self.std ** 2] * xs.shape[0]).type_as(sigmas_t) + sigmas_t ** 2)
+        log_probs = []
+        for x, sigma in zip(xs, sigmas):
+             # float
+            prob=0
+            for mu in self.centres:
+                prob += normal_density_2D(x, mu, sigma) / self.mixtures
+            log_prob = torch.log(prob)
+            log_probs.append(log_prob)
+        return torch.stack(log_probs, dim=0)
 
-        mus = self.centres.type_as(batch) #(K,2)
-        sigmas = torch.sqrt(torch.tensor([0.2 ** 2] * batch.shape[0]).type_as(sigmas_t) + sigmas_t ** 2) # (N,)
-        scores = gmm_score(batch, mus, sigmas)
-        return scores
+
+    def log_prob2(self, xs, ts):
+        log_probs = []
+        sigmas_t = self.sde.marginal_prob(torch.zeros_like(xs), ts)[1]
+        sigmas = torch.sqrt(torch.tensor([self.std ** 2] * xs.shape[0]).type_as(sigmas_t) + sigmas_t ** 2)
+        for x, sigma in zip(xs, sigmas):
+            n=self.mixtures
+            mus=torch.tensor(self.calculate_centers(n)).type_as(x)
+            sigmas=torch.tensor([[sigma, sigma]]*n).type_as(x)
+            mix = D.categorical.Categorical(torch.ones(n,).type_as(x))
+            comp = D.independent.Independent(D.normal.Normal(
+                        mus, sigmas), 1)
+            gmm = D.mixture_same_family.MixtureSameFamily(mix, comp)
+            log_prob = gmm.log_prob(x)
+            log_probs.append(log_prob)
+        return torch.stack(log_probs, dim=0)
+
+    # def ground_truth_score(self, batch, t):
+    #     '''
+    #     batch (N, 2)
+    #     t (N,)
+    #     returns gt score (N,2)
+    #     '''
+    #     assert isinstance(self.sde, sde_lib.VESDE)
+    #     sigmas_t = self.sde.marginal_prob(torch.zeros_like(batch), t)[1]
+
+    #     def gmm_score(xs, mus, sigmas):
+    #         num = torch.sum(self.normal_density_2D(xs, mus, sigmas)[...,None] * (mus[None, ...] - xs[:, None, :]), dim=1) #(N,2)
+    #         denum = torch.sum(self.normal_density_2D(xs, mus, sigmas), dim=1)[...,None] #(N,1)
+    #         return num / (sigmas[...,None] ** 2 * denum) #(N,2)
+
+    #     mus = self.centres.type_as(batch) #(K,2)
+    #     sigmas = torch.sqrt(torch.tensor([self.std ** 2] * batch.shape[0]).type_as(sigmas_t) + sigmas_t ** 2) # (N,)
+    #     scores = gmm_score(batch, mus, sigmas)
+    #     return scores
     
 
 class Circles(SyntheticDataset):
@@ -160,13 +175,13 @@ class SyntheticDataModule(pl.LightningDataModule):
         
     def setup(self, stage=None): 
         if self.dataset_type == 'GaussianBubbles':
-            self.data = GaussianBubbles(self.config)
+            self.dataset = GaussianBubbles(self.config)
         elif self.dataset_type == 'Circles':
-            self.data = Circles(self.config)
+            self.dataset = Circles(self.config)
         else:
             raise NotImplemented
-        l=len(self.data)
-        self.train_data, self.valid_data, self.test_data = random_split(self.data, [int(self.split[0]*l), int(self.split[1]*l), int(self.split[2]*l)]) 
+        l=len(self.dataset)
+        self.train_data, self.valid_data, self.test_data = random_split(self.dataset, [int(self.split[0]*l), int(self.split[1]*l), int(self.split[2]*l)]) 
     
     def train_dataloader(self):
         return DataLoader(self.train_data, batch_size = self.train_batch, num_workers=self.train_workers) 

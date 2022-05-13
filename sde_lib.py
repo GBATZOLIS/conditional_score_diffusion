@@ -30,6 +30,13 @@ class SDE(abc.ABC):
     """Parameters to determine the marginal distribution of the SDE, $p_t(x)$."""
     pass
 
+  def perturb(self, x_0, t):
+    """Retruns x from pt(x|x_0)"""
+    z = torch.randn_like(x_0)
+    mean, std = self.marginal_prob(x_0, t)
+    perturbed_data = mean + std[(...,) + (None,) * len(x_0.shape[1:])] * z
+    return perturbed_data
+
   @abc.abstractmethod
   def prior_sampling(self, shape):
     """Generate one sample from the prior distribution, $p_T(x)$."""
@@ -184,7 +191,8 @@ class SNRSDE(SDE):
   def prior_logp(self, z):
     shape = z.shape
     N = np.prod(shape[1:])
-    logps = -N / 2. * np.log(2 * np.pi) - torch.sum(z ** 2, dim=(1, 2, 3)) / 2.
+    dims_to_reduce=tuple(range(len(z.shape))[1:])
+    logps = -N / 2. * np.log(2 * np.pi) - torch.sum(z ** 2, dim=dims_to_reduce) / 2.
     return logps
 
 class VVSDE(SDE):
@@ -301,6 +309,7 @@ class subVPSDE(SDE):
   def prior_logp(self, z):
     shape = z.shape
     N = np.prod(shape[1:])
+
     return -N / 2. * np.log(2 * np.pi) - torch.sum(z ** 2, dim=(1, 2, 3)) / 2.
 
 
@@ -366,7 +375,8 @@ class VESDE(SDE):
   def prior_logp(self, z):
     shape = z.shape
     N = np.prod(shape[1:])
-    return -N / 2. * np.log(2 * np.pi * self.sigma_max ** 2) - torch.sum(z ** 2, dim=(1, 2, 3)) / (2 * self.sigma_max ** 2)
+    dims_to_reduce=tuple(range(len(z.shape))[1:])
+    return -N / 2. * np.log(2 * np.pi * self.sigma_max ** 2) - torch.sum(z ** 2, dim=dims_to_reduce) / (2 * self.sigma_max ** 2)
 
   def discretize(self, x, t):
     """SMLD(NCSN) discretization."""

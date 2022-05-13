@@ -1,0 +1,133 @@
+config: !!python/object:ml_collections.config_dict.config_dict.ConfigDict
+  _convert_dict: true
+  _fields:
+    data: !!python/object:ml_collections.config_dict.config_dict.ConfigDict
+      _convert_dict: true
+      _fields:
+        create_dataset: false
+        data_samples: 50000
+        datamodule: Synthetic
+        dataset_type: Circles
+        dim: 2
+        factor: 0.5
+        noise: 0.06
+        num_channels: 0
+        return_labels: false
+        shape:
+        - 2
+        split:
+        - 0.8
+        - 0.1
+        - 0.1
+        use_data_mean: false
+      _locked: false
+      _type_safe: true
+    device: !!python/object/apply:torch.device
+    - cuda
+    - 0
+    eval: !!python/object:ml_collections.config_dict.config_dict.ConfigDict
+      _convert_dict: true
+      _fields:
+        batch_size: 512
+        begin_ckpt: 50
+        bpd_dataset: test
+        callback: null
+        enable_bpd: false
+        enable_loss: true
+        enable_sampling: true
+        end_ckpt: 96
+        num_samples: 50000
+        workers: 4
+      _locked: false
+      _type_safe: true
+    logging: !!python/object:ml_collections.config_dict.config_dict.ConfigDict
+      _convert_dict: true
+      _fields:
+        envery_timedelta: null
+        every_n_epochs: null
+        log_name: null
+        log_path: null
+        top_k: null
+      _locked: false
+      _type_safe: true
+    model: !!python/object:ml_collections.config_dict.config_dict.ConfigDict
+      _convert_dict: true
+      _fields:
+        beta_max: 25
+        beta_min: 0.1
+        checkpoint_path: null
+        dropout: 0.25
+        ema_rate: 0.9999
+        hidden_layers: 1
+        hidden_nodes: 128
+        name: fcn_potential
+        num_scales: 1000
+        scale_by_sigma: false
+        sigma_max: 4
+        sigma_min: 0.01
+        state_size: 2
+      _locked: false
+      _type_safe: true
+    optim: !!python/object:ml_collections.config_dict.config_dict.ConfigDict
+      _convert_dict: true
+      _fields:
+        beta1: 0.9
+        eps: 1.0e-08
+        grad_clip: 1.0
+        lr: 0.0002
+        optimizer: Adam
+        warmup: 5000
+        weight_decay: 0
+      _locked: false
+      _type_safe: true
+    sampling: !!python/object:ml_collections.config_dict.config_dict.ConfigDict
+      _convert_dict: true
+      _fields:
+        corrector: none
+        method: pc
+        n_steps_each: 1
+        noise_removal: true
+        predictor: reverse_diffusion
+        probability_flow: false
+        snr: 0.075
+      _locked: false
+      _type_safe: true
+    seed: 42
+    training: !!python/object:ml_collections.config_dict.config_dict.ConfigDict
+      _convert_dict: true
+      _fields:
+        accelerator: null
+        accumulate_grad_batches: 1
+        alpha: 0.0
+        batch_size: 500
+        continuous: true
+        eval_freq: 2500
+        gpus: 1
+        lightning_module: fokker-planck
+        likelihood_weighting: true
+        log_freq: 50
+        n_chunks: 50
+        n_iters: 100000000000000000000
+        num_epochs: 100000
+        num_nodes: 1
+        reduce_mean: false
+        sde: vesde
+        show_evolution: true
+        snapshot_freq: 5000
+        snapshot_freq_for_preemption: 5000
+        snapshot_sampling: true
+        visualization_callback:
+        - 2DSamplesVisualization
+        - 2DVectorFieldVisualization
+        workers: 4
+      _locked: false
+      _type_safe: true
+    validation: !!python/object:ml_collections.config_dict.config_dict.ConfigDict
+      _convert_dict: true
+      _fields:
+        batch_size: 500
+        workers: 4
+      _locked: false
+      _type_safe: true
+  _locked: false
+  _type_safe: true

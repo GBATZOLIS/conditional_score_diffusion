@@ -1,4 +1,4 @@
-from models import ddpm, ncsnv2, fcn, ddpm3D, fcn_potential, ddpm_potential #needed for model registration
+from models import ddpm, ncsnv2, fcn, ddpm3D, fcn_potential, ddpm_potential, csdi #needed for model registration
 import pytorch_lightning as pl
 #from pytorch_lightning.plugins import DDPPlugin
 import numpy as np
@@ -9,10 +9,10 @@ from lightning_callbacks import callbacks, HaarMultiScaleCallback, PairedCallbac
 from lightning_callbacks.HaarMultiScaleCallback import normalise_per_image, permute_channels, normalise, normalise_per_band, create_supergrid
 from lightning_callbacks.utils import get_callbacks
 
-from lightning_data_modules import HaarDecomposedDataset, ImageDatasets, PairedDataset, SyntheticDataset, SyntheticPairedDataset, Synthetic1DConditionalDataset, SRDataset, SRFLOWDataset #needed for datamodule registration
+from lightning_data_modules import HaarDecomposedDataset, ImageDatasets, PairedDataset, SyntheticDataset, SyntheticPairedDataset, Synthetic1DConditionalDataset, SyntheticTimeSeries, SRDataset, SRFLOWDataset, CryptoDataset #needed for datamodule registration
 from lightning_data_modules.utils import create_lightning_datamodule
 
-from lightning_modules import BaseSdeGenerativeModel, HaarMultiScaleSdeGenerativeModel, ConditionalSdeGenerativeModel, ConservativeSdeGenerativeModel #need for lightning module registration
+from lightning_modules import BaseSdeGenerativeModel, HaarMultiScaleSdeGenerativeModel, ConditionalSdeGenerativeModel, ConservativeSdeGenerativeModel, FokkerPlanckModel #need for lightning module registration
 from lightning_modules.utils import create_lightning_module
 
 from torchvision.transforms import RandomCrop, CenterCrop, ToTensor, Resize
@@ -37,6 +37,11 @@ def train(config, log_path, checkpoint_path, log_name=None):
     DataModule = create_lightning_datamodule(config)
     callbacks = get_callbacks(config)
     LightningModule = create_lightning_module(config)
+
+    if config.logging.log_path is not None:
+      log_path = config.logging.log_path
+    if config.logging.log_name is not None:
+      log_name = config.logging.log_name
 
     logger = pl.loggers.TensorBoardLogger(log_path, name='', version=log_name)
 

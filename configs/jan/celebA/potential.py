@@ -3,6 +3,7 @@ import torch
 import math
 import numpy as np
 import configs.jan.celebA.default as default
+from datetime import timedelta
 
 
 def get_config():
@@ -12,6 +13,15 @@ def get_config():
   sampling = config.sampling
 
   sampling.corrector = 'none'
+
+  # logging
+  config.logging = logging = ml_collections.ConfigDict()
+  logging.log_path = 'logs/celebA/'
+  logging.log_name = 'potential_ve'
+  logging.top_k = 5
+  logging.every_n_epochs = 1000
+  logging.envery_timedelta = timedelta(minutes=1)
+
 
   # model
   config.model = model = ml_collections.ConfigDict()

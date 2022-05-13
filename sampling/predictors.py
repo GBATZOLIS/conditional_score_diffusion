@@ -1,6 +1,7 @@
 import abc
 import torch
 import sde_lib
+import numpy as np
 
 _PREDICTORS = {}
 
@@ -60,6 +61,60 @@ class EulerMaruyamaPredictor(Predictor):
     x_mean = x + drift * dt
     x = x_mean + diffusion[(...,) + (None,) * len(x.shape[1:])] * np.sqrt(-dt) * z
     return x, x_mean
+
+@register_predictor(name='heun') #Heun's method (pc-Adams-11-pece)
+class PC_Adams_11_Predictor(Predictor):
+  def __init__(self, sde, score_fn, probability_flow=True):
+    super().__init__(sde, score_fn, probability_flow)
+    #we implement the PECE method here. This should give us quadratic order of accuracy.
+
+  def f(self, x, t):
+    if isinstance(self.sde, dict):
+      score = self.score_fn(x, t)
+      f = {}
+      for name in self.sde.keys():
+        f_drift, f_diffusion = self.sde[name].sde(x[name], t)
+        r_drift = f_drift - f_diffusion[(..., ) + (None, ) * len(x[name].shape[1:])] ** 2 * score[name] * 0.5
+        f[name] = r_drift
+      return f
+    else:
+      drift, diffusion = self.sde.sde(x, t)
+      score = self.score_fn(x, t)
+      drift = drift - diffusion[(..., ) + (None, ) * len(x.shape[1:])] ** 2 * score * 0.5
+      return drift
+
+  def predict(self, x, f_0, h):
+    if isinstance(self.sde, dict):
+      prediction = {}
+      for name in self.sde.keys():
+        prediction[name] = x[name] + f_0[name] * h
+    else:
+      prediction = x + f_0 * h
+
+    return prediction
+  
+  def correct(self, x, f_1, f_0, h):
+    if isinstance(self.sde, dict):
+      correction = {}
+      for name in x.keys():
+        correction[name] = x[name] + h/2 * (f_1[name] + f_0[name])
+    else:
+      correction = x + h/2 * (f_1 + f_0)
+    return correction
+
+  def update_fn(self, x, t):
+      h = -1. / self.rsde.N #torch.tensor(self.inverse_step_fn(t[0].cpu().item())).type_as(t)
+      
+      #evaluate
+      f_0 = self.f(x, t)
+      #predict
+      x_1 = self.predict(x, f_0, h)
+      #evaluate
+      f_1 = self.f(x_1, t+h)
+      #correct once
+      x_2 = self.correct(x, f_1, f_0, h)
+
+      return x_2, x_2
 
 @register_predictor(name='conditional_euler_maruyama')
 class conditionalEulerMaruyamaPredictor(Predictor):

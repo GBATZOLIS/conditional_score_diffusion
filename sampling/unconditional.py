@@ -1,5 +1,5 @@
 from sampling.predictors import get_predictor, ReverseDiffusionPredictor, NonePredictor
-from sampling.correctors import get_corrector, NoneCorrector
+from sampling.correctors import get_corrector, NoneCorrector, MetropolisAdjustedLangevinCorrector
 from tqdm import tqdm
 import functools
 import torch
@@ -333,6 +333,9 @@ def shared_corrector_update_fn(x, t, sde, model, corrector, continuous, snr, n_s
   if corrector is None:
     # Predictor-only sampler
     corrector_obj = NoneCorrector(sde, score_fn, snr, n_steps)
+  elif corrector.__name__ == 'MetropolisAdjustedLangevinCorrector':
+    energy_fn = model.energy
+    corrector_obj = corrector(sde, score_fn, energy_fn, snr, n_steps)
   else:
     corrector_obj = corrector(sde, score_fn, snr, n_steps)
   return corrector_obj.update_fn(x, t)
