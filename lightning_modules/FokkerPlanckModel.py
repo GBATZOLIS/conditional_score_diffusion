@@ -10,6 +10,7 @@ from . import utils
 import torch.optim as optim
 import os
 import torch
+import numpy as np
 
 @utils.register_lightning_module(name='fokker-planck')
 class FokkerPlanckModel(pl.LightningModule):
@@ -90,7 +91,7 @@ class FokkerPlanckModel(pl.LightningModule):
             grad_norm_2 = torch.linalg.norm(self.score_model.score(x, t), dim=1)**2
 
             score_x = lambda y: self.score_model.score(y,t)
-            divergence = compute_divergence(score_x, x)    
+            divergence = compute_divergence(score_x, x, hutchinson=self.config.training.hutchinson)    
             #self.score_model.trace_hessian_log_energy(x, t) 
             
             log_energy_t = lambda s: self.score_model.log_energy(x, s) 
@@ -104,6 +105,7 @@ class FokkerPlanckModel(pl.LightningModule):
         #difference = fp_loss(perturbed_data, t)
         
         x_grad_fp_loss = compute_grad(lambda x: fp_loss(x,t), perturbed_data)
+        # DO WE WANT TO SQUARE HERE?
         loss_fp = (torch.linalg.norm(x_grad_fp_loss, dim=1)**2).mean()
         
         #diff_chunked = torch.chunk(difference, n_chunks, dim=0)
@@ -133,10 +135,28 @@ class FokkerPlanckModel(pl.LightningModule):
         loss_dsm = self.train_loss_fn(self.score_model, batch)
         self.log('train_denoising_loss', loss_dsm, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         
-        #loss = loss_dsm + self.config.training.alpha * loss_fp
-        #weight = self.config.training.alpha 
-        weight = self.config.training.alpha_min * (self.config.training.alpha_max / self.config.training.alpha_min) ** (self.current_epoch / self.config.training.num_epochs)
-        loss = loss_dsm + weight*loss_fp #+ weight * ballance_loss
+
+
+        N = self.config.training.num_epochs
+        t = self.current_epoch / N
+        # For projection
+        #t = ((self.current_epoch - (N-1)) / N)
+        
+        # constant weight
+        if self.config.training.schedule == 'constant':
+            weight = self.config.training.alpha 
+        # geometric schedule
+        elif self.config.training.schedule == 'geometric':
+            weight = self.config.training.alpha_min * (self.config.training.alpha_max / self.config.training.alpha_min) ** t
+        # linear schedule
+        elif self.config.training.schedule == 'linear':
+            weight = (1 - t) * self.config.training.alpha_min  + t * self.config.training.alpha_max
+
+        # maxout
+        #weight = max(weight, self.config.training.alpha_max)
+
+        # loss
+        loss = loss_dsm + weight * loss_fp #+ weight * ballance_loss
         self.log('train_full_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         
         return loss

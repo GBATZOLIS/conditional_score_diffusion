@@ -30,7 +30,7 @@ def get_config():
   #logging
   config.logging = logging = ml_collections.ConfigDict()
   logging.log_path = 'logs/circles/fokker_planck/'
-  logging.log_name = 'fp_grad-alpha_0_0001_to_0_01_deep'
+  logging.log_name = 'fp_grad-hutchinson'
   logging.top_k = 5
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
@@ -39,14 +39,16 @@ def get_config():
   training = config.training
   training.lightning_module = 'fokker-planck' 
   training.batch_size = 500
-  training.num_epochs = int(1e4)
+  training.num_epochs = 2* int(1e4)
   training.n_iters = int(1e20)
   training.likelihood_weighting = True
   training.continuous = True
   training.sde = 'vesde'
-  training.alpha = 0.000
-  training.alpha_min=0.0001
-  training.alpha_max=0.01
+  training.schedule = 'geometric'
+  training.alpha = 0.01
+  training.alpha_min=1e-4
+  training.alpha_max=1e-2
+  training.hutchinson = True
   training.n_chunks=50
   # callbacks
   training.visualization_callback = ['2DSamplesVisualization', '2DVectorFieldVisualization']
@@ -83,7 +85,7 @@ def get_config():
   
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = None
+  model.checkpoint_path = None #'logs/circles/fokker_planck/fp_grad-alpha_0_deep/checkpoints/best/last.ckpt'
   model.sigma_max = 4
   model.sigma_min = 0.01
   model.beta_min = 0.1

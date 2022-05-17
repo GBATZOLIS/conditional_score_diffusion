@@ -109,7 +109,7 @@ def compute_grad(f,x):
     gradients = gradients.view(gradients.size(0), -1)
   return gradients
 
-def compute_divergence(f, x):
+def compute_divergence(f, x, hutchinson=False):
   """
   Args:
     - f - vector field function
@@ -117,17 +117,26 @@ def compute_divergence(f, x):
   Returns:
     - div - divergence of the vector field f at each x
   """
-  with torch.enable_grad():
-    x = x.requires_grad_(True)
-    out = f(x)
-    grads = []
-    for i, v in enumerate(torch.eye(x.shape[1], device=x.device)):
-        gradients = torch.autograd.grad(outputs=out, inputs=x,
-                            grad_outputs=v.repeat(x.shape[0],1),
-                            create_graph=True, retain_graph=True, only_inputs=True)[0][:,i]
-        grads.append(gradients)
-    grads = torch.stack(grads,dim=1)
-  return torch.sum(grads, dim=1)
+  if hutchinson:
+    with torch.enable_grad():
+      #eps = torch.randn_like(x)
+      eps = torch.randint_like(x, low=0, high=2).float() * 2 - 1.
+      x.requires_grad_(True)
+      fn_eps = torch.sum(f(x) * eps)
+      grad_fn_eps = torch.autograd.grad(fn_eps, x)[0]
+    return torch.sum(grad_fn_eps * eps, dim=tuple(range(1, len(x.shape))))
+  else:
+    with torch.enable_grad():
+      x = x.requires_grad_(True)
+      out = f(x)
+      grads = []
+      for i, v in enumerate(torch.eye(x.shape[1], device=x.device)):
+          gradients = torch.autograd.grad(outputs=out, inputs=x,
+                              grad_outputs=v.repeat(x.shape[0],1),
+                              create_graph=True, retain_graph=True, only_inputs=True)[0][:,i]
+          grads.append(gradients)
+      grads = torch.stack(grads,dim=1)
+    return torch.sum(grads, dim=1)
 
 
 def compute_curl(f, xs):

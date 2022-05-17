@@ -44,6 +44,7 @@ def get_config():
   training.likelihood_weighting = True
   training.continuous = True
   training.sde = 'vesde'
+  training.schedule = 'geometric'
   training.alpha = 0.000
   training.alpha_min=0.0001
   training.alpha_max=1
