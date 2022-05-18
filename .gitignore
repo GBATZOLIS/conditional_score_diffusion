@@ -20,6 +20,9 @@ dist/
 # Other
 *.DS_Store
 
+#VScode files
+.vscode/
+
 
 #LOGS 
 lightning_logs/
