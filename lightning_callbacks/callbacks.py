@@ -4,7 +4,7 @@ from utils import scatter, plot, compute_grad, create_video, hist
 from models.ema import ExponentialMovingAverage
 import torchvision
 from . import utils
-from plot_utils import plot_curl_backprop, plot_vector_field
+from plot_utils import plot_curl, plot_vector_field
 import numpy as np
 from models import utils as mutils
 from pytorch_lightning.callbacks import ModelCheckpoint
@@ -252,14 +252,14 @@ class CurlVizualizer(Callback):
             self.visualise_curl_evolution(pl_module)
 
     def visualise_curl(self, pl_module):
-        image=plot_curl_backprop(pl_module, 'curl')
+        image=plot_curl(pl_module, 'curl')
         pl_module.logger.experiment.add_image('curl', image, pl_module.current_epoch)
     
     def visualise_curl_evolution(self, pl_module):
         times=[0., .25, .5, .75, 1]
         images=[]
         for t in times:
-            image=plot_curl_backprop(pl_module, 'curl at time ' + str(t), t)
+            image=plot_curl(pl_module, 'curl at time ' + str(t), t)
             images.append(image)
         grid = torchvision.utils.make_grid(images)
         pl_module.logger.experiment.add_image('curl evolution', grid, pl_module.current_epoch)

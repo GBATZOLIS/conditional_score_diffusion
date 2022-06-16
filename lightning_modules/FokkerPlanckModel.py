@@ -104,9 +104,10 @@ class FokkerPlanckModel(pl.LightningModule):
 
         #difference = fp_loss(perturbed_data, t)
         
-        x_grad_fp_loss = compute_grad(lambda x: fp_loss(x,t), perturbed_data)
-        # DO WE WANT TO SQUARE HERE?
-        loss_fp = (torch.linalg.norm(x_grad_fp_loss, dim=1)**2).mean()
+        #x_grad_fp_loss = compute_grad(lambda x: fp_loss(x,t), perturbed_data)
+        #loss_fp = (torch.linalg.norm(x_grad_fp_loss, dim=1)).mean()
+        
+        loss_fp = fp_loss(perturbed_data, t).abs().mean()
         
         #diff_chunked = torch.chunk(difference, n_chunks, dim=0)
         # for chunk in diff_chunked:

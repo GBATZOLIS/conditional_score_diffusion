@@ -85,7 +85,7 @@ class MetropolisAdjustedLangevinCorrector(Corrector):
   def __init__(self, sde, score_fn, energy_fn, snr, n_steps):
     super().__init__(sde, score_fn, snr, n_steps)
 
-    self.energy_fn = lambda x,t: torch.exp(energy_fn(x,t))
+    self.energy_fn = energy_fn
     
     if not isinstance(sde, sde_lib.VPSDE) \
         and not isinstance(sde, sde_lib.VESDE) \

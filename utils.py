@@ -13,11 +13,17 @@ import math
 from sklearn.neighbors import KernelDensity
 from models.utils import get_score_fn
 
-def generate_grid(n=500, d=2, c=[0,0]):
+def generate_grid(n=500, d=2, c=[0,0], tensor=False):
     x = np.linspace(-d + c[0], d + c[0], n)
     y = np.linspace(-d + c[1], d + c[1], n)
     # Meshgrid
     X,Y = np.meshgrid(x,y)
+    if tensor:
+      XYpairs = np.stack([ X.reshape(-1), Y.reshape(-1) ], axis=1)
+      XYpairs_tensor = torch.from_numpy(XYpairs) + 1e-10 # for numerical stability
+      XYpairs_tensor=XYpairs_tensor.float()
+      return XYpairs_tensor
+
     return X, Y
 
 def extract_vector_field(pl_module, X, Y, t=0.):

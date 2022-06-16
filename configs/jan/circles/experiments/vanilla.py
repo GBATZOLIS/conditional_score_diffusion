@@ -22,6 +22,7 @@ import math
 import numpy as np
 from datetime import timedelta
 
+
 from configs.jan.default import get_default_configs
 
 def get_config():
@@ -29,7 +30,7 @@ def get_config():
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = 'logs/gaussian_bubbles/fokker_planck/proto/'
+  logging.log_path = 'logs/circles/fokker_planck/proto/'
   logging.log_name = 'vanilla'
   logging.top_k = 5
   logging.every_n_epochs = 1000
@@ -40,7 +41,7 @@ def get_config():
   training.gpus = 1
   training.lightning_module = 'base' 
   training.batch_size = 500
-  training.num_epochs = 2* int(1e4)
+  training.num_epochs = 5 * int(1e4)
   training.n_iters = int(1e20)
   training.likelihood_weighting = True
   training.continuous = True
@@ -63,17 +64,15 @@ def get_config():
   sampling.probability_flow = False
   sampling.snr = 0.15 #0.15 in VE sde (you typically need to play with this term - more details in the main paper)
 
-   # data
+  # data
   config.data = data = ml_collections.ConfigDict()
   data.datamodule = 'Synthetic'
-  data.dataset_type = 'GaussianBubbles'
+  data.dataset_type = 'Circles'
   data.use_data_mean = False # What is this?
   data.create_dataset = False
   data.split = [0.8, 0.1, 0.1]
   data.data_samples = 50000
-
-  data.mixtures = 4
-  data.std = 0.2
+  data.noise = 0.06
   data.factor = 0.5
   data.return_labels = False #whether to return the mixture class of each point in the mixture.
   data.shape = [2]
@@ -82,7 +81,7 @@ def get_config():
   
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = None
+  model.checkpoint_path = None 
   model.sigma_max = 4
   model.sigma_min = 0.01
   model.beta_min = 0.1

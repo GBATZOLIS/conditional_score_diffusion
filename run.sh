@@ -13,8 +13,17 @@ conda activate score_sde
 REPO=/home/js2164/jan/repos/diffusion_score/
 #REPO=/home/js2164/jan/repos/diffusion_score/
 
-CONFIG=configs/jan/circles/fokker_planck/fokker_planck_circles.py
+CONFIG=configs/jan/circles/experiments/potential.py
+#configs/jan/circles/fokker_planck/fokker_planck_circles.py
+#configs/jan/circles/vanilla_ve.py
+#configs/jan/gaussian/vesde.py
 #configs/jan/gaussian/fokker_planck_gauss.py
+#configs/jan/circles/vanilla_ve.py
+#configs/jan/gaussian/fokker_planck_gauss.py
+#configs/jan/circles/vanilla_ve.py
+#configs/jan/circles/fokker_planck/fokker_planck_circles.py
+#configs/jan/gaussian/fokker_planck_gauss.py
+#configs/jan/circles/fokker_planck/fokker_planck_circles.py
 #configs/jan/crypto/default.py
 #configs/jan/sine/default.py
 #configs/jan/circles/fokker_planck/fokker_planck.py
