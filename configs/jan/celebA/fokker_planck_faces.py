@@ -18,15 +18,15 @@ def get_config():
   training = config.training
   training.schedule = 'geometric'
   training.alpha = 0.01
-  training.alpha_min=1e-4
-  training.alpha_max=1e-2
+  training.alpha_min=1e-5
+  training.alpha_max=1e-3
   training.hutchinson = True
   training.n_chunks=50
   training.batch_size = 16
 
   # logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = 'logs/celebA/'
+  logging.log_path = 'logs/celebA/fokker_planck_test'
   logging.log_name = 'fp'
   logging.top_k = 5
   logging.every_n_epochs = 1000

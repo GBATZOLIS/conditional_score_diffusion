@@ -18,11 +18,11 @@
             "program": "${file}",
             "args": [
                 "--config",
-                "configs/jan/gaussian/fokker_planck_gauss.py",
+                "configs/jan/celebA/fokker_planck_faces.py",
                 "--log_path",
                 "./test_logs",
-                //"--debug",
-                //"True"
+                "--debug",
+                "True"
             ],
             "console": "integratedTerminal"
         },
