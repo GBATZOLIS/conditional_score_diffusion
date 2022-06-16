@@ -27,6 +27,8 @@ class FCN_Potential(pl.LightningModule):
             self.mlp.append(nn.ELU())
         
         self.mlp.append(nn.Linear(hidden_nodes, output_size))
+        # if config.model.sigmoid_last:
+        #     self.mlp.append(nn.Sigmoid())
         self.mlp = nn.Sequential(*self.mlp)
 
     def log_energy(self, x, t):

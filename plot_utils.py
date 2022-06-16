@@ -8,7 +8,7 @@ import copy
 from matplotlib import pyplot as plt
 from models.utils import get_score_fn
 from vector_fields.vector_utils import curl, curl_backprop
-from utils import generate_grid, extract_vector_field
+from utils import generate_grid, extract_vector_field, compute_curl
 
 def plot_vector_field(pl_module, title='Stream plot', t=0., lines=False):
     n = 500 if lines else 25
@@ -30,28 +30,28 @@ def plot_vector_field(pl_module, title='Stream plot', t=0., lines=False):
     return image
 
 
-def plot_curl(pl_module, title='Curl'):
-    X,Y = generate_grid()
-    out_X, out_Y = extract_vector_field(pl_module, X, Y)
-    n = len(X[0])
-    dx = 2*2/n
-    Z=curl(out_X,out_Y,dx)
-    plt.figure(figsize=(10, 10))
-    plt.contourf(X, Y, np.abs(Z))
-    plt.colorbar()
-    plt.xlabel('x')
-    plt.ylabel('y')
-    plt.gca().set_aspect('equal')
-    plt.title(title)
-    buf = io.BytesIO()
-    plt.savefig(buf, format='jpeg')
-    buf.seek(0)
-    image = PIL.Image.open(buf)
-    image = transforms.ToTensor()(image)
-    plt.close()
-    return image
+# def plot_curl(pl_module, title='Curl'):
+#     X,Y = generate_grid()
+#     out_X, out_Y = extract_vector_field(pl_module, X, Y)
+#     n = len(X[0])
+#     dx = 2*2/n
+#     Z=curl(out_X,out_Y,dx)
+#     plt.figure(figsize=(10, 10))
+#     plt.contourf(X, Y, np.abs(Z))
+#     plt.colorbar()
+#     plt.xlabel('x')
+#     plt.ylabel('y')
+#     plt.gca().set_aspect('equal')
+#     plt.title(title)
+#     buf = io.BytesIO()
+#     plt.savefig(buf, format='jpeg')
+#     buf.seek(0)
+#     image = PIL.Image.open(buf)
+#     image = transforms.ToTensor()(image)
+#     plt.close()
+#     return image
 
-def plot_curl_backprop(pl_module, title='Curl', t=0.):
+def plot_curl(pl_module, title='Curl', t=0.):
     device = pl_module.device
     score_fn = get_score_fn(pl_module.sde, pl_module.score_model, train=False, continuous=True)
     X,Y = generate_grid()
@@ -59,7 +59,8 @@ def plot_curl_backprop(pl_module, title='Curl', t=0.):
     XYpairs = np.stack([ X.reshape(-1), Y.reshape(-1) ], axis=1)
     xs = torch.tensor(XYpairs, dtype=torch.float, requires_grad=True, device=device)
     ts = torch.tensor([t] * n**2, dtype=torch.float, device=device)
-    Z=curl_backprop(score_fn,xs, ts).cpu().detach().numpy().reshape(n,n)
+    fn = lambda x: score_fn(x,ts)
+    Z=compute_curl(fn, xs).cpu().detach().numpy().reshape(n,n)
     plt.figure(figsize=(10, 10))
     plt.contourf(X, Y, np.abs(Z))
     plt.colorbar()

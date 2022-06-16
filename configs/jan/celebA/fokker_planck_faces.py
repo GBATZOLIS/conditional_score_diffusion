@@ -23,6 +23,7 @@ def get_config():
   training.alpha_max=1e-3
   training.hutchinson = True
   training.n_chunks=50
+  training.batch_size = 16
 
   # logging
   config.logging = logging = ml_collections.ConfigDict()

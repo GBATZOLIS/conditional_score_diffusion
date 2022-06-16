@@ -29,25 +29,26 @@ def get_config():
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = 'logs/gaussian_bubbles/fokker_planck/'
-  logging.log_name = 'fp_grad-alpha_0_0001_to_1_deep'
+  logging.log_path = 'logs/gaussian_bubbles/fokker_planck/proto/'
+  logging.log_name = 'potential'
   logging.top_k = 5
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
 
-  # training
+ # training
   training = config.training
   training.lightning_module = 'fokker-planck' 
   training.batch_size = 500
-  training.num_epochs = int(1e4)
+  training.num_epochs = 2* int(1e4)
   training.n_iters = int(1e20)
   training.likelihood_weighting = True
   training.continuous = True
   training.sde = 'vesde'
-  training.schedule = 'geometric'
-  training.alpha = 0.000
-  training.alpha_min=0.0001
-  training.alpha_max=1
+  training.schedule = 'constant'
+  training.alpha=0 #1e-3
+  training.alpha_min=1e-4
+  training.alpha_max=1e-2
+  training.hutchinson = False
   training.n_chunks=50
   # callbacks
   training.visualization_callback = ['2DSamplesVisualization', '2DVectorFieldVisualization']
@@ -77,6 +78,7 @@ def get_config():
   data.data_samples = 50000
 
   data.mixtures = 4
+  data.std = 0.2
   data.factor = 0.5
   data.return_labels = False #whether to return the mixture class of each point in the mixture.
   data.shape = [2]

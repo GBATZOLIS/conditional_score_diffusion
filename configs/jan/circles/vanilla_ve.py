@@ -20,24 +20,35 @@ import ml_collections
 import torch
 import math
 import numpy as np
+from datetime import timedelta
+
 
 from configs.jan.default import get_default_configs
 
 def get_config():
   config = get_default_configs()
 
+  #logging
+  config.logging = logging = ml_collections.ConfigDict()
+  logging.log_path = 'logs/circles/fokker_planck/proto/'
+  logging.log_name = 'vanilla'
+  logging.top_k = 5
+  logging.every_n_epochs = 1000
+  logging.envery_timedelta = timedelta(minutes=1)
+
   # training
   training = config.training
   training.gpus = 1
   training.lightning_module = 'base' 
   training.batch_size = 500
-  training.num_epochs = int(1e10)
-  training.n_iters = int(1e100)  
+  training.num_epochs = 2* int(1e4)
+  training.n_iters = int(1e20)
   training.likelihood_weighting = True
   training.continuous = True
   training.sde = 'vesde'
   # callbacks
   training.visualization_callback = ['2DSamplesVisualization', '2DCurlVisualization', '2DVectorFieldVisualization']
+  training.show_evolution = True 
 
   # validation
   validation = config.validation
@@ -70,18 +81,17 @@ def get_config():
   
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = None
-  # sde
+  model.checkpoint_path = None 
   model.sigma_max = 4
   model.sigma_min = 0.01
   model.beta_min = 0.1
-  model.beta_max = 20
-  # network
+  model.beta_max = 25
+
   model.name = 'fcn'
   model.state_size = data.dim
   model.hidden_layers = 3
-  model.hidden_nodes = 128
-  model.dropout = 0.25
+  model.hidden_nodes = 256
+  model.dropout = 0.0
   model.scale_by_sigma = False
   model.num_scales = 1000
   model.ema_rate = 0.9999
@@ -90,7 +100,7 @@ def get_config():
   optim = config.optim
   optim.weight_decay = 0
   optim.optimizer = 'Adam'
-  optim.lr = 2e-4
+  optim.lr = 2e-5
   optim.beta1 = 0.9
   optim.eps = 1e-8
   optim.warmup = 5000
