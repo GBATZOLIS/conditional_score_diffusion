@@ -149,7 +149,7 @@ class DDPM(pl.LightningModule):
     modules.append(conv3x3(in_ch, output_channels, init_scale=0.))
     self.all_modules = nn.ModuleList(modules)
 
-  def energy(self, x, labels, return_sahpe=True):
+  def log_energy(self, x, labels, return_sahpe=False):
     modules = self.all_modules
     m_idx = 0
     if self.conditional:
@@ -222,18 +222,18 @@ class DDPM(pl.LightningModule):
     else:
       return h
   
-  def forward(self, x, labels):
-    torch_grad_enabled =torch.is_grad_enabled()
-    torch.set_grad_enabled(True)
-    x = x.clone().detach()
-    x.requires_grad=True
-    
-    h, out_shape = self.energy(x, labels)
-    gradients = torch.autograd.grad(outputs=h, inputs=x,
-                                  grad_outputs=torch.ones(h.size()).to(self.device),
-                                  create_graph=True, retain_graph=True, only_inputs=True)[0]
-    gradients = gradients.view(*out_shape)
-    torch.set_grad_enabled(torch_grad_enabled)
+  def energy(self, x ,t):
+    return torch.exp(self.log_energy(x,t))
 
-    
+  def score(self, x, t):
+    with torch.enable_grad():
+      x = x.requires_grad_(True)
+      out, out_shape = self.log_energy(x, t, return_sahpe=True)
+      gradients = torch.autograd.grad(outputs=out, inputs=x,
+                              grad_outputs=torch.ones(out.size()).to(self.device),
+                              create_graph=True, retain_graph=True, only_inputs=True)[0]
+      gradients = gradients.view(*out_shape)
     return gradients
+
+  def forward(self, x, t):
+      return self.score(x,t)

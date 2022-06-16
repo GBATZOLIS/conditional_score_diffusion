@@ -16,6 +16,7 @@ def get_config():
 
   # training
   training = config.training
+  training.lightning_module = 'fokker-planck'
   training.schedule = 'geometric'
   training.alpha = 0.01
   training.alpha_min=1e-5
@@ -25,8 +26,8 @@ def get_config():
 
   # logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = 'logs/celebA/fokker_planck_test'
-  logging.log_name = 'fp'
+  logging.log_path = 'logs/celebA/fokker_planck'
+  logging.log_name = 'fp_geom_1e-5_1e-3'
   logging.top_k = 5
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
