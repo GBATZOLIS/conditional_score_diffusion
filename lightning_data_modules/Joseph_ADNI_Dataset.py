@@ -31,7 +31,7 @@ def load_data(path):
     
     return data
 
-class DUALGLOW_Dataset(Dataset):
+class JosephADNI_Dataset(Dataset):
     """A template dataset class for you to implement custom datasets."""
     def __init__(self,  config, phase):
         # get the image paths of your dataset;
@@ -73,8 +73,8 @@ class DUALGLOW_Dataset(Dataset):
         """Return the total number of images."""
         return len(self.data.keys())
 
-@utils.register_lightning_datamodule(name='DUAL-GLOW')
-class DUALGLOWDataModule(pl.LightningDataModule):
+@utils.register_lightning_datamodule(name='JosephADNI')
+class JosephADNIDataModule(pl.LightningDataModule):
     def __init__(self, config):
         super().__init__()
         #DataLoader arguments
@@ -88,9 +88,9 @@ class DUALGLOWDataModule(pl.LightningDataModule):
         self.test_batch = config.eval.batch_size
 
     def setup(self, stage=None): 
-        self.train_dataset = DUALGLOW_Dataset(self.config, phase='train')
-        self.val_dataset = DUALGLOW_Dataset(self.config, phase='validation')
-        self.test_dataset = DUALGLOW_Dataset(self.config, phase='validation')
+        self.train_dataset = JosephADNI_Dataset(self.config, phase='train')
+        self.val_dataset = JosephADNI_Dataset(self.config, phase='validation')
+        self.test_dataset = JosephADNI_Dataset(self.config, phase='validation')
 
     def train_dataloader(self):
         return DataLoader(self.train_dataset, batch_size = self.train_batch, shuffle=True, num_workers=self.train_workers) 
