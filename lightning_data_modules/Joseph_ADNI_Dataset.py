@@ -116,7 +116,7 @@ class JosephADNIDataModule(pl.LightningDataModule):
     def setup(self, stage=None): 
         self.train_dataset = JosephADNI_Dataset(self.config, phase='train')
         self.val_dataset = JosephADNI_Dataset(self.config, phase='validation')
-        self.test_dataset = JosephADNI_Dataset(self.config, phase='validation')
+        self.test_dataset = JosephADNI_Dataset(self.config, phase='test')
 
     def train_dataloader(self):
         return DataLoader(self.train_dataset, batch_size = self.train_batch, shuffle=True, num_workers=self.train_workers) 

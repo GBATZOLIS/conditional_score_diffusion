@@ -84,7 +84,7 @@ def create_working_dataset(master_path, copy_path):
         for i, date in enumerate(subject_scan_dates):
             subject_date_dir = os.path.join(subject_id_dir, date)
 
-            save_subject_dir = os.path.join(train_path, '%s_%d' % (subject_id, i+1))
+            save_subject_dir = os.path.join(validation_path, '%s_%d' % (subject_id, i+1))
             Path(save_subject_dir).mkdir(parents=True, exist_ok=True)
 
             mri_path = os.path.join(subject_date_dir, 'mri')
@@ -120,7 +120,7 @@ def create_working_dataset(master_path, copy_path):
         for i, date in enumerate(subject_scan_dates):
             subject_date_dir = os.path.join(subject_id_dir, date)
 
-            save_subject_dir = os.path.join(train_path, '%s_%d' % (subject_id, i+1))
+            save_subject_dir = os.path.join(test_path, '%s_%d' % (subject_id, i+1))
             Path(save_subject_dir).mkdir(parents=True, exist_ok=True)
 
             mri_path = os.path.join(subject_date_dir, 'mri')
