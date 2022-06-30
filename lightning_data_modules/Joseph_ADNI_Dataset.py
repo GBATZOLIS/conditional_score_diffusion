@@ -12,6 +12,15 @@ import pytorch_lightning as pl
 from glob import glob 
 import scipy
 
+def normalise(x, value_range=None):
+    if value_range is None:
+        x -= x.min()
+        x /= x.max()
+    else:
+        x -= value_range[0]
+        x /= value_range[1]
+    return x
+
 def listdir_nothidden_filenames(path, filetype=None):
     if not filetype:
         paths = glob(os.path.join(path, '*'))
@@ -66,6 +75,10 @@ class JosephADNI_Dataset(Dataset):
         
         mri = torch.tensor(mri, dtype=torch.float32).unsqueeze(0)
         pet = torch.tensor(pet, dtype=torch.float32).unsqueeze(0)
+
+        #normalize -> not the best way yet. (use the mean and std of the dataset)
+        mri = normalise(mri)
+        pet = normalise(pet)
 
         return mri, pet
         
