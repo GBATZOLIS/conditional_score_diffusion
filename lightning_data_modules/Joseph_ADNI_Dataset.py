@@ -11,6 +11,7 @@ from . import utils
 import pytorch_lightning as pl
 from glob import glob 
 import scipy
+from scipy.ndimage import zoom
 
 def normalise(x, value_range=None):
     if value_range is None:
@@ -44,6 +45,7 @@ class JosephADNI_Dataset(Dataset):
     """A template dataset class for you to implement custom datasets."""
     def __init__(self,  config, phase):
         # get the image paths of your dataset;
+        self.config = config
         self.phase = phase
         self.data = load_data(os.path.join(config.data.base_dir, config.data.dataset, phase))
         self.use_data_augmentation = config.data.use_data_augmentation
@@ -51,6 +53,9 @@ class JosephADNI_Dataset(Dataset):
     def __getitem__(self, index):
         mri = self.data[index]['img_mri']
         pet = self.data[index]['img_pet']
+
+        mri_shape = mri.shape
+        pet_shape = pet.shape
 
         if self.use_data_augmentation and self.phase=='train':
             available_dims = np.arange(0, len(mri.shape))
@@ -79,6 +84,13 @@ class JosephADNI_Dataset(Dataset):
         #normalize -> not the best way yet. (use the mean and std of the dataset)
         mri = normalise(mri)
         pet = normalise(pet)
+
+        #resize to target size
+        mri_target_shape = self.config.data.shape_y
+        mri = zoom(mri, (mri_target_shape[0]/mri_shape[0], mri_target_shape[1]/mri_shape[1], mri_target_shape[2]/mri_shape[2]))
+
+        pet_target_shape = self.config.data.shape_x
+        pet = zoom(pet, (pet_target_shape[0]/pet_shape[0], pet_target_shape[1]/pet_shape[1], pet_target_shape[2]/pet_shape[2]))
 
         return mri, pet
         

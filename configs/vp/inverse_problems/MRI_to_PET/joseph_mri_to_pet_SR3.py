@@ -65,8 +65,8 @@ def get_config():
   data.datamodule = 'JosephADNI'
   data.create_dataset = False
   data.split = [0.8, 0.1, 0.1]
-  data.shape_x = [1, 48, 64, 48]
-  data.shape_y = [1, 48, 64, 48]
+  data.shape_x = [1, 64, 64, 64] #[1, 48, 64, 48]
+  data.shape_y = [1, 64, 64, 64] #[1, 48, 64, 48]
   data.range_x = [0,1] 
   data.range_y = [0,1] 
   

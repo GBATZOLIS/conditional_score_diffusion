@@ -9,7 +9,7 @@ from lightning_callbacks import callbacks, HaarMultiScaleCallback, PairedCallbac
 from lightning_callbacks.HaarMultiScaleCallback import normalise_per_image, permute_channels, normalise, normalise_per_band, create_supergrid
 from lightning_callbacks.utils import get_callbacks
 
-from lightning_data_modules import HaarDecomposedDataset, ImageDatasets, PairedDataset, SyntheticDataset, SRDataset, SRFLOWDataset, DUALGLOWDataset #needed for datamodule registration
+from lightning_data_modules import HaarDecomposedDataset, ImageDatasets, PairedDataset, SyntheticDataset, SRDataset, SRFLOWDataset, DUALGLOWDataset, Joseph_ADNI_Dataset #needed for datamodule registration
 from lightning_data_modules.utils import create_lightning_datamodule
 
 from lightning_modules import BaseSdeGenerativeModel, HaarMultiScaleSdeGenerativeModel, ConditionalSdeGenerativeModel #need for lightning module registration
