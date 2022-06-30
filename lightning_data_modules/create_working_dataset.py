@@ -63,12 +63,14 @@ def create_working_dataset(master_path, copy_path):
             for mri_scan in mri_scans:
                 img_nifti = nib.load(os.path.join(mri_path, mri_scan))
                 img_npy = np.array(img_nifti.dataobj)
-                np.save(file=os.path.join(save_mri_path, mri_scan), arr = img_npy)
+                print('mri shape: ', img_npy.shape)
+                #np.save(file=os.path.join(save_mri_path, mri_scan), arr = img_npy)
             
             for pet_scan in pet_scans:
                 img_nifti = nib.load(os.path.join(pet_path, pet_scan))
                 img_npy = np.array(img_nifti.dataobj)
-                np.save(file=os.path.join(save_pet_path, pet_scan), arr = img_npy)
+                print('pet shape: ', img_npy.shape)
+                #np.save(file=os.path.join(save_pet_path, pet_scan), arr = img_npy)
 
 
     #create the validation dataset
@@ -98,12 +100,12 @@ def create_working_dataset(master_path, copy_path):
             for mri_scan in mri_scans:
                 img_nifti = nib.load(os.path.join(mri_path, mri_scan))
                 img_npy = np.array(img_nifti.dataobj)
-                np.save(file=os.path.join(save_mri_path, mri_scan), arr = img_npy)
+                #np.save(file=os.path.join(save_mri_path, mri_scan), arr = img_npy)
             
             for pet_scan in pet_scans:
                 img_nifti = nib.load(os.path.join(pet_path, pet_scan))
                 img_npy = np.array(img_nifti.dataobj)
-                np.save(file=os.path.join(save_pet_path, pet_scan), arr = img_npy)
+                #np.save(file=os.path.join(save_pet_path, pet_scan), arr = img_npy)
 
     #create the test dataset
     test_path = os.path.join(copy_path, 'test')
@@ -132,12 +134,12 @@ def create_working_dataset(master_path, copy_path):
             for mri_scan in mri_scans:
                 img_nifti = nib.load(os.path.join(mri_path, mri_scan))
                 img_npy = np.array(img_nifti.dataobj)
-                np.save(file=os.path.join(save_mri_path, mri_scan), arr = img_npy)
+                #np.save(file=os.path.join(save_mri_path, mri_scan), arr = img_npy)
             
             for pet_scan in pet_scans:
                 img_nifti = nib.load(os.path.join(pet_path, pet_scan))
                 img_npy = np.array(img_nifti.dataobj)
-                np.save(file=os.path.join(save_pet_path, pet_scan), arr = img_npy)
+                #np.save(file=os.path.join(save_pet_path, pet_scan), arr = img_npy)
 
 
 master_path = '/home/gb511/score_sde_pytorch-1/datasets/selected_organised_data'
