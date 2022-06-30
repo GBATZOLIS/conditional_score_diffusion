@@ -59,7 +59,7 @@ def get_config():
 
   # data
   config.data = data = ml_collections.ConfigDict()
-  data.base_dir = 'datasets' #'/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/datasets'
+  data.base_dir = '/home/gb511/score_sde_pytorch-1/datasets' #'/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/datasets'
   data.dataset = 'selected_ADNI_data_tr'
   data.use_data_mean = False
   data.datamodule = 'JosephADNI'
