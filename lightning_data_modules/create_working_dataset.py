@@ -52,25 +52,25 @@ def create_working_dataset(master_path, copy_path):
 
             mri_path = os.path.join(subject_date_dir, 'mri')
             mri_scans = os.listdir(mri_path)
-            save_mri_path = os.path.join(save_subject_dir, 'mri')
-            Path(save_mri_path).mkdir(parents=True, exist_ok=True)
+            #save_mri_path = os.path.join(save_subject_dir, 'mri')
+            #Path(save_mri_path).mkdir(parents=True, exist_ok=True)
             
             pet_path = os.path.join(subject_date_dir, 'pet')
             pet_scans = os.listdir(pet_path)
-            save_pet_path = os.path.join(save_subject_dir, 'pet')
-            Path(save_pet_path).mkdir(parents=True, exist_ok=True)
+            #save_pet_path = os.path.join(save_subject_dir, 'pet')
+            #Path(save_pet_path).mkdir(parents=True, exist_ok=True)
 
             for mri_scan in mri_scans:
                 img_nifti = nib.load(os.path.join(mri_path, mri_scan))
                 img_npy = np.array(img_nifti.dataobj)
-                print('mri shape: ', img_npy.shape)
-                #np.save(file=os.path.join(save_mri_path, mri_scan), arr = img_npy)
+                #print('mri shape: ', img_npy.shape)
+                np.save(file=os.path.join(save_subject_dir, 'img_mri'), arr = img_npy)
             
             for pet_scan in pet_scans:
                 img_nifti = nib.load(os.path.join(pet_path, pet_scan))
                 img_npy = np.array(img_nifti.dataobj)
-                print('pet shape: ', img_npy.shape)
-                #np.save(file=os.path.join(save_pet_path, pet_scan), arr = img_npy)
+                #print('pet shape: ', img_npy.shape)
+                np.save(file=os.path.join(save_subject_dir, 'img_pet'), arr = img_npy)
 
 
     #create the validation dataset
@@ -84,28 +84,30 @@ def create_working_dataset(master_path, copy_path):
         for i, date in enumerate(subject_scan_dates):
             subject_date_dir = os.path.join(subject_id_dir, date)
 
-            save_subject_dir = os.path.join(validation_path, '%s_%d' % (subject_id, i+1))
+            save_subject_dir = os.path.join(train_path, '%s_%d' % (subject_id, i+1))
             Path(save_subject_dir).mkdir(parents=True, exist_ok=True)
 
             mri_path = os.path.join(subject_date_dir, 'mri')
             mri_scans = os.listdir(mri_path)
-            save_mri_path = os.path.join(save_subject_dir, 'mri')
-            Path(save_mri_path).mkdir(parents=True, exist_ok=True)
+            #save_mri_path = os.path.join(save_subject_dir, 'mri')
+            #Path(save_mri_path).mkdir(parents=True, exist_ok=True)
             
             pet_path = os.path.join(subject_date_dir, 'pet')
             pet_scans = os.listdir(pet_path)
-            save_pet_path = os.path.join(save_subject_dir, 'pet')
-            Path(save_pet_path).mkdir(parents=True, exist_ok=True)
+            #save_pet_path = os.path.join(save_subject_dir, 'pet')
+            #Path(save_pet_path).mkdir(parents=True, exist_ok=True)
 
             for mri_scan in mri_scans:
                 img_nifti = nib.load(os.path.join(mri_path, mri_scan))
                 img_npy = np.array(img_nifti.dataobj)
-                #np.save(file=os.path.join(save_mri_path, mri_scan), arr = img_npy)
+                #print('mri shape: ', img_npy.shape)
+                np.save(file=os.path.join(save_subject_dir, 'img_mri'), arr = img_npy)
             
             for pet_scan in pet_scans:
                 img_nifti = nib.load(os.path.join(pet_path, pet_scan))
                 img_npy = np.array(img_nifti.dataobj)
-                #np.save(file=os.path.join(save_pet_path, pet_scan), arr = img_npy)
+                #print('pet shape: ', img_npy.shape)
+                np.save(file=os.path.join(save_subject_dir, 'img_pet'), arr = img_npy)
 
     #create the test dataset
     test_path = os.path.join(copy_path, 'test')
@@ -118,28 +120,30 @@ def create_working_dataset(master_path, copy_path):
         for i, date in enumerate(subject_scan_dates):
             subject_date_dir = os.path.join(subject_id_dir, date)
 
-            save_subject_dir = os.path.join(test_path, '%s_%d' % (subject_id, i+1))
+            save_subject_dir = os.path.join(train_path, '%s_%d' % (subject_id, i+1))
             Path(save_subject_dir).mkdir(parents=True, exist_ok=True)
 
             mri_path = os.path.join(subject_date_dir, 'mri')
             mri_scans = os.listdir(mri_path)
-            save_mri_path = os.path.join(save_subject_dir, 'mri')
-            Path(save_mri_path).mkdir(parents=True, exist_ok=True)
+            #save_mri_path = os.path.join(save_subject_dir, 'mri')
+            #Path(save_mri_path).mkdir(parents=True, exist_ok=True)
             
             pet_path = os.path.join(subject_date_dir, 'pet')
             pet_scans = os.listdir(pet_path)
-            save_pet_path = os.path.join(save_subject_dir, 'pet')
-            Path(save_pet_path).mkdir(parents=True, exist_ok=True)
+            #save_pet_path = os.path.join(save_subject_dir, 'pet')
+            #Path(save_pet_path).mkdir(parents=True, exist_ok=True)
 
             for mri_scan in mri_scans:
                 img_nifti = nib.load(os.path.join(mri_path, mri_scan))
                 img_npy = np.array(img_nifti.dataobj)
-                #np.save(file=os.path.join(save_mri_path, mri_scan), arr = img_npy)
+                #print('mri shape: ', img_npy.shape)
+                np.save(file=os.path.join(save_subject_dir, 'img_mri'), arr = img_npy)
             
             for pet_scan in pet_scans:
                 img_nifti = nib.load(os.path.join(pet_path, pet_scan))
                 img_npy = np.array(img_nifti.dataobj)
-                #np.save(file=os.path.join(save_pet_path, pet_scan), arr = img_npy)
+                #print('pet shape: ', img_npy.shape)
+                np.save(file=os.path.join(save_subject_dir, 'img_pet'), arr = img_npy)
 
 
 master_path = '/home/gb511/score_sde_pytorch-1/datasets/selected_organised_data'
