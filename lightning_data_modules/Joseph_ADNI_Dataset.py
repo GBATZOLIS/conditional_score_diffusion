@@ -48,6 +48,7 @@ class JosephADNI_Dataset(Dataset):
         self.config = config
         self.phase = phase
         self.data = load_data(os.path.join(config.data.base_dir, config.data.dataset, phase))
+        print(self.data)
         self.use_data_augmentation = config.data.use_data_augmentation
 
     def __getitem__(self, index):
@@ -77,9 +78,6 @@ class JosephADNI_Dataset(Dataset):
                 mri = rotated_mri
                 pet = rotated_pet
             '''
-        
-        mri = torch.tensor(mri, dtype=torch.float32).unsqueeze(0)
-        pet = torch.tensor(pet, dtype=torch.float32).unsqueeze(0)
 
         #normalize -> not the best way yet. (use the mean and std of the dataset)
         mri = normalise(mri)
@@ -91,6 +89,9 @@ class JosephADNI_Dataset(Dataset):
 
         pet_target_shape = self.config.data.shape_x
         pet = zoom(pet, (pet_target_shape[0]/pet_shape[0], pet_target_shape[1]/pet_shape[1], pet_target_shape[2]/pet_shape[2]))
+
+        mri = torch.tensor(mri, dtype=torch.float32).unsqueeze(0)
+        pet = torch.tensor(pet, dtype=torch.float32).unsqueeze(0)
 
         return mri, pet
         
