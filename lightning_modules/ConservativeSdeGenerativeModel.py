@@ -1,5 +1,5 @@
 import losses
-from losses import get_sde_loss_fn, get_smld_loss_fn, get_ddpm_loss_fn, get_general_sde_loss_fn
+from losses import get_general_sde_loss_fn
 from lightning_modules.BaseSdeGenerativeModel import BaseSdeGenerativeModel
 from utils import compute_grad
 import pytorch_lightning as pl
