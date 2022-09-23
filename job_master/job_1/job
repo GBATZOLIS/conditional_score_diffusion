@@ -1,5 +1,5 @@
 config=configs/jan/celebA/hpc/run.py
 log=logs/celebA/potential
 name=snr
-count=1
-id=55680456
+count=0
+id=3725927

@@ -1,8 +1,8 @@
+import os
 import subprocess
 import re
 import glob
 
-from cv2 import line
 
 
 class Job():
@@ -62,7 +62,7 @@ class JobMaster():
         cmds = ['cd ' + job.job_dir + '; sbatch wilkes_script']
         result = subprocess.run(cmds, capture_output=True, text=True, shell=True, executable='/bin/bash')
         out = result.stdout
-        id = re.findall("\d\d\d\d\d\d\d\d", out)[0]
+        id = re.findall("\d+", out)[0]
         return id
 
     def run_job(self, job):

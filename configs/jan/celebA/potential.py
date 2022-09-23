@@ -11,17 +11,15 @@ def get_config():
 
   data =  config.data
   sampling = config.sampling
-
   sampling.corrector = 'none'
 
   # logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = 'logs/celebA/'
-  logging.log_name = 'potential_ve'
+  logging.log_path = 'logs/celebA/test/'
+  logging.log_name = 'auto_resmue'
   logging.top_k = 5
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
-
 
   # model
   config.model = model = ml_collections.ConfigDict()

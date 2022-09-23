@@ -13,27 +13,17 @@ conda activate score_sde
 REPO=/rds/user/js2164/hpc-work/repos/score_sde_pytorch/
 #REPO=/home/js2164/jan/repos/diffusion_score/
 
-CONFIG=configs/jan/celebA/experiments/fp1e-4.py
-#configs/jan/circles/vanilla_vp.py
-#configs/jan/celebA/potential_hpc.py
+CONFIG=/home/js2164/rds/hpc-work/repos/score_sde_pytorch/configs/jan/celebA/potential.py
 #configs/jan/celebA/hpc.py
 #configs/jan/circles/potential/circles_potential.py
 #configs/jan/circles/curl_penalty/LAMBDA.py
-
-LOG=logs/celebA/vanilla
-#logs/snrsde
+LOG=logs/celebA
 #logs/circles_new
 #logs/celebA
 
-#CHECKPOINT=logs/celebA/lightning_logs/potential_1/checkpoints/epoch=22-step=74565.ckpt
-#logs/celebA/lightning_logs/potential_1/checkpoints/epoch=22-step=74565.ckpt
-
-NAME=ve
+#CHECKPOINT=logs/curl_penalty_new/lightning_logs/LAMBDA_0/checkpoints/epoch=24999-step=1999999.ckpt
 
 cd $REPO
 
 python main.py --config $CONFIG \
-               --log_path $LOG \
-               --log_name $NAME \        
-               
-               
+               --log_path $LOG 

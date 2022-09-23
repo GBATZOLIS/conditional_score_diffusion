@@ -88,7 +88,8 @@ class FokkerPlanckModel(pl.LightningModule):
         perturbed_data = self.sde.perturb(batch, t) # WARNING P_1 or P_t
 
         def fp_loss(x,t):
-            grad_norm_2 = torch.linalg.norm(self.score_model.score(x, t), dim=1)**2
+            B = x.shape[0] # batch size
+            grad_norm_2 = torch.linalg.norm(self.score_model.score(x, t).view(B,-1), dim=1)**2
 
             score_x = lambda y: self.score_model.score(y,t)
             divergence = compute_divergence(score_x, x, hutchinson=self.config.training.hutchinson)    
