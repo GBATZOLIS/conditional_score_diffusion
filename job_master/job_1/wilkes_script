@@ -20,7 +20,7 @@
 #SBATCH --ntasks=1
 #! Specify the number of GPUs per node (between 1 and 4; must be 4 if nodes>1).
 #! Note that the job submission script will enforce no more than 32 cpus per GPU.
-#SBATCH --gres=gpu:2
+#SBATCH --gres=gpu:1
 #! How much wallclock time will be required?
 #SBATCH --time=12:00:00
 #! What types of email messages do you wish to receive?
@@ -54,7 +54,7 @@ module load rhel8/default-amp              # REQUIRED - loads the basic environm
 #! Insert additional module load commands after this line if needed:
 
 #! Full path to application executable: 
-application='/home/js2164/rds/hpc-work/repos/score_sde_pytorch/job_master/job_1//main.sh'
+application='sh /home/js2164/rds/hpc-work/repos/score_sde_pytorch/job_master/job_1//main.sh'
 #! Run options for the application:
 options=""
 

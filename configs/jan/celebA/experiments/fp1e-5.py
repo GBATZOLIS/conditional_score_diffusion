@@ -18,17 +18,17 @@ def get_config():
   training = config.training
   training.lightning_module = 'fokker-planck'
   training.schedule = 'constant'
-  training.alpha = 1e-3
+  training.alpha = 1e-5
   training.alpha_min=0#1e-5
   training.alpha_max=0#1e-3
   training.hutchinson = True
-  training.n_chunks=50
-  training.batch_size = 16
+  #training.n_chunks=50
+  training.batch_size = 64
 
   # logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = 'logs/celebA/fokker_planck'
-  logging.log_name = 'fp_1e-3'
+  logging.log_path = 'logs/celebA/fokker_planck2/'
+  logging.log_name = 'fp_1e-5'
   logging.top_k = 5
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
@@ -36,7 +36,7 @@ def get_config():
 
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = None
+  model.checkpoint_path = None #'/home/js2164/rds/hpc-work/repos/score_sde_pytorch/logs/celebA/fokker_planck/fp_1e-5/checkpoints/best/last.ckpt'
   model.num_scales = 1000
   model.sigma_max = np.sqrt(np.prod(data.shape)) #input range is [0,1] and resolution is 64^2
   print('model.sigma_max: %.4f' % model.sigma_max)

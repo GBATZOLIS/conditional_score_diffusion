@@ -245,20 +245,16 @@ def get_score_fn(sde, model, conditional=False, train=False, continuous=False):
 
     elif isinstance(sde, sde_lib.VESDE) or isinstance(sde, sde_lib.cVESDE):
       def score_fn(x, t):
-        if continuous:
-          #raise NotImplementedError('Continuous training for VE SDE is not checked. Division by std should be included. Not completed yet.')
-          #std = labels = sde.marginal_prob(torch.zeros_like(x), t)[1]
-          #time_embedding = torch.log(labels) if model.embedding_type == 'fourier' else labels
-          score = model_fn(x, t)
-          #score = score / std[(...,)+(None,)*len(x.shape[1:])]
-        else:
-          # For VE-trained models, t=0 corresponds to the lowest noise level
-          labels = t*(sde.N - 1)
-          labels = torch.round(labels).long()
-          std = sigma_labels = sde.discrete_sigmas.type_as(x)[labels]
-          score = model_fn(x, sigma_labels)
-          score = score / std[(...,)+(None,)*len(x.shape[1:])]
-
+        assert continuous
+        score = model_fn(x, t)
+        # IMPORTANT BELOW:
+        #raise NotImplementedError('Continuous training for VE SDE is not checked. Division by std should be included. Not completed yet.')
+        #std = labels = sde.marginal_prob(torch.zeros_like(x), t)[1]
+        #time_embedding = torch.log(labels) if model.embedding_type == 'fourier' else labels  # For NCNN++
+        #time_embedding = t * (sde.N - 1) # For DDPM
+        #score = model_fn(x, time_embedding)
+        #score = score / std[(...,)+(None,)*len(x.shape[1:])]
+        #score = divide_by_sigmas(score, t, sde, continuous)
         return score
     elif isinstance(sde, sde_lib.SNRSDE):
         assert continuous
