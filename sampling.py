@@ -351,6 +351,72 @@ def shared_corrector_update_fn(x, t, sde, model, corrector, continuous, snr, n_s
     corrector_obj = corrector(sde, score_fn, snr, n_steps)
   return corrector_obj.update_fn(x, t)
 
+def get_curvature_profile_fn(model, sde, num_batches, t_grid, scaler, continuous=False, eps=1e-3, device='cuda'):
+    #output: a fn that receives model as input and outputs the estimated curvature profile
+
+    timesteps = torch.linspace(eps, sde.T, t_grid, device=device)
+
+    def get_f_ode_fn(sde, model):
+      def f_ode_fn(x, t):
+        score = score_fn(x, t)
+        drift, diffusion = sde.sde(x, t)
+        return drift - diffusion[:, None, None, None] ** 2 * score * 0.5
+      return f_ode_fn
+    
+    def get_fode_as_fn_of_x(f_ode, t):
+      def fode_as_fn_of_x(x):
+          return f_ode(x, t)
+      return fode_as_fn_of_x
+
+    def get_fode_as_fn_of_t(f_ode, x):
+      def fode_as_fn_of_t(t):
+          return f_ode(x, t)
+      return fode_as_fn_of_t
+
+    def project_acc_vector(velocity, acceleration):
+      #velocity and acceleration are assumed batched tensors.
+      #velocity.size() = (batch, velocity)
+      #acceleration.size() = (batch, acceleration)
+
+      normalised_velocity = torch.nn.functional.normalize(velocity, p=2.0, dim=1)
+      tangential_acceleration_coefficient = torch.sum(normalised_velocity*acceleration, dim=1)
+      tangential_acceleration = tangential_acceleration_coefficient[:,None]*normalised_velocity
+      centripetal_acceleration = acceleration - tangential_acceleration
+      return tangential_acceleration, centripetal_acceleration
+
+    def centripetal_acceleration_fn(x, t):
+      f_ode_fn = get_f_ode_fn(sde, model)
+      f_ode_x = get_fode_as_fn_of_x(f_ode_fn, t)
+      f_ode_t = get_fode_as_fn_of_t(f_ode_fn, x)
+      jvp = torch.autograd.functional.jvp(f_ode_x, x, v=velocity)[1]
+      df_dt = torch.autograd.functional.jvp(f_ode_t, t, v=torch.ones_like(t))[1]
+      acceleration = jvp + df_dt
+      centripetal_acceleration = project_acc_vector(torch.flatten(velocity, star_dim=1), torch.flatten(acceleration, star_dim=1))[1]
+      return centripetal_acceleration
+    
+    def average_curvature(x, t):
+      centripetal_acceleration = centripetal_acceleration_fn(x, t)
+      centr_acc_magnitudes = torch.linalg.norm(centripetal_acceleration, dim=1)
+      return torch.mean(centr_acc_magnitudes)
+
+    def curvature_profile_fn(data_iter):
+      curvatures = []
+      for t in timesteps:
+        t_curvatures = []
+        for i in range(num_batches):
+          batch = torch.from_numpy(next(data_iter)['image']._numpy()).to(device).float()
+          batch = batch.permute(0, 3, 1, 2)
+          batch = scaler(batch)
+
+          avg_curvature = average_curvature(batch, t)
+          t_curvatures.append(avg_curvature)
+      
+        curvatures.append(torch.mean(t_curvatures))
+
+      return torch.tensor(curvatures)
+    
+    return curvature_profile_fn
+    
 
 def get_pc_sampler(sde, shape, predictor, corrector, inverse_scaler, snr,
                    n_steps=1, probability_flow=False, continuous=False,

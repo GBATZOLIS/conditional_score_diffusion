@@ -231,8 +231,7 @@ def evaluate(config,
 
 
   # Create data loaders for likelihood evaluation. Only evaluate on uniformly dequantized data
-  train_ds_bpd, eval_ds_bpd, _ = datasets.get_dataset(config,
-                                                      uniform_dequantization=True, evaluation=True)
+  train_ds_bpd, eval_ds_bpd, _ = datasets.get_dataset(config, uniform_dequantization=True, evaluation=True)
   if config.eval.bpd_dataset.lower() == 'train':
     ds_bpd = train_ds_bpd
     bpd_num_repeats = 1
