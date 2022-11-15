@@ -2,12 +2,16 @@ import os
 import subprocess
 import re
 import glob
+import sys
+sys.path.append('/home/js2164/rds/hpc-work/repos/score_sde_pytorch/')
+from configs.utils import read_config
 
 
 
 class Job():
 
     def __init__(self):
+        self.repo_path = '/home/js2164/rds/hpc-work/repos/score_sde_pytorch/'
         self.job_dir = None
         self.id = None
         self.config = None
@@ -25,8 +29,9 @@ class Job():
                 lines[-1] = lines[-1] + '\n'
             lines = ''.join(lines)
             self.config = re.findall("config=([\w|/ | \.]+)", lines)[0]
-            self.log = re.findall("log=([\w|/ | \.]+)", lines)[0]
-            self.name = re.findall("name=([\w|/ | \.]+)", lines)[0]
+            config = read_config(self.config)
+            self.log = config.logging.log_path #re.findall("log=([\w|/ | \.]+)", lines)[0]
+            self.name = config.logging.log_name #re.findall("name=([\w|/ | \.]+)", lines)[0]
             self.count = re.findall("count=([\w|/ | \.]+)", lines)[0]
             self.count = int(self.count)
 
@@ -39,8 +44,8 @@ class Job():
     def update_job_file(self):
         lines = [
             'config='+self.config+'\n',
-            'log='+self.log+'\n',
-            'name='+self.name+'\n',
+            #'log='+self.log+'\n',
+            #'name='+self.name+'\n',
             'count='+str(self.count)+'\n'
         ]
         if self.checkpoint_path is not None:
@@ -55,11 +60,10 @@ class JobMaster():
     
     def __init__(self):
         self.repo_path = '/home/js2164/rds/hpc-work/repos/score_sde_pytorch/'
-        self.wilkes_script_path = '/home/js2164/rds/hpc-work/repos/score_sde_pytorch/wilkes_scripts/job3/wilkes3_script'
 
     def submit(self, job):   
-        self.create_main_and_wilkes(job)        
-        cmds = ['cd ' + job.job_dir + '; sbatch wilkes_script']
+        self.create_wilkes(job)        
+        cmds = [f'cd {job.job_dir}; sbatch main.sh']
         result = subprocess.run(cmds, capture_output=True, text=True, shell=True, executable='/bin/bash')
         out = result.stdout
         id = re.findall("\d+", out)[0]
@@ -75,8 +79,7 @@ class JobMaster():
             # Resuming job
             if self.check_if_running(job): 
                 return None
-            else: 
-                # if not running 
+            else:                 # if not running 
                 job.checkpoint_path = self.get_checkpoint_path(job)
                 id = self.submit(job)
 
@@ -85,7 +88,7 @@ class JobMaster():
         job.update_job_file()
 
     def get_checkpoint_path(self, job):
-        dir_path = self.repo_path + '/' + job.log + '/' + job.name + '/checkpoints'
+        dir_path = os.path.join(self.repo_path, job.log, job.name,'checkpoints') 
         chpt_path = glob.glob(dir_path)[-1]
         return chpt_path
 
@@ -96,30 +99,66 @@ class JobMaster():
         return False if result.stdout == '' else True
 
 
-    def create_main_and_wilkes(self, job):
+    def create_wilkes(self, job):
         main_sh_path = job.job_dir + '/main.sh'
+        
         with open(main_sh_path,'w') as main_sh:
-            L = ['#!/bin/bash \n',
-            'module unload miniconda/3 \n',
-            'module load cuda/11.4 \n',
-            'source /home/js2164/.bashrc \n',
-            'conda activate score_sde \n',
-            'cd ' + self.repo_path + '\n'
+            L = [
+                '#!/bin/bash \n',
+
+                '#! Name of the job: \n',
+                f'#SBATCH -J {job.name} \n',
+
+                '#! Which project should be charged (NB Wilkes2 projects end in \'-GPU\'): \n',
+                '#SBATCH --account SCHOENLIEB-SL3-GPU \n',
+
+                '#! How many whole nodes should be allocated? \n',
+                '#SBATCH --nodes=1 \n',
+
+                '#! How many (MPI) tasks will there be in total? \n',
+                '#! Note probably this should not exceed the total number of GPUs in use. \n',
+                '#SBATCH --ntasks=1 \n',
+
+                '#! Specify the number of GPUs per node (between 1 and 4; must be 4 if nodes>1). \n',
+                '#! Note that the job submission script will enforce no more than 32 cpus per GPU. \n',
+                '#SBATCH --gres=gpu:1 \n',
+
+                '#! How much wallclock time will be required? \n',
+                '#SBATCH --time=12:00:00 \n',
+
+                '#! What types of email messages do you wish to receive? \n',
+                '#SBATCH --mail-type=begin        # send email when job begins \n',
+                '#SBATCH --mail-type=end \n',
+                '#SBATCH --mail-user=js2164@cam.ac.uk \n',
+
+                '#! Do not change: \n',
+                '#SBATCH -p ampere \n',
+                ' \n',
+
+                '. /etc/profile.d/modules.sh                # Leave this line (enables the module command) \n',
+                'module purge                               # Removes all modules still loaded \n',
+                'module load rhel8/default-amp              # REQUIRED - loads the basic environment \n',
+
+                'module unload miniconda/3 \n',
+                'module load cuda/11.4 \n',
+
+                'module list \n',
+
+                'nvidia-smi \n',
+
+                'source /home/js2164/.bashrc \n',
+                'conda activate score_sde \n',
+
+                'REPO=/rds/user/js2164/hpc-work/repos/score_sde_pytorch/ \n',
+                ' \n',
+
+                f'cd {job.repo_path} \n',
+
+                f'python main.py --config {job.config} \\ \n',
+                            f' --checkpoint_path {job.checkpoint_path} \n' if job.checkpoint_path is not None else '',
+                            f'--log_path {job.log} \\ \n',
+                            f'--log_name {job.name} \\ \n'
+
             ]
 
-            if job.checkpoint_path is not None:
-                L = L + ['python main.py --config ' + job.config + ' --checkpoint_path' + job.checkpoint_path + ' --log_path ' + job.log + ' --log_name ' + job.name]
-            else:
-                 L = L + ['python main.py --config ' + job.config + ' --log_path ' + job.log + ' --log_name ' + job.name]
-
             main_sh.writelines(L)
-
-        with open(self.wilkes_script_path, 'r') as wilkes_script:
-            lines = wilkes_script.readlines()
-
-        for i, line in enumerate(lines):
-            if line[:11] == 'application':
-                lines[i] = 'application=' + '\'' + main_sh_path + '\''
-
-        with open(job.job_dir + '/wilkes_script', 'w') as wilkes_script:
-            wilkes_script.writelines(lines)

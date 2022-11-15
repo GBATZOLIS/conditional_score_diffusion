@@ -1,3 +1,4 @@
+import os 
 import torch
 from pytorch_lightning.callbacks import Callback
 from utils import scatter, plot, compute_grad, create_video, hist
@@ -392,7 +393,7 @@ def sample_model_score(batch, pl_module):
 @utils.register_callback(name='CheckpointTopK')
 class CheckpointTopK(ModelCheckpoint):
     def __init__(self, config):
-        super().__init__(dirpath=config.logging.log_path+config.logging.log_name+'/checkpoints/best/',
+        super().__init__(dirpath=os.path.join(config.logging.log_path, config.logging.log_name, 'checkpoints', 'best'),
                                         monitor='eval_loss_epoch',
                                         filename='{epoch}--{eval_loss_epoch:.3f}',
                                         save_last=True,
@@ -403,7 +404,7 @@ class CheckpointTopK(ModelCheckpoint):
 @utils.register_callback(name='CheckpointEveryNepochs')
 class CheckpointEveryNepochs(ModelCheckpoint):
     def __init__(self, config):
-        super().__init__(dirpath=config.logging.log_path+config.logging.log_name+'/checkpoints/epochs',
+        super().__init__(dirpath=os.path.join(config.logging.log_path, config.logging.log_name, 'checkpoints', 'epochs'),
                                         monitor='eval_loss_epoch',
                                         filename='{epoch}',
                                         save_last=False,
@@ -413,9 +414,11 @@ class CheckpointEveryNepochs(ModelCheckpoint):
 @utils.register_callback(name='CheckpointTime')
 class CheckpointTime(ModelCheckpoint):
     def __init__(self, config):
-        super().__init__(dirpath=config.logging.log_path+config.logging.log_name+'/checkpoints/time',
+        super().__init__(dirpath=os.path.join(config.logging.log_path, config.logging.log_name, 'checkpoints', 'time'),
                                         monitor='eval_loss_epoch',
                                         filename=datetime.datetime.now().strftime('%Y-%m-%d %H:%M'),
                                         save_last=False,
                                         train_time_interval=config.logging.envery_timedelta
                         )
+
+

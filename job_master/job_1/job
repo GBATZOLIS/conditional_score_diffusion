@@ -1,5 +1,3 @@
-config=configs/jan/celebA/hpc/run.py
-log=logs/celebA/potential
-name=snr
+config=configs/jan/circles/experiments/potential.py
 count=0
-id=3725927
+id=4373260

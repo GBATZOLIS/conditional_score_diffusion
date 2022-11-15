@@ -30,8 +30,8 @@ def get_config():
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = 'logs/circles/fokker_planck/proto/'
-  logging.log_name = 'potential_sigmoid'
+  logging.log_path = 'logs/circles/new'
+  logging.log_name = 'test'
   logging.top_k = 5
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
