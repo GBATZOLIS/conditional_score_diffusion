@@ -86,6 +86,7 @@ def train(config, workdir):
                                               uniform_dequantization=config.data.uniform_dequantization)
   train_iter = iter(train_ds)  # pytype: disable=wrong-arg-types
   eval_iter = iter(eval_ds)  # pytype: disable=wrong-arg-types
+  
   # Create data normalizer and its inverse
   scaler = datasets.get_data_scaler(config)
   inverse_scaler = datasets.get_data_inverse_scaler(config)
@@ -455,7 +456,7 @@ def get_curvature_profile(config):
   num_batches = 100
 
   #get_curvature_profile_fn needs to be adapted to the new code
-  curvature_estimator = sampling.get_curvature_profile_fn(eval_ds, score_model, sde, num_batches, True, config.device)
+  curvature_estimator = sampling.get_curvature_profile_fn(eval_ds, score_model, sde, num_batches, scaler, True, config.device)
   timesteps = torch.linspace(eps, sde.T, t_grid, device=config.device)
 
   curvatures = []

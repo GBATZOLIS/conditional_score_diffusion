@@ -485,7 +485,7 @@ def get_ode_sampler(sde, shape, inverse_scaler,
   return ode_sampler
 
 
-def get_curvature_profile_fn(dataloader, model, sde, num_batches, continuous=True, device='cuda'):
+def get_curvature_profile_fn(dataloader, model, sde, num_batches, scaler, continuous=True, device='cuda'):
     #output: a fn that receives model as input and outputs the estimated curvature profile
 
     def get_f_ode_fn(sde, model):
