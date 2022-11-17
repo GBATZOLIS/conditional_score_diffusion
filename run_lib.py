@@ -43,6 +43,9 @@ from utils import save_checkpoint, restore_checkpoint
 
 FLAGS = flags.FLAGS
 
+#addition
+from pathlib import Path
+
 
 def train(config, workdir):
   """Runs the training pipeline.
@@ -406,3 +409,61 @@ def evaluate(config,
         io_buffer = io.BytesIO()
         np.savez_compressed(io_buffer, IS=inception_score, fid=fid, kid=kid)
         f.write(io_buffer.getvalue())
+
+def get_curvature_profile(config):
+  eval_dir = os.path.join(workdir, eval_folder)
+  Path(eval_dir).mkdir(parents=True, exist_ok=True)
+
+  train_ds, eval_ds, _ = datasets.get_dataset(config,
+                                              uniform_dequantization=config.data.uniform_dequantization,
+                                              evaluation=True)
+  
+  # Create data normalizer and its inverse
+  scaler = datasets.get_data_scaler(config)
+  inverse_scaler = datasets.get_data_inverse_scaler(config)
+
+  # Initialize model
+  score_model = mutils.create_model(config)
+  optimizer = losses.get_optimizer(config, score_model.parameters())
+  ema = ExponentialMovingAverage(score_model.parameters(), decay=config.model.ema_rate)
+  state = dict(optimizer=optimizer, model=score_model, ema=ema, step=0)
+
+  checkpoint_dir = os.path.join(workdir, "checkpoints")
+
+  # Setup SDEs
+  if config.training.sde.lower() == 'vpsde':
+    sde = sde_lib.VPSDE(beta_min=config.model.beta_min, beta_max=config.model.beta_max, N=config.model.num_scales)
+    sampling_eps = 1e-3
+  elif config.training.sde.lower() == 'subvpsde':
+    sde = sde_lib.subVPSDE(beta_min=config.model.beta_min, beta_max=config.model.beta_max, N=config.model.num_scales)
+    sampling_eps = 1e-3
+  elif config.training.sde.lower() == 'vesde':
+    sde = sde_lib.VESDE(sigma_min=config.model.sigma_min, sigma_max=config.model.sigma_max, N=config.model.num_scales)
+    sampling_eps = 1e-5
+  else:
+    raise NotImplementedError(f"SDE {config.training.sde} unknown.")
+
+  assert config.model.checkpoint_path is not None, 'checkpoint path has not been provided in the configuration file.'
+  ckpt_path = config.model.checkpoint_path
+
+  state = restore_checkpoint(ckpt_path, state, device=config.device)
+  ema.copy_to(score_model.parameters())
+
+  t_grid = 100
+  num_batches = 100
+
+  save_dir = os.path.join(eval_dir, 'curvature')
+  Path(save_dir).mkdir(parents=True, exist_ok=True)
+
+  #get_curvature_profile_fn needs to be adapted to the new code
+  curvature_estimator = get_curvature_profile_fn(batch, score_model, sde, num_batches, True, config.device)
+  timesteps = torch.linspace(eps, sde.T, t_grid, device=config.device)
+
+  curvatures = []
+  for i in tqdm(range(timesteps.size(0))):
+      t = timesteps[i]
+      curvatures.append(curvature_estimator(t))
+    
+  with open(os.path.join(save_dir, 'info.pkl'), 'wb') as f:
+        info = {'t':timesteps.cpu().tolist(), 'curvatures':curvatures}
+        pickle.dump(info, f)

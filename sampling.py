@@ -483,3 +483,76 @@ def get_ode_sampler(sde, shape, inverse_scaler,
       return x, nfe
 
   return ode_sampler
+
+
+def get_curvature_profile_fn(dataloader, model, sde, num_batches, continuous=True, device='cuda'):
+    #output: a fn that receives model as input and outputs the estimated curvature profile
+
+    def get_f_ode_fn(sde, model):
+        score_fn = mutils.get_score_fn(sde, model, conditional=False, train=False, continuous=continuous)
+        def f_ode_fn(x, t):
+            score = score_fn(x, t)
+            drift, diffusion = sde.sde(x, t)
+            return drift - diffusion[:, None, None, None] ** 2 * score * 0.5
+        return f_ode_fn
+    
+    def get_fode_as_fn_of_x(f_ode, t):
+        def fode_as_fn_of_x(x):
+            return f_ode(x, t)
+        return fode_as_fn_of_x
+
+    def get_fode_as_fn_of_t(f_ode, x):
+        def fode_as_fn_of_t(t):
+            return f_ode(x, t)
+        return fode_as_fn_of_t
+
+    def project_acc_vector(velocity, acceleration):
+        #velocity and acceleration are assumed batched tensors.
+        #velocity.size() = (batch, velocity)
+        #acceleration.size() = (batch, acceleration)
+
+        normalised_velocity = torch.nn.functional.normalize(velocity, p=2.0, dim=1)
+        tangential_acceleration_coefficient = torch.sum(normalised_velocity*acceleration, dim=1)
+        tangential_acceleration = tangential_acceleration_coefficient[:,None]*normalised_velocity
+        centripetal_acceleration = acceleration - tangential_acceleration
+        return tangential_acceleration, centripetal_acceleration
+
+    def centripetal_acceleration_fn(x, t):
+        f_ode_fn = get_f_ode_fn(sde, model)
+        f_ode_x = get_fode_as_fn_of_x(f_ode_fn, t)
+        f_ode_t = get_fode_as_fn_of_t(f_ode_fn, x)
+
+        velocity = f_ode_fn(x, t)
+        jvp = torch.autograd.functional.jvp(f_ode_x, x, v=velocity)[1].detach()
+        df_dt = torch.autograd.functional.jvp(f_ode_t, t, v=torch.ones_like(t))[1].detach()
+        
+        acceleration = jvp + df_dt
+        centripetal_acceleration = project_acc_vector(torch.flatten(velocity, start_dim=1), torch.flatten(acceleration, start_dim=1))[1]
+        return centripetal_acceleration
+    
+    def average_curvature(x, t): #t is the same for all x
+        centripetal_acceleration = centripetal_acceleration_fn(x, t)
+        centr_acc_magnitudes = torch.linalg.norm(centripetal_acceleration, dim=1)
+        return torch.mean(centr_acc_magnitudes)
+
+    def curvature_estimator_fn(t):
+        t_curvatures = []
+        for idx, batch in enumerate(dataloader):
+            if idx > num_batches:
+                break
+
+            batch = torch.from_numpy(batch['image']._numpy()).to(device).float()
+            batch = batch.permute(0, 3, 1, 2)
+            batch = scaler(batch)
+
+            z = torch.randn_like(batch)
+            vec_t = torch.ones(batch.size(0), device=device) * t
+            mean, std = sde.marginal_prob(batch, vec_t)
+            x = mean + std[(...,) + (None,) * len(batch.shape[1:])] * z
+
+            avg_curvature = average_curvature(x, vec_t).item()
+            t_curvatures.append(avg_curvature)
+      
+        return torch.mean(torch.tensor(t_curvatures)).cpu().item()
+    
+    return curvature_estimator_fn
