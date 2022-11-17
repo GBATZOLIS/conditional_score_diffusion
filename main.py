@@ -55,7 +55,7 @@ def main(argv):
   elif FLAGS.mode == 'curvature':
     run_lib.get_curvature_profile(FLAGS.config)
   else:
-    raise ValueError("Mode %s not recognized." %s)
+    raise ValueError("Mode %s not recognized." % FLAGS.mode)
 
 
 if __name__ == "__main__":
