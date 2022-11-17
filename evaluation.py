@@ -19,7 +19,7 @@
 import numpy as np
 import six
 import tensorflow as tf
-import tensorflow_gan as tfgan
+#import tensorflow_gan as tfgan
 import tensorflow_hub as tfhub
 
 INCEPTION_TFHUB = 'https://tfhub.dev/tensorflow/tfgan/eval/inception/1'
@@ -86,6 +86,7 @@ def classifier_fn_from_tfhub(output_fields, inception_model,
   return _classifier_fn
 
 
+'''
 @tf.function
 def run_inception_jit(inputs,
                       inception_model,
@@ -102,7 +103,7 @@ def run_inception_jit(inputs,
     num_batches=num_batches,
     classifier_fn=classifier_fn_from_tfhub(None, inception_model),
     dtypes=_DEFAULT_DTYPES)
-
+'''
 
 @tf.function
 def run_inception_distributed(input_tensor,
