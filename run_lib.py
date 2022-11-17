@@ -454,7 +454,7 @@ def get_curvature_profile(config):
   num_batches = 100
 
   #get_curvature_profile_fn needs to be adapted to the new code
-  curvature_estimator = get_curvature_profile_fn(batch, score_model, sde, num_batches, True, config.device)
+  curvature_estimator = sampling.get_curvature_profile_fn(batch, score_model, sde, num_batches, True, config.device)
   timesteps = torch.linspace(eps, sde.T, t_grid, device=config.device)
 
   curvatures = []
