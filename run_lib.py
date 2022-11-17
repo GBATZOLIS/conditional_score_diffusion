@@ -431,8 +431,6 @@ def get_curvature_profile(config):
   ema = ExponentialMovingAverage(score_model.parameters(), decay=config.model.ema_rate)
   state = dict(optimizer=optimizer, model=score_model, ema=ema, step=0)
 
-  checkpoint_dir = os.path.join(workdir, "checkpoints")
-
   # Setup SDEs
   if config.training.sde.lower() == 'vpsde':
     sde = sde_lib.VPSDE(beta_min=config.model.beta_min, beta_max=config.model.beta_max, N=config.model.num_scales)
