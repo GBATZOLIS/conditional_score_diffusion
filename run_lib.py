@@ -411,8 +411,8 @@ def evaluate(config,
         f.write(io_buffer.getvalue())
 
 def get_curvature_profile(config):
-  eval_dir = os.path.join(workdir, eval_folder)
-  Path(eval_dir).mkdir(parents=True, exist_ok=True)
+  save_path = os.path.join(config.base_path, 'curvature')
+  Path(save_path).mkdir(parents=True, exist_ok=True)
 
   train_ds, eval_ds, _ = datasets.get_dataset(config,
                                               uniform_dequantization=config.data.uniform_dequantization,
@@ -443,17 +443,14 @@ def get_curvature_profile(config):
   else:
     raise NotImplementedError(f"SDE {config.training.sde} unknown.")
 
-  assert config.model.checkpoint_path is not None, 'checkpoint path has not been provided in the configuration file.'
-  ckpt_path = config.model.checkpoint_path
+  assert config.model.checkpoint is not None, 'checkpoint path has not been provided in the configuration file.'
+  ckpt_path = os.path.join(config.base_path, 'checkpoints', config.model.checkpoint, '.pth')
 
   state = restore_checkpoint(ckpt_path, state, device=config.device)
   ema.copy_to(score_model.parameters())
 
   t_grid = 100
   num_batches = 100
-
-  save_dir = os.path.join(eval_dir, 'curvature')
-  Path(save_dir).mkdir(parents=True, exist_ok=True)
 
   #get_curvature_profile_fn needs to be adapted to the new code
   curvature_estimator = get_curvature_profile_fn(batch, score_model, sde, num_batches, True, config.device)
@@ -464,6 +461,6 @@ def get_curvature_profile(config):
       t = timesteps[i]
       curvatures.append(curvature_estimator(t))
     
-  with open(os.path.join(save_dir, 'info.pkl'), 'wb') as f:
+  with open(os.path.join(save_path, config.model.checkpoint + '.pkl'), 'wb') as f:
         info = {'t':timesteps.cpu().tolist(), 'curvatures':curvatures}
         pickle.dump(info, f)
