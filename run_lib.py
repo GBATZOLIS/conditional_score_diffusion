@@ -448,7 +448,7 @@ def get_curvature_profile(config):
     raise NotImplementedError(f"SDE {config.training.sde} unknown.")
 
   assert config.model.checkpoint is not None, 'checkpoint path has not been provided in the configuration file.'
-  ckpt_path = os.path.join(config.base_path, 'checkpoints', config.model.checkpoint, '.pth')
+  ckpt_path = os.path.join(config.base_path, 'checkpoints', config.model.checkpoint + '.pth')
 
   state = restore_checkpoint(ckpt_path, state, device=config.device)
   ema.copy_to(score_model.parameters())
