@@ -22,7 +22,7 @@ from configs.default_cifar10_configs import get_default_configs
 def get_config():
   config = get_default_configs()
 
-  config.base_path = '/home/gb511/projects/curvature/cifar10_ddpm_continuous'
+  config.base_path = '/home/gb511/projects/curvature/vp_cifar10_ddpm_continuous'
 
   # training
   training = config.training

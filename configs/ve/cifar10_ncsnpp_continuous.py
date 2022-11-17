@@ -20,6 +20,9 @@ from configs.default_cifar10_configs import get_default_configs
 
 def get_config():
   config = get_default_configs()
+
+  config.base_path = '/home/gb511/projects/curvature/ve_cifar10_ncsnpp_continuous'
+
   # training
   training = config.training
   training.sde = 'vesde'
@@ -33,6 +36,7 @@ def get_config():
 
   # model
   model = config.model
+  model.checkpoint = 'checkpoint_24'
   model.name = 'ncsnpp'
   model.scale_by_sigma = True
   model.ema_rate = 0.999
