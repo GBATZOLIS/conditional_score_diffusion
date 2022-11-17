@@ -452,8 +452,8 @@ def get_curvature_profile(config):
   state = restore_checkpoint(ckpt_path, state, device=config.device)
   ema.copy_to(score_model.parameters())
 
-  t_grid = 100
-  num_batches = 100
+  t_grid = 20
+  num_batches = 25
 
   #get_curvature_profile_fn needs to be adapted to the new code
   curvature_estimator = sampling.get_curvature_profile_fn(eval_ds, score_model, sde, num_batches, scaler, True, config.device)
