@@ -31,7 +31,7 @@ flags.DEFINE_string("workdir", None, "Work directory.")
 flags.DEFINE_enum("mode", None, ["train", "eval", 'curvature'], "Running mode: train or eval")
 flags.DEFINE_string("eval_folder", "eval",
                     "The folder name for storing evaluation results")
-flags.mark_flags_as_required([s"config", "mode"])
+flags.mark_flags_as_required(["config", "mode"])
 
 
 def main(argv):
