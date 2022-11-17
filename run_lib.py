@@ -23,7 +23,7 @@ import time
 
 import numpy as np
 import tensorflow as tf
-import tensorflow_gan as tfgan
+#import tensorflow_gan as tfgan
 import logging
 # Keep the import below for registering all model definitions
 from models import ddpm, ncsnv2, ncsnpp
@@ -387,17 +387,20 @@ def evaluate(config,
 
       # Compute FID/KID/IS on all samples together.
       if not inceptionv3:
-        inception_score = tfgan.eval.classifier_score_from_logits(all_logits)
+        #inception_score = tfgan.eval.classifier_score_from_logits(all_logits)
+        inception_score = -1 #this MUST be replaced
+        print('We need to resolve the issue here')
       else:
         inception_score = -1
 
-      fid = tfgan.eval.frechet_classifier_distance_from_activations(
-        data_pools, all_pools)
+      #fid = tfgan.eval.frechet_classifier_distance_from_activations(
+      #  data_pools, all_pools)
+
       # Hack to get tfgan KID work for eager execution.
       tf_data_pools = tf.convert_to_tensor(data_pools)
       tf_all_pools = tf.convert_to_tensor(all_pools)
-      kid = tfgan.eval.kernel_classifier_distance_from_activations(
-        tf_data_pools, tf_all_pools).numpy()
+      #kid = tfgan.eval.kernel_classifier_distance_from_activations(
+      #  tf_data_pools, tf_all_pools).numpy()
       del tf_data_pools, tf_all_pools
 
       logging.info(
