@@ -489,7 +489,7 @@ def get_curvature_profile_fn(dataloader, model, sde, num_batches, scaler, contin
     #output: a fn that receives model as input and outputs the estimated curvature profile
 
     def get_f_ode_fn(sde, model):
-        score_fn = mutils.get_score_fn(sde, model, conditional=False, train=False, continuous=continuous)
+        score_fn = mutils.get_score_fn(sde, model, train=False, continuous=continuous)
         def f_ode_fn(x, t):
             score = score_fn(x, t)
             drift, diffusion = sde.sde(x, t)
