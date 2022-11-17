@@ -31,7 +31,7 @@ flags.DEFINE_string("workdir", None, "Work directory.")
 flags.DEFINE_enum("mode", None, ["train", "eval", 'curvature'], "Running mode: train or eval")
 flags.DEFINE_string("eval_folder", "eval",
                     "The folder name for storing evaluation results")
-flags.mark_flags_as_required(["config", "mode"])
+flags.mark_flags_as_required([s"config", "mode"])
 
 
 def main(argv):
@@ -55,7 +55,7 @@ def main(argv):
   elif FLAGS.mode == 'curvature':
     run_lib.get_curvature_profile(FLAGS.config)
   else:
-    raise ValueError(f"Mode {FLAGS.mode} not recognized.")
+    raise ValueError("Mode %s not recognized." %s)
 
 
 if __name__ == "__main__":
