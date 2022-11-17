@@ -40,6 +40,7 @@ import torch
 from torch.utils import tensorboard
 from torchvision.utils import make_grid, save_image
 from utils import save_checkpoint, restore_checkpoint
+from tqdm import tqdm 
 
 FLAGS = flags.FLAGS
 
