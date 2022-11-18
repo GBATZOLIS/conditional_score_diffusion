@@ -500,7 +500,7 @@ def get_manifold_dimension(config):
   scores = torch.flatten(scores, start_dim=1)
   print(scores.size())
 
-  '''
+  
   u, s, v = torch.linalg.svd(scores)
 
   s = s.tolist()
@@ -510,7 +510,6 @@ def get_manifold_dimension(config):
   with open(os.path.join(save_path, config.model.checkpoint + '.pkl'), 'wb') as f:
     info = {'singular_values':singular_values}
     pickle.dump(info, f)
-  '''
 
   
 
