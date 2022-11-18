@@ -487,6 +487,7 @@ def get_manifold_dimension(config):
     batch = x.clone()
     
     mean, std = sde.marginal_prob(batch, vec_t)
+    z = torch.randn_like(batch)
     x = mean + std[(...,) + (None,) * len(batch.shape[1:])] * z
     score = score_fn(x, t).detach().cpu()
     scores.append(score)
