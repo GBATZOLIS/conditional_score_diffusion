@@ -494,7 +494,7 @@ def get_manifold_dimension(config):
   
   scores = torch.stack(scores)
   scores = torch.flatten(scores, start_dim=1)
-  u, s, v = torch.linalg.svd(A)
+  u, s, v = torch.linalg.svd(scores)
 
   s = s.tolist()
   
