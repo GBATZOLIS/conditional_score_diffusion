@@ -18,7 +18,7 @@
             "program": "${file}",
             "args": [
                 "--config",
-                "configs/jan/celebA/fokker_planck_faces.py",
+                "/home/js2164/rds/hpc-work/repos/score_sde_pytorch/configs/jan/gaussian/vesde.py",
                 "--log_path",
                 "./test_logs",
                 "--debug",
