@@ -22,7 +22,8 @@ from configs.default_cifar10_configs import get_default_configs
 def get_config():
   config = get_default_configs()
 
-  server = 'hpc'
+  server = 'abg'
+  
   if server == 'hpc':
     config.base_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/fast_reverse_diffusion/curvature/subvp_cifar10_ddpm_continuous'
   elif server == 'abg':
