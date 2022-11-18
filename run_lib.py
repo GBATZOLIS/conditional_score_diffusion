@@ -44,7 +44,7 @@ from tqdm import tqdm
 
 import pickle
 import math
-import mutils
+from models import utils as mutils
 
 FLAGS = flags.FLAGS
 
