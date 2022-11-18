@@ -483,19 +483,23 @@ def get_manifold_dimension(config):
   vec_t = torch.ones(x.size(0), device=device) * t
 
   scores = []
-  for i in tqdm(range(num_batches)):
+  for i in tqdm(range(1, num_batches+1)):
     batch = x.clone()
     
     mean, std = sde.marginal_prob(batch, vec_t)
     z = torch.randn_like(batch)
     x = mean + std[(...,) + (None,) * len(batch.shape[1:])] * z
     score = score_fn(x, vec_t).detach().cpu()
-    scores.append(score)
+
+    if i < num_batches:
+      scores.append(score)
+    else:
+      scores.append(score[:extra_in_last_batch])
   
-  scores = torch.stack(scores)
+  scores = torch.cat(scores, dim=0)
   scores = torch.flatten(scores, start_dim=1)
   print(scores.size())
-  
+
   '''
   u, s, v = torch.linalg.svd(scores)
 
