@@ -28,7 +28,7 @@ FLAGS = flags.FLAGS
 config_flags.DEFINE_config_file(
   "config", None, "Training configuration.", lock_config=True)
 flags.DEFINE_string("workdir", None, "Work directory.")
-flags.DEFINE_enum("mode", None, ["train", "eval", 'curvature'], "Running mode: train or eval")
+flags.DEFINE_enum("mode", None, ["train", "eval", 'curvature', 'manifold'], "Running mode: train or eval")
 flags.DEFINE_string("eval_folder", "eval",
                     "The folder name for storing evaluation results")
 flags.mark_flags_as_required(["config", "mode"])
@@ -54,6 +54,8 @@ def main(argv):
     run_lib.evaluate(FLAGS.config, FLAGS.workdir, FLAGS.eval_folder)
   elif FLAGS.mode == 'curvature':
     run_lib.get_curvature_profile(FLAGS.config)
+  elif FLAGS.mode == 'manifold':
+    run_lib.get_manifold_dimension(FLAGS.config)
   else:
     raise ValueError("Mode %s not recognized." % FLAGS.mode)
 
