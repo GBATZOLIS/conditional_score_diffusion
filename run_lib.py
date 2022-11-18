@@ -464,7 +464,7 @@ def get_manifold_dimension(config):
 
   device = config.device
 
-  x = next(train_ds)
+  x = next(iter(train_ds))
   x = torch.from_numpy(x['image']._numpy()).to(device).float()
   x = x.permute(0, 3, 1, 2)
   x = scaler(x)
