@@ -460,7 +460,7 @@ def get_manifold_dimension(config):
   save_path = os.path.join(config.base_path, 'manifold_dimension')
   Path(save_path).mkdir(parents=True, exist_ok=True)
   train_ds, eval_ds, scaler, inverse_scaler, score_model, sde, eps = setup(config)
-  score_fn = mutils.get_score_fn(sde, model, train=False, continuous=continuous)
+  score_fn = mutils.get_score_fn(sde, score_model, train=False, continuous=continuous)
 
   device = config.device
 
