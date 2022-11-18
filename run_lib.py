@@ -41,7 +41,10 @@ from torch.utils import tensorboard
 from torchvision.utils import make_grid, save_image
 from utils import save_checkpoint, restore_checkpoint
 from tqdm import tqdm 
+
 import pickle
+import math
+import mutils
 
 FLAGS = flags.FLAGS
 
@@ -416,10 +419,7 @@ def evaluate(config,
         np.savez_compressed(io_buffer, IS=inception_score, fid=fid, kid=kid)
         f.write(io_buffer.getvalue())
 
-def get_curvature_profile(config):
-  save_path = os.path.join(config.base_path, 'curvature')
-  Path(save_path).mkdir(parents=True, exist_ok=True)
-
+def setup(config):
   train_ds, eval_ds, _ = datasets.get_dataset(config,
                                               uniform_dequantization=config.data.uniform_dequantization,
                                               evaluation=True)
@@ -452,6 +452,64 @@ def get_curvature_profile(config):
 
   state = restore_checkpoint(ckpt_path, state, device=config.device)
   ema.copy_to(score_model.parameters())
+
+  return train_ds, eval_ds, scaler, inverse_scaler, score_model, sde, eps
+
+
+def get_manifold_dimension(config):
+  save_path = os.path.join(config.base_path, 'manifold_dimension')
+  Path(save_path).mkdir(parents=True, exist_ok=True)
+  train_ds, eval_ds, scaler, inverse_scaler, score_model, sde, eps = setup(config)
+  score_fn = mutils.get_score_fn(sde, model, train=False, continuous=continuous)
+
+  device = config.device
+
+  x = next(train_ds)
+  x = torch.from_numpy(x['image']._numpy()).to(device).float()
+  x = x.permute(0, 3, 1, 2)
+  x = scaler(x)
+
+  batchsize = x.size(0)
+  ambient_dim = math.prod(x.shape[1:])
+  print('Ambient dim size: %d' % ambient_dim)
+
+  x = x[0]
+  x = x.repeat([batchsize,]+[1 for i in range(len(x.shape))])
+
+  num_batches = ambient_dim // batchsize + 1
+  extra_in_last_batch = ambient_dim - (ambient_dim // batchsize) * batchsize
+
+  t = eps
+  vec_t = torch.ones(batch.size(0), device=device) * t
+
+  scores = []
+  for i in range(num_batches):
+    batch = x.clone()
+    
+    mean, std = sde.marginal_prob(batch, vec_t)
+    x = mean + std[(...,) + (None,) * len(batch.shape[1:])] * z
+    score = score_fn(x, t).detach().cpu()
+    scores.append(score)
+  
+  scores = torch.stack(scores)
+  scores = torch.flatten(scores, start_dim=1)
+  u, s, v = torch.linalg.svd(A)
+
+  s = s.tolist()
+  
+  singular_values = s
+
+  with open(os.path.join(save_path, config.model.checkpoint + '.pkl'), 'wb') as f:
+    info = {'singular_values':singular_values}
+    pickle.dump(info, f)
+
+  
+
+def get_curvature_profile(config):
+  save_path = os.path.join(config.base_path, 'curvature')
+  Path(save_path).mkdir(parents=True, exist_ok=True)
+
+  train_ds, eval_ds, scaler, inverse_scaler, score_model, sde, eps = setup(config)
 
   t_grid = 50
   num_batches = 50
