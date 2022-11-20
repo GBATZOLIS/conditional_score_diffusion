@@ -464,9 +464,9 @@ def get_manifold_dimension(config):
 
   device = config.device
 
-  datapoints = 1
+  datapoints = 120
   singular_values = []
-  for idx, batch in enumerate(eval_ds):
+  for idx, batch in tqdm(enumerate(eval_ds)):
     if idx+1 > datapoints:
       break
 
@@ -489,7 +489,7 @@ def get_manifold_dimension(config):
     vec_t = torch.ones(x.size(0), device=device) * t
 
     scores = []
-    for i in tqdm(range(1, num_batches+1)):
+    for i in range(1, num_batches+1):
       batch = x.clone()
       
       mean, std = sde.marginal_prob(batch, vec_t)
