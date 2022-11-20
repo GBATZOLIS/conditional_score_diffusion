@@ -466,7 +466,7 @@ def get_manifold_dimension(config):
 
   num_batches = 10
   singular_values = []
-  for idx, batch in enumerate(dataloader):
+  for idx, batch in enumerate(eval_ds):
     if idx > num_batches:
       break
 
