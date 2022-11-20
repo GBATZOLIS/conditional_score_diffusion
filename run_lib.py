@@ -464,53 +464,53 @@ def get_manifold_dimension(config):
 
   device = config.device
 
-  x = next(iter(train_ds))
-  x = torch.from_numpy(x['image']._numpy()).to(device).float()
-  x = x.permute(0, 3, 1, 2)
-  x = scaler(x)
+  num_batches = 20
+  singular_values = []
+  for idx, batch in enumerate(dataloader):
+    if idx > num_batches:
+      break
 
-  batchsize = x.size(0)
-  ambient_dim = math.prod(x.shape[1:])
-  print('Ambient dim size: %d' % ambient_dim)
+    x = torch.from_numpy(batch['image']._numpy()).to(device).float()
+    x = x.permute(0, 3, 1, 2)
+    x = scaler(x)
 
-  x = x[0]
-  x = x.repeat([batchsize,]+[1 for i in range(len(x.shape))])
+    batchsize = x.size(0)
+    ambient_dim = math.prod(x.shape[1:])
+    #print('Ambient dim size: %d' % ambient_dim)
 
-  num_batches = ambient_dim // batchsize + 1
-  extra_in_last_batch = ambient_dim - (ambient_dim // batchsize) * batchsize
-  num_batches *= 4
+    x = x[0]
+    x = x.repeat([batchsize,]+[1 for i in range(len(x.shape))])
 
-  t = eps
-  vec_t = torch.ones(x.size(0), device=device) * t
+    num_batches = ambient_dim // batchsize + 1
+    extra_in_last_batch = ambient_dim - (ambient_dim // batchsize) * batchsize
+    num_batches *= 4
 
-  scores = []
-  for i in tqdm(range(1, num_batches+1)):
-    batch = x.clone()
+    t = eps
+    vec_t = torch.ones(x.size(0), device=device) * t
+
+    scores = []
+    for i in tqdm(range(1, num_batches+1)):
+      batch = x.clone()
+      
+      mean, std = sde.marginal_prob(batch, vec_t)
+      z = torch.randn_like(batch)
+      batch = mean + std[(...,) + (None,) * len(batch.shape[1:])] * z
+      score = score_fn(batch, vec_t).detach().cpu()
+
+      if i < num_batches:
+        scores.append(score)
+      else:
+        scores.append(score[:extra_in_last_batch])
     
-    mean, std = sde.marginal_prob(batch, vec_t)
-    z = torch.randn_like(batch)
-    batch = mean + std[(...,) + (None,) * len(batch.shape[1:])] * z
-    score = score_fn(batch, vec_t).detach().cpu()
+    scores = torch.cat(scores, dim=0)
+    scores = torch.flatten(scores, start_dim=1)
 
-    if i < num_batches:
-      scores.append(score)
-    else:
-      scores.append(score[:extra_in_last_batch])
-  
-  scores = torch.cat(scores, dim=0)
-  scores = torch.flatten(scores, start_dim=1)
-  print(scores.size())
+    means = scores.mean(dim=0, keepdim=True)
+    normalized_scores = scores - means
 
-  means = scores.mean(dim=0, keepdim=True)
-  #stds = scores.std(dim=0, keepdim=True)
-  #normalized_scores = (scores - means) / stds
-  normalized_scores = scores - means
-
-  u, s, v = torch.linalg.svd(normalized_scores)
-
-  s = s.tolist()
-  
-  singular_values = s
+    u, s, v = torch.linalg.svd(normalized_scores)
+    s = s.tolist()
+    singular_values.append(s)
 
   with open(os.path.join(save_path, config.model.checkpoint + '.pkl'), 'wb') as f:
     info = {'singular_values':singular_values}
