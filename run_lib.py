@@ -464,10 +464,10 @@ def get_manifold_dimension(config):
 
   device = config.device
 
-  datapoints = 5
+  datapoints = 1
   singular_values = []
   for idx, batch in enumerate(eval_ds):
-    if idx > datapoints:
+    if idx+1 > datapoints:
       break
 
     x = torch.from_numpy(batch['image']._numpy()).to(device).float()
