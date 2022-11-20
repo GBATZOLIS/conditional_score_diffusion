@@ -501,8 +501,11 @@ def get_manifold_dimension(config):
   scores = torch.flatten(scores, start_dim=1)
   print(scores.size())
 
-  
-  u, s, v = torch.linalg.svd(scores)
+  means = scores.mean(dim=1, keepdim=True)
+  stds = scores.std(dim=1, keepdim=True)
+  normalized_scores = (scores - means) / stds
+
+  u, s, v = torch.linalg.svd(normalized_scores)
 
   s = s.tolist()
   
