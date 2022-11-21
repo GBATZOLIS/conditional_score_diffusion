@@ -37,7 +37,7 @@ def get_callbacks(config):
                                                                   eval_config=config.eval, 
                                                                   data_config=config.data,
                                                                   approach = config.training.conditioning_approach))
-    else:
+    if config.training.visualization_callback is not None:
       if isinstance(config.training.visualization_callback, list):
         for callback in config.training.visualization_callback:
           callbacks.append(get_callback_by_name(callback)(show_evolution=config.training.show_evolution))

@@ -1,6 +1,6 @@
 #!/bin/bash 
 #! Name of the job: 
-#SBATCH -J test 
+#SBATCH -J ve 
 #! Which project should be charged (NB Wilkes2 projects end in '-GPU'): 
 #SBATCH --account SCHOENLIEB-SL3-GPU 
 #! How many whole nodes should be allocated? 
@@ -12,7 +12,7 @@
 #! Note that the job submission script will enforce no more than 32 cpus per GPU. 
 #SBATCH --gres=gpu:1 
 #! How much wallclock time will be required? 
-#SBATCH --time=00:10:00 
+#SBATCH --time=12:00:00 
 #! What types of email messages do you wish to receive? 
 #SBATCH --mail-type=begin        # send email when job begins 
 #SBATCH --mail-type=end 
@@ -32,6 +32,6 @@ conda activate score_sde
 REPO=/rds/user/js2164/hpc-work/repos/score_sde_pytorch/ 
  
 cd /home/js2164/rds/hpc-work/repos/score_sde_pytorch/ 
-python main.py --config configs/jan/circles/experiments/potential.py \ 
---log_path logs/circles/new \ 
---log_name test \ 
+python main.py --config configs/ksphere/vesde.py \ 
+--log_path logs/ksphere/ \ 
+--log_name ve \ 

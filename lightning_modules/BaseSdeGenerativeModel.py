@@ -4,7 +4,6 @@ import pytorch_lightning as pl
 import sde_lib
 from sampling.unconditional import get_sampling_fn
 from models import utils as mutils
-from sde_lib import VESDE, VPSDE
 from . import utils
 import torch.optim as optim
 import os
@@ -50,15 +49,6 @@ class BaseSdeGenerativeModel(pl.LightningModule):
         if config.training.continuous:
             loss_fn = get_general_sde_loss_fn(self.sde, train, reduce_mean=config.training.reduce_mean,
                                     continuous=True, likelihood_weighting=config.training.likelihood_weighting)
-        else:
-            if isinstance(self.sde, VESDE):
-                loss_fn = get_smld_loss_fn(self.sde, train, reduce_mean=config.training.reduce_mean, likelihood_weighting=config.training.likelihood_weighting)
-            elif isinstance(self.sde, VPSDE):
-                assert not config.training.likelihood_weighting, "Likelihood weighting is not supported for original DDPM training."
-                loss_fn = get_ddpm_loss_fn(self.sde, train, reduce_mean=config.training.reduce_mean)
-            else:
-                raise ValueError(f"Discrete training for {self.sde.__class__.__name__} is not recommended.")
-        
         return loss_fn
 
     def configure_default_sampling_shape(self, config):
@@ -81,7 +71,7 @@ class BaseSdeGenerativeModel(pl.LightningModule):
         if num_samples is None:
             sampling_shape = self.default_sampling_shape
         else:
-            sampling_shape = [num_samples] +  config.data.shape
+            sampling_shape = [num_samples] +  self.config.data.shape
         sampling_fn = get_sampling_fn(self.config, self.sde, sampling_shape, self.sampling_eps)
 
         return sampling_fn(self.score_model, show_evolution=show_evolution)
