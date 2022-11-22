@@ -10,6 +10,7 @@ import numpy as np
 from models import utils as mutils
 from pytorch_lightning.callbacks import ModelCheckpoint
 import datetime
+import pickle
 
 @utils.register_callback(name='configuration')
 class ConfigurationSetterCallback(Callback):
@@ -20,6 +21,14 @@ class ConfigurationSetterCallback(Callback):
         # Configure trainining and validation loss functions.
         pl_module.train_loss_fn = pl_module.configure_loss_fn(pl_module.config, train=True)
         pl_module.eval_loss_fn = pl_module.configure_loss_fn(pl_module.config, train=False)
+
+        # Pickle config file
+        config = pl_module.config
+        path = os.path.join(config.logging.log_path, config.logging.log_name)
+        if not os.path.exists(path):
+            os.makedirs(path)
+        with open(os.path.join(path, 'config.pkl'), 'wb') as file:
+            pickle.dump(config, file)
     
     def on_test_epoch_start(self, trainer, pl_module):
         pl_module.configure_sde(pl_module.config)

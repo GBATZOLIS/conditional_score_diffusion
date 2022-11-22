@@ -69,7 +69,7 @@ def get_config():
   data.create_dataset = False
   data.split = [0.8, 0.1, 0.1]
   data.data_samples = 50000
-  data.use_data_mean=False # WHAT IS THIS?
+  data.use_data_mean=False 
 
   data.n_spheres = 1
   data.ambient_dim=100
@@ -83,7 +83,7 @@ def get_config():
   config.model = model = ml_collections.ConfigDict()
   model.checkpoint_path = None
   model.sigma_max = data.manifold_dim * math.sqrt(2)
-  model.sigma_min = 0.001
+  model.sigma_min = 1e-2
 
   model.name = 'fcn'
   model.state_size = data.dim

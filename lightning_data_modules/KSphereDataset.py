@@ -10,7 +10,7 @@ class KSphereDataset(Dataset):
         super().__init__()
         self.data = self.generate_data(config.data.data_samples, config.data.n_spheres, config.data.ambient_dim, config.data.manifold_dim, config.data.noise_std)
 
-    def generate_data(n_samples, n_spheres, ambient_dim, manifold_dim, noise_std):
+    def generate_data(self, n_samples, n_spheres, ambient_dim, manifold_dim, noise_std):
             data = []
             for _ in range(n_spheres):
                     new_data = torch.randn((n_samples, manifold_dim+1))
