@@ -29,7 +29,7 @@ def get_config():
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = 'logs/ksphere/'
+  logging.log_path = '/home/gb511/projects/manifold_dimension/ksphere' #'logs/ksphere/'
   logging.log_name = 've'
   logging.top_k = 5
   logging.every_n_epochs = 1000
@@ -81,7 +81,7 @@ def get_config():
   
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = None
+  model.checkpoint_path = '/home/gb511/projects/manifold_dimension/ksphere/ve/checkpoints/last.ckpt'
   model.sigma_max = data.manifold_dim * math.sqrt(2)
   model.sigma_min = 1e-2
 
