@@ -10,7 +10,7 @@ config_flags.DEFINE_config_file(
 flags.DEFINE_string("checkpoint_path", None, "Checkpoint directory.")
 flags.DEFINE_string("data_path", None, "Checkpoint directory.")
 flags.DEFINE_string("log_path", "./", "Checkpoint directory.")
-flags.DEFINE_enum("mode", "train", ["train", "test", "multi_scale_test", "compute_dataset_statistics"], "Running mode: train or test")
+flags.DEFINE_enum("mode", "train", ["train", "test", "multi_scale_test", "compute_dataset_statistics", 'manifold_dimension'], "Running mode: train or test")
 flags.DEFINE_string("eval_folder", "eval",
                     "The folder name for storing evaluation results")
 flags.DEFINE_boolean("debug", False, "Use GPU?")
@@ -29,6 +29,8 @@ def main(argv):
     run_lib.multi_scale_test(FLAGS.config, FLAGS.log_path)
   elif FLAGS.mode == 'compute_dataset_statistics':
     run_lib.compute_data_stats(FLAGS.config)
+  elif FLAGS.mode == 'manifold_dimension':
+    run_lib.get_manifold_dimension(FLAGS.config)
 
 if __name__ == "__main__":
   app.run(main)
