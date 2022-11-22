@@ -360,14 +360,15 @@ def get_manifold_dimension(config):
 
   num_datapoints = 120
   singular_values = []
-  for idx, batch in tqdm(enumerate(train_dataloader)):
+  for idx, orig_batch in tqdm(enumerate(train_dataloader)):
     if idx+1 >= num_datapoints:
       break
+    
+    orig_batch = orig_batch.to(device)
+    batchsize = orig_batch.size(0)
+    ambient_dim = math.prod(orig_batch.shape[1:])
 
-    batchsize = batch.size(0)
-    ambient_dim = math.prod(batch.shape[1:])
-
-    x = batch[0]
+    x = orig_batch[0]
     x = x.repeat([batchsize,]+[1 for i in range(len(x.shape))])
 
     num_batches = ambient_dim // batchsize + 1
