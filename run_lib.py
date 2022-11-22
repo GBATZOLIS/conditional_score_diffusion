@@ -367,7 +367,7 @@ def get_manifold_dimension(config):
     batchsize = batch.size(0)
     ambient_dim = math.prod(batch.shape[1:])
 
-    x = x[0]
+    x = batch[0]
     x = x.repeat([batchsize,]+[1 for i in range(len(x.shape))])
 
     num_batches = ambient_dim // batchsize + 1
