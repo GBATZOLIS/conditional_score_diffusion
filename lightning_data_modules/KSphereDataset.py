@@ -8,22 +8,29 @@ class KSphereDataset(Dataset):
 
     def __init__(self, config) -> None:
         super().__init__()
-        self.data = self.generate_data(config.data.data_samples, config.data.ambient_dim, config.data.manifold_dim)
+        self.data = self.generate_data(config.data.data_samples, config.data.n_spheres, config.data.ambient_dim, config.data.manifold_dim, config.data.noise_std)
 
-    def generate_data(self, n_samples, ambient_dim, manifold_dim):
-        data = torch.randn((n_samples, manifold_dim+1))
-        norms = torch.linalg.norm(data, dim=1)
-        data = data / norms[:,None]
+    def generate_data(n_samples, n_spheres, ambient_dim, manifold_dim, noise_std):
+            data = []
+            for _ in range(n_spheres):
+                    new_data = torch.randn((n_samples, manifold_dim+1))
+                    norms = torch.linalg.norm(new_data, dim=1)
+                    new_data = new_data / norms[:,None]
 
-        # random isometric embedding
-        embedding_matrix = torch.randn((ambient_dim, manifold_dim+1))
-        q, r = np.linalg.qr(embedding_matrix)
-        q = torch.from_numpy(q)
+                    # random isometric embedding
+                    embedding_matrix = torch.randn((ambient_dim, manifold_dim+1))
+                    q, r = np.linalg.qr(embedding_matrix)
+                    q = torch.from_numpy(q)
 
-        # embed data
-        data = (q @ data.T).T
+                    # embed new_data
+                    new_data = (q @ new_data.T).T
 
-        return data
+                    # add noise
+                    new_data = new_data + noise_std * torch.randn_like(new_data)
+                    data.append(new_data)
+
+            data = torch.concat(data, dim=0)
+            return data
 
     def __getitem__(self, index):
         item = self.data[index]

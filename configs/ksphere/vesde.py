@@ -71,8 +71,10 @@ def get_config():
   data.data_samples = 50000
   data.use_data_mean=False # WHAT IS THIS?
 
+  data.n_spheres = 1
   data.ambient_dim=100
   data.manifold_dim=10
+  data.noise_std = 0
   data.dim = data.ambient_dim
   data.num_channels = 0 
   data.shape = [data.dim]
@@ -80,15 +82,13 @@ def get_config():
   # model
   config.model = model = ml_collections.ConfigDict()
   model.checkpoint_path = None
-  model.sigma_max = 4
-  model.sigma_min = 0.01
-  model.beta_min = 0.1
-  model.beta_max = 25
+  model.sigma_max = data.manifold_dim * math.sqrt(2)
+  model.sigma_min = 0.001
 
   model.name = 'fcn'
   model.state_size = data.dim
   model.hidden_layers = 3
-  model.hidden_nodes = 256
+  model.hidden_nodes = 512
   model.dropout = 0.0
   model.scale_by_sigma = False
   model.num_scales = 1000
