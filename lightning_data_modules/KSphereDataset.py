@@ -29,7 +29,7 @@ class KSphereDataset(Dataset):
                     new_data = new_data + noise_std * torch.randn_like(new_data)
                     data.append(new_data)
 
-            data = torch.concat(data, dim=0)
+            data = torch.cat(data, dim=0)
             return data
 
     def __getitem__(self, index):
