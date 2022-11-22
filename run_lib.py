@@ -346,8 +346,8 @@ def get_manifold_dimension(config):
   pl_module.configure_sde(config)
 
   #get the ema parameters for evaluation
-  pl_module.ema.store(pl_module.parameters())
-  pl_module.ema.copy_to(pl_module.parameters()) 
+  #pl_module.ema.store(pl_module.parameters())
+  #pl_module.ema.copy_to(pl_module.parameters()) 
 
   device = config.device
   pl_module = pl_module.to(device)
