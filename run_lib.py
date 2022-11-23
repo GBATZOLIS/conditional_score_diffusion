@@ -358,7 +358,7 @@ def get_manifold_dimension(config):
   score_fn = mutils.get_score_fn(sde, score_model, conditional=False, train=False, continuous=True)
   #---- end of setup ----
 
-  num_datapoints = 120
+  num_datapoints = 40
   singular_values = []
   for idx, orig_batch in tqdm(enumerate(train_dataloader)):
     if idx+1 >= num_datapoints:
@@ -375,7 +375,7 @@ def get_manifold_dimension(config):
     extra_in_last_batch = ambient_dim - (ambient_dim // batchsize) * batchsize
     num_batches *= 8
 
-    t = 0.009 #pl_module.sampling_eps
+    t = 0.7 #pl_module.sampling_eps
     vec_t = torch.ones(x.size(0), device=device) * t
 
     scores = []
