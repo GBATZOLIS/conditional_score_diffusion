@@ -375,7 +375,7 @@ def get_manifold_dimension(config):
     extra_in_last_batch = ambient_dim - (ambient_dim // batchsize) * batchsize
     num_batches *= 8
 
-    t = 1. #pl_module.sampling_eps
+    t = pl_module.sampling_eps
     vec_t = torch.ones(x.size(0), device=device) * t
 
     scores = []
