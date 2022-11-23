@@ -13,6 +13,7 @@ class KSphereDataset(Dataset):
     def generate_data(self, n_samples, n_spheres, ambient_dim, manifold_dim, noise_std):
             data = []
             for _ in range(n_spheres):
+                    # sample N(0, I) and normalize
                     new_data = torch.randn((n_samples, manifold_dim+1))
                     norms = torch.linalg.norm(new_data, dim=1)
                     new_data = new_data / norms[:,None]
@@ -22,7 +23,7 @@ class KSphereDataset(Dataset):
                     q, r = np.linalg.qr(embedding_matrix)
                     q = torch.from_numpy(q)
 
-                    # embed new_data
+                    # embed the data in the ambient space
                     new_data = (q @ new_data.T).T
 
                     # add noise
@@ -64,10 +65,10 @@ class SyntheticDataModule(pl.LightningDataModule):
         self.train_data, self.valid_data, self.test_data = random_split(self.dataset, [int(self.split[0]*l), int(self.split[1]*l), int(self.split[2]*l)]) 
     
     def train_dataloader(self):
-        return DataLoader(self.train_data, batch_size = self.train_batch, num_workers=self.train_workers) 
+        return DataLoader(self.train_data, batch_size = self.train_batch, num_workers=self.train_workers, shuffle=True)  
   
     def val_dataloader(self):
-        return DataLoader(self.valid_data, batch_size = self.val_batch, num_workers=self.val_workers) 
+        return DataLoader(self.valid_data, batch_size = self.val_batch, num_workers=self.val_workers, shuffle=True) 
   
     def test_dataloader(self): 
         return DataLoader(self.test_data, batch_size = self.test_batch, num_workers=self.test_workers) 

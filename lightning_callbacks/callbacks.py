@@ -15,6 +15,7 @@ import pickle
 @utils.register_callback(name='configuration')
 class ConfigurationSetterCallback(Callback):
     def on_fit_start(self, trainer, pl_module):
+        config = pl_module.config
         # Configure SDE
         pl_module.configure_sde(pl_module.config)
         
@@ -22,12 +23,16 @@ class ConfigurationSetterCallback(Callback):
         pl_module.train_loss_fn = pl_module.configure_loss_fn(pl_module.config, train=True)
         pl_module.eval_loss_fn = pl_module.configure_loss_fn(pl_module.config, train=False)
 
-        # Pickle config file
-        config = pl_module.config
-        path = os.path.join(config.logging.log_path, config.logging.log_name)
-        if not os.path.exists(path):
-            os.makedirs(path)
-        with open(os.path.join(path, 'config.pkl'), 'wb') as file:
+        # If log_path exists make sure you are resuming
+        log_path = os.path.join(config.logging.log_path, config.logging.log_name)
+        if config.model.checkpoint_path is None and os.path.exists(log_path):
+            print('LOGGING PATH EXISTS BUT NOT RESUMING FROM CHECKPOINT!')
+            raise RuntimeError('LOGGING PATH EXISTS BUT NOT RESUMING FROM CHECKPOINT!')
+
+        # Pickle config file 
+        if not os.path.exists(log_path):
+            os.makedirs(log_path)
+        with open(os.path.join(log_path, 'config.pkl'), 'wb') as file:
             pickle.dump(config, file)
     
     def on_test_epoch_start(self, trainer, pl_module):
