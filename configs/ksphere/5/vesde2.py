@@ -81,7 +81,7 @@ def get_config():
   
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = '/home/gb511/projects/manifold_dimension/ksphere/5/ve-higher-snr/checkpoints/best/last.ckpt'
+  model.checkpoint_path = '/home/gb511/projects/manifold_dimension/ksphere/5/%s/checkpoints/best/last.ckpt' % logging.log_name
   model.sigma_max = 1e-2
   model.sigma_min = 1e-3
 
