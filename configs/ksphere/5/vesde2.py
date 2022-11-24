@@ -40,7 +40,7 @@ def get_config():
   training.gpus = 1
   training.lightning_module = 'base' 
   training.batch_size = 500
-  training.num_epochs = 2* int(1e4)
+  training.num_epochs = 2 * int(1e5)
   training.n_iters = int(1e20)
   training.likelihood_weighting = True
   training.continuous = True
