@@ -88,7 +88,7 @@ def get_config():
   model.name = 'fcn'
   model.state_size = data.dim
   model.hidden_layers = 5
-  model.hidden_nodes = 1024
+  model.hidden_nodes = 2048
   model.dropout = 0.0
   model.scale_by_sigma = False
   model.num_scales = 1000
