@@ -33,7 +33,7 @@ from tqdm import tqdm
 from models import utils as mutils
 import math
 import pickle
-from sklearn.decomposition import ProbabilisticPCA
+from sklearn.decomposition import PCA
 
 def train(config, log_path, checkpoint_path, log_name=None):
     print('RESUMING: ' + str(checkpoint_path))
@@ -400,7 +400,7 @@ def get_manifold_dimension(config):
     normalized_scores = scores - means
 
     np_scores = np.array(normalized_scores)
-    pca = ProbabilisticPCA(n_components='mle')
+    pca = PCA(n_components='mle')
     pca.fit(np_scores)
     print(n_components_)
 
