@@ -33,6 +33,7 @@ from tqdm import tqdm
 from models import utils as mutils
 import math
 import pickle
+from sklearn.decomposition import ProbabilisticPCA
 
 def train(config, log_path, checkpoint_path, log_name=None):
     print('RESUMING: ' + str(checkpoint_path))
@@ -358,7 +359,7 @@ def get_manifold_dimension(config):
   score_fn = mutils.get_score_fn(sde, score_model, conditional=False, train=False, continuous=True)
   #---- end of setup ----
 
-  num_datapoints = 40
+  num_datapoints = 1
   singular_values = []
   for idx, orig_batch in tqdm(enumerate(train_dataloader)):
     if idx+1 >= num_datapoints:
@@ -397,6 +398,12 @@ def get_manifold_dimension(config):
 
     means = scores.mean(dim=0, keepdim=True)
     normalized_scores = scores - means
+
+    np_scores = np.array(normalized_scores)
+    pca = ProbabilisticPCA(n_components='mle')
+    pca.fit(np_scores)
+    print(n_components_)
+
 
     u, s, v = torch.linalg.svd(normalized_scores)
     s = s.tolist()
