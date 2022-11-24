@@ -30,7 +30,7 @@ def get_config():
   #logging
   config.logging = logging = ml_collections.ConfigDict()
   logging.log_path = '/home/gb511/projects/manifold_dimension/ksphere/5' #'logs/ksphere/'
-  logging.log_name = 've-higher-snr-focused'
+  logging.log_name = 've-higher-snr-focused-deep'
   logging.top_k = 5
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
@@ -81,14 +81,14 @@ def get_config():
   
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = '/home/gb511/projects/manifold_dimension/ksphere/5/%s/checkpoints/best/last.ckpt' % logging.log_name
+  model.checkpoint_path = None #'/home/gb511/projects/manifold_dimension/ksphere/5/%s/checkpoints/best/last.ckpt' % logging.log_name
   model.sigma_max = 1e-2+1e-4
   model.sigma_min = 1e-2-1e-4
 
   model.name = 'fcn'
   model.state_size = data.dim
-  model.hidden_layers = 3
-  model.hidden_nodes = 512
+  model.hidden_layers = 5
+  model.hidden_nodes = 1024
   model.dropout = 0.0
   model.scale_by_sigma = False
   model.num_scales = 1000
@@ -98,7 +98,7 @@ def get_config():
   optim = config.optim
   optim.weight_decay = 0
   optim.optimizer = 'Adam'
-  optim.lr = 2e-5
+  optim.lr = 1e-4
   optim.beta1 = 0.9
   optim.eps = 1e-8
   optim.warmup = 5000
