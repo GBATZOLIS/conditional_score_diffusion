@@ -51,15 +51,6 @@ class FokkerPlanckModel(pl.LightningModule):
         if config.training.continuous:
             loss_fn = get_general_sde_loss_fn(self.sde, train, reduce_mean=config.training.reduce_mean,
                                     continuous=True, likelihood_weighting=config.training.likelihood_weighting)
-        else:
-            if isinstance(self.sde, VESDE):
-                loss_fn = get_smld_loss_fn(self.sde, train, reduce_mean=config.training.reduce_mean, likelihood_weighting=config.training.likelihood_weighting)
-            elif isinstance(self.sde, VPSDE):
-                assert not config.training.likelihood_weighting, "Likelihood weighting is not supported for original DDPM training."
-                loss_fn = get_ddpm_loss_fn(self.sde, train, reduce_mean=config.training.reduce_mean)
-            else:
-                raise ValueError(f"Discrete training for {self.sde.__class__.__name__} is not recommended.")
-        
         return loss_fn
 
     def configure_default_sampling_shape(self, config):

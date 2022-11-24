@@ -1,0 +1,2 @@
+- Why are we using absl?
+- How to handle configs/args?

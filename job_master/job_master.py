@@ -15,6 +15,7 @@ class Job():
         self.job_dir = None
         self.id = None
         self.config = None
+        self.mode = 'train'
         self.log = None
         self.name = None
         self.checkpoint_path = None
@@ -29,6 +30,8 @@ class Job():
                 lines[-1] = lines[-1] + '\n'
             lines = ''.join(lines)
             self.config = re.findall("config=([\w|/ | \.]+)", lines)[0]
+            if len(re.findall("mode=([\w|/ | \.]+)", lines)) > 0:
+                self.mode = re.findall("mode=([\w|/ | \.]+)", lines)[0]
             config = read_config(self.config)
             self.log = config.logging.log_path #re.findall("log=([\w|/ | \.]+)", lines)[0]
             self.name = config.logging.log_name #re.findall("name=([\w|/ | \.]+)", lines)[0]
@@ -155,6 +158,7 @@ class JobMaster():
                 f'cd {job.repo_path} \n',
 
                 f'python main.py --config {job.config} \\ \n',
+                            f' --mode {job.mode} \\ \n',
                             f' --checkpoint_path {job.checkpoint_path} \n' if job.checkpoint_path is not None else '',
                             f'--log_path {job.log} \\ \n',
                             f'--log_name {job.name} \\ \n'

@@ -37,6 +37,7 @@ def get_config():
 
   # training
   training = config.training
+  training.mode = 'train'
   training.gpus = 1
   training.lightning_module = 'base' 
   training.batch_size = 500
@@ -81,7 +82,7 @@ def get_config():
   
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = '/home/gb511/projects/manifold_dimension/ksphere/ve/checkpoints/last.ckpt'
+  model.checkpoint_path = 'test_logs/ve/checkpoints/best/last.ckpt'
   model.sigma_max = data.manifold_dim * math.sqrt(2)
   model.sigma_min = 1e-2
 

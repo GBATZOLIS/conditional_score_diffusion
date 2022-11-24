@@ -33,5 +33,6 @@ REPO=/rds/user/js2164/hpc-work/repos/score_sde_pytorch/
  
 cd /home/js2164/rds/hpc-work/repos/score_sde_pytorch/ 
 python main.py --config configs/ksphere/N_5/vesde_sig_1e3_4.py \ 
+ --mode train \ 
 --log_path logs/ksphere/n_5/ \ 
 --log_name ve_sig_0.001_4.0 \ 
