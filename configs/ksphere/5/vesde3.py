@@ -30,7 +30,7 @@ def get_config():
   #logging
   config.logging = logging = ml_collections.ConfigDict()
   logging.log_path = '/home/gb511/projects/manifold_dimension/ksphere/5' #'logs/ksphere/'
-  logging.log_name = 've-higher-snr'
+  logging.log_name = 've-higher-snr-focused'
   logging.top_k = 5
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
