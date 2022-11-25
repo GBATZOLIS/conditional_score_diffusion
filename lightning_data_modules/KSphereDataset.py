@@ -8,26 +8,31 @@ class KSphereDataset(Dataset):
 
     def __init__(self, config) -> None:
         super().__init__()
-        self.data = self.generate_data(config.data.data_samples, config.data.n_spheres, config.data.ambient_dim, config.data.manifold_dim, config.data.noise_std)
+        self.data = self.generate_data(config.data.data_samples, config.data.n_spheres, config.data.ambient_dim, config.data.manifold_dim, config.data.noise_std, config.data.separated)
 
-    def generate_data(self, n_samples, n_spheres, ambient_dim, manifold_dim, noise_std):
+    def generate_data(self, n_samples, n_spheres, ambient_dim, manifold_dim, noise_std, separated=False):
             data = []
-            for _ in range(n_spheres):
-                    new_data = torch.randn((n_samples, manifold_dim+1))
-                    norms = torch.linalg.norm(new_data, dim=1)
-                    new_data = new_data / norms[:,None]
+            if separated:
+                radius = torch.linspace(start=0.5, end=1.5, steps = n_spheres)
+            else:
+                radius = torch.ones(n_spheres)
 
-                    # random isometric embedding
-                    embedding_matrix = torch.randn((ambient_dim, manifold_dim+1))
-                    q, r = np.linalg.qr(embedding_matrix)
-                    q = torch.from_numpy(q)
+            for i in range(n_spheres):
+                new_data = torch.randn((n_samples, manifold_dim+1))
+                norms = torch.linalg.norm(new_data, dim=1)
+                new_data = new_data / norms[:,None]
 
-                    # embed new_data
-                    new_data = (q @ new_data.T).T
+                # random isometric embedding
+                embedding_matrix = torch.randn((ambient_dim, manifold_dim+1))
+                q, r = np.linalg.qr(embedding_matrix)
+                q = torch.from_numpy(q)
 
-                    # add noise
-                    new_data = new_data + noise_std * torch.randn_like(new_data)
-                    data.append(new_data)
+                # embed new_data
+                new_data = (q @ new_data.T).T
+
+                # add noise
+                new_data = radius[i]*new_data + noise_std * torch.randn_like(new_data)
+                data.append(new_data)
 
             data = torch.cat(data, dim=0)
             idx = torch.randperm(data.size(0))
