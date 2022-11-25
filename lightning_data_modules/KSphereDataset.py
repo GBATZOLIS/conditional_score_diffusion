@@ -8,24 +8,51 @@ class KSphereDataset(Dataset):
 
     def __init__(self, config) -> None:
         super().__init__()
-        self.data = self.generate_data(config.data.data_samples, config.data.n_spheres, config.data.ambient_dim, config.data.manifold_dim, config.data.noise_std)
+        self.data = self.generate_data(config.data.data_samples, config.data.n_spheres, 
+                                        config.data.ambient_dim, config.data.manifold_dim,
+                                        config.data.noise_std, config.data.embedding_type,
+                                        config.data.radii)
 
-    def generate_data(self, n_samples, n_spheres, ambient_dim, manifold_dim, noise_std):
+    def generate_data(self, n_samples, n_spheres, ambient_dim, 
+                        manifold_dim, noise_std, embedding_type,
+                        radii):
             data = []
-            for _ in range(n_spheres):
+            for i in range(n_spheres):
                     # sample N(0, I) and normalize
                     new_data = torch.randn((n_samples, manifold_dim+1))
                     norms = torch.linalg.norm(new_data, dim=1)
                     new_data = new_data / norms[:,None]
+                    new_data = new_data * radii[i]
 
-                    # random isometric embedding
-                    embedding_matrix = torch.randn((ambient_dim, manifold_dim+1))
-                    q, r = np.linalg.qr(embedding_matrix)
-                    q = torch.from_numpy(q)
-
-                    # embed the data in the ambient space
-                    new_data = (q @ new_data.T).T
-
+                    if embedding_type == 'random_isometry':
+                        # random isometric embedding
+                        embedding_matrix = torch.randn((ambient_dim, manifold_dim+1))
+                        q, r = np.linalg.qr(embedding_matrix)
+                        q = torch.from_numpy(q)
+                        new_data = (q @ new_data.T).T
+                    elif embedding_type == 'first':
+                        # embedding into first manifold_dim + 1 dimensions
+                        suffix_zeros = torch.zeros([n_samples, ambient_dim - new_data.shape[1]])
+                        new_data = torch.cat([new_data, suffix_zeros], dim=1)
+                    elif embedding_type == 'separating':
+                        # embbedding which puts spheres in non-intersecting dimensions
+                        if n_spheres * (manifold_dim + 1) > ambient_dim:
+                            raise RuntimeError('Cant fit that many spheres. Enusre that n_spheres * (manifold_dim + 1) <= ambient_dim')
+                        prefix_zeros = torch.zeros((n_samples, i * (manifold_dim + 1)))
+                        new_data = torch.cat([prefix_zeros, new_data], dim=1)
+                        suffix_zeros = torch.zeros([n_samples, ambient_dim - new_data.shape[1]])
+                        new_data = torch.cat([new_data, suffix_zeros], dim=1)
+                    elif embedding_type == 'along_axis':
+                        # embbedding which puts spheres in non-intersecting dimensions
+                        if n_spheres * (manifold_dim + 1) > ambient_dim:
+                            raise RuntimeError('Cant fit that many spheres.')
+                        prefix_zeros = torch.zeros((n_samples, i))
+                        new_data = torch.cat([prefix_zeros, new_data], dim=1)
+                        suffix_zeros = torch.zeros([n_samples, ambient_dim - new_data.shape[1]])
+                        new_data = torch.cat([new_data, suffix_zeros], dim=1)    
+                    else:
+                        raise RuntimeError('Unknown embedding type.')
+                        
                     # add noise
                     new_data = new_data + noise_std * torch.randn_like(new_data)
                     data.append(new_data)

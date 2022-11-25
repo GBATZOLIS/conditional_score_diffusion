@@ -403,7 +403,7 @@ def get_manifold_dimension(config):
     singular_values.append(s)
 
   with open(os.path.join(save_path, 'svd.pkl'), 'wb') as f:
-    info = {'singular_values':singular_values}
+    info = {'singular_values':singular_values, 'normalized_scores': normalized_scores}
     pickle.dump(info, f)
   
 

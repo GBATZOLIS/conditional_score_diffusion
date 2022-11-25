@@ -73,16 +73,18 @@ def get_config():
   data.use_data_mean=False 
 
   data.n_spheres = 1
+  data.radii = [1] * data.n_spheres
   data.ambient_dim=100
   data.manifold_dim=10
   data.noise_std = 0
+  data.embedding_type = 'random_isometry'
   data.dim = data.ambient_dim
   data.num_channels = 0 
   data.shape = [data.dim]
   
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = 'test_logs/ve/checkpoints/best/last.ckpt'
+  model.checkpoint_path = None #'/home/gb511/projects/manifold_dimension/ksphere/ve/checkpoints/last.ckpt'
   model.sigma_max = data.manifold_dim * math.sqrt(2)
   model.sigma_min = 1e-2
 

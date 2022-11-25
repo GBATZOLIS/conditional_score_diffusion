@@ -27,16 +27,18 @@ def main(argv):
   if FLAGS.config[-3:] == 'pkl':
     with open(FLAGS.config, 'rb') as file:
       config = pickle.load(file)
-      if FLAGS.checkpoint_path is not None:
-        config.model.checkpoint_path =  FLAGS.checkpoint_path
   elif FLAGS.config[-2:] == 'py':
     config = read_config(FLAGS.config)
   else:
     raise RuntimeError('Unknown config extension. Provide a path to .py or .pkl file.')
+  
+  if FLAGS.checkpoint_path is not None:
+        config.model.checkpoint_path =  FLAGS.checkpoint_path
 
   if FLAGS.debug:
     config.training.gpus = 0
     config.logging.log_path = 'test_logs/'
+    
   if FLAGS.mode == 'train':
     run_lib.train(config, FLAGS.log_path, FLAGS.checkpoint_path, FLAGS.log_name)
   elif FLAGS.mode == 'test':

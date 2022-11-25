@@ -1,6 +1,6 @@
 #!/bin/bash 
 #! Name of the job: 
-#SBATCH -J ve_sig_0.01_4.0 
+#SBATCH -J separated_wide 
 #! Which project should be charged (NB Wilkes2 projects end in '-GPU'): 
 #SBATCH --account SCHOENLIEB-SL3-GPU 
 #! How many whole nodes should be allocated? 
@@ -32,7 +32,7 @@ conda activate score_sde
 REPO=/rds/user/js2164/hpc-work/repos/score_sde_pytorch/ 
  
 cd /home/js2164/rds/hpc-work/repos/score_sde_pytorch/ 
-python main.py --config configs/ksphere/vesde_sig_1e2_4.py \ 
+python main.py --config configs/ksphere/N_2/random_wide_shallow.py \ 
  --mode train \ 
---log_path logs/ksphere/dim_50/n_1/ \ 
---log_name ve_sig_0.01_4.0 \ 
+--log_path logs/ksphere/dim_10/n_2/ \ 
+--log_name separated_wide \ 

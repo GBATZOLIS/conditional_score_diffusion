@@ -1,2 +1,3 @@
-- Why are we using absl?
-- How to handle configs/args?
+- Learning rate scheduler
+- Optuna
+- Separated spheres
