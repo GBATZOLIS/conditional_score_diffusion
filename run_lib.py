@@ -359,7 +359,7 @@ def get_manifold_dimension(config):
   score_fn = mutils.get_score_fn(sde, score_model, conditional=False, train=False, continuous=True)
   #---- end of setup ----
 
-  num_datapoints = 10
+  num_datapoints = 100
   singular_values = []
   for idx, orig_batch in tqdm(enumerate(train_dataloader)):
     if idx+1 >= num_datapoints:
@@ -399,10 +399,10 @@ def get_manifold_dimension(config):
     means = scores.mean(dim=0, keepdim=True)
     normalized_scores = scores - means
 
-    np_scores = np.array(normalized_scores)
-    pca = PCA(n_components='mle')
-    pca.fit(np_scores)
-    print(pca.n_components_)
+    #np_scores = np.array(normalized_scores)
+    #pca = PCA(n_components='mle')
+    #pca.fit(np_scores)
+    #print(pca.n_components_)
 
 
     u, s, v = torch.linalg.svd(normalized_scores)
