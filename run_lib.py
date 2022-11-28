@@ -356,7 +356,13 @@ def get_manifold_dimension(config):
   
   score_model = pl_module.score_model
   sde = pl_module.sde
-  score_fn = mutils.get_score_fn(sde, score_model, conditional=False, train=False, continuous=True)
+
+  if log_name == 'conditional':
+    conditional = True
+  else:
+    conditional = False
+
+  score_fn = mutils.get_score_fn(sde, score_model, conditional=conditional, train=False, continuous=True)
   #---- end of setup ----
 
   num_datapoints = 100
@@ -365,12 +371,21 @@ def get_manifold_dimension(config):
     if idx+1 >= num_datapoints:
       break
     
-    orig_batch = orig_batch.to(device)
-    batchsize = orig_batch.size(0)
-    ambient_dim = math.prod(orig_batch.shape[1:])
+    if conditional:
+      Y, X = orig_batch
+    else:
+      X = orig_batch
 
-    x = orig_batch[0]
+    X = X.to(device)
+    batchsize = X.size(0)
+    ambient_dim = math.prod(X.shape[1:])
+
+    x = X[0]
     x = x.repeat([batchsize,]+[1 for i in range(len(x.shape))])
+
+    if conditional:
+      y = Y[0]
+      y = y.repeat([batchsize,]+[1 for i in range(len(y.shape))])
 
     num_batches = ambient_dim // batchsize + 1
     extra_in_last_batch = ambient_dim - (ambient_dim // batchsize) * batchsize
@@ -385,8 +400,14 @@ def get_manifold_dimension(config):
 
       mean, std = sde.marginal_prob(batch, vec_t)
       z = torch.randn_like(batch)
-      batch = mean + std[(...,) + (None,) * len(batch.shape[1:])] * z
-      score = score_fn(batch, vec_t).detach().cpu()
+      perturbed_x = mean + std[(...,) + (None,) * len(batch.shape[1:])] * z
+      
+      if conditional:
+        perturbed_batch = {'x':perturbed_x, 'y':y}
+      else:
+        perturbed_batch = perturbed_x
+
+      score = score_fn(perturbed_batch, vec_t).detach().cpu()
 
       if i < num_batches:
         scores.append(score)
@@ -410,7 +431,7 @@ def get_manifold_dimension(config):
     singular_values.append(s)
 
   with open(os.path.join(save_path, 'svd.pkl'), 'wb') as f:
-    info = {'singular_values':singular_values}
+    info = {'singular_values': singular_values}
     pickle.dump(info, f)
   
 
