@@ -102,6 +102,7 @@ class FCN_conditional(FCN):
   
     def forward(self, input_dict, labels):
         x, y = input_dict['x'], input_dict['y']
-        concat = torch.cat((x, y.unsqueeze(dim=1)), dim=1)
+        #y = y.unsqueeze(dim=1)
+        concat = torch.cat((x, y), dim=1)
         score_x = super().forward(concat, labels)
         return score_x
