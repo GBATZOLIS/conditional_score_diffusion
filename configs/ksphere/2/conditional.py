@@ -84,8 +84,8 @@ def get_config():
   # model
   config.model = model = ml_collections.ConfigDict()
   model.checkpoint_path = None #'/home/gb511/projects/manifold_dimension/ksphere/5/%s/checkpoints/best/last.ckpt' % logging.log_name
-  model.sigma_max = 4
-  model.sigma_min = 1e-2
+  model.sigma_max_x = 4
+  model.sigma_min_x = 1e-2
 
   model.name = 'fcn_conditional'
   model.state_size = data.dim
