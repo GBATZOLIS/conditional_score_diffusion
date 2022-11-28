@@ -39,6 +39,7 @@ def get_config():
   training = config.training
   training.gpus = 1
   training.lightning_module = 'conditional' 
+  training.conditioning_approach = 'sr3'
   training.batch_size = 500
   training.num_epochs = 2 * int(1e5)
   training.n_iters = int(1e20)
