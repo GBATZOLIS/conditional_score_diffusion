@@ -29,8 +29,8 @@ def get_config():
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = '/home/gb511/projects/manifold_dimension/ksphere/2' #'logs/ksphere/'
-  logging.log_name = 'conditional'
+  logging.log_path = '/home/gb511/projects/manifold_dimension/ksphere/1' #'logs/ksphere/'
+  logging.log_name = 'unconditional'
   logging.top_k = 5
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
@@ -38,8 +38,7 @@ def get_config():
   # training
   training = config.training
   training.gpus = 1
-  training.lightning_module = 'conditional' 
-  training.conditioning_approach = 'sr3'
+  training.lightning_module = 'base' 
   training.batch_size = 500
   training.num_epochs = 2 * int(1e5)
   training.n_iters = int(1e20)
@@ -66,7 +65,7 @@ def get_config():
 
    # data
   config.data = data = ml_collections.ConfigDict()
-  data.datamodule = 'conditionalKSphere'
+  data.datamodule = 'KSphere'
   data.create_dataset = False
   data.split = [0.8, 0.1, 0.1]
   data.data_samples = 50000
@@ -83,11 +82,11 @@ def get_config():
   
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = None #'/home/gb511/projects/manifold_dimension/ksphere/2/%s/checkpoints/best/last.ckpt' % logging.log_name
-  model.sigma_max_x = 4
-  model.sigma_min_x = 1e-2
+  model.checkpoint_path = None #'/home/gb511/projects/manifold_dimension/ksphere/1/%s/checkpoints/best/last.ckpt' % logging.log_name
+  model.sigma_max = 4
+  model.sigma_min = 1e-2
 
-  model.name = 'fcn_conditional'
+  model.name = 'fcn'
   model.state_size = data.dim
   model.hidden_layers = 5
   model.hidden_nodes = 2048
