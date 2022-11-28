@@ -5,12 +5,13 @@ from utils import scatter, plot, compute_grad, create_video, hist
 from models.ema import ExponentialMovingAverage
 import torchvision
 from . import utils
-from plot_utils import plot_curl, plot_vector_field
+from plot_utils import plot_curl, plot_vector_field, plot_spectrum, plot_norms
 import numpy as np
 from models import utils as mutils
 from pytorch_lightning.callbacks import ModelCheckpoint
 import datetime
 import pickle
+from dim_reduction import get_manifold_dimension
 
 @utils.register_callback(name='configuration')
 class ConfigurationSetterCallback(Callback):
@@ -401,6 +402,49 @@ def sample_model_score(batch, pl_module):
     g2 = pl_module.sde.sde(torch.zeros_like(batch), t)[1] ** 2
     score_fn = mutils.get_score_fn(pl_module.sde, pl_module.score_model, train=False, continuous=True)
     return score_fn(perturbed_data, t)
+
+@utils.register_callback(name='ScoreSpecturmVisualization')
+class ScoreSpecturmVisualization(Callback):
+    def __init__(self, show_evolution=False):
+        super().__init__()
+        self.evolution = False #show_evolution
+
+        
+
+    def on_validation_epoch_end(self,trainer, pl_module):
+        if pl_module.current_epoch % 500 == 0:
+            config = pl_module.config
+            config.model.checkpoint_path =  config.logging.log_path + config.logging.log_name + "/checkpoints/best/last.ckpt"
+            name=f'svd_{pl_module.current_epoch}'
+            try:
+                get_manifold_dimension(config = config, name=name)
+                path = os.path.join(config.logging.log_path, config.logging.log_name, 'svd', f'{name}.pkl')
+                with open(path, 'rb') as f:
+                    svd = pickle.load(f)
+                singular_values = svd['singular_values']
+                image = plot_spectrum(singular_values=singular_values, return_tensor=True)
+                pl_module.logger.experiment.add_image('score specturm', image, pl_module.current_epoch)
+            except:
+                print('Couldnt produce the score spectrum.')
+
+@utils.register_callback(name='KSphereEvaluation')
+class KSphereEvaluation(Callback):
+    def __init__(self, show_evolution=False):
+        super().__init__()
+        self.evolution = False #show_evolution
+
+    def on_validation_epoch_end(self,trainer, pl_module):
+        if pl_module.current_epoch % 500 == 0:
+            config = pl_module.config
+            samples, _ = pl_module.sample(num_samples=1000)
+            min_norm=torch.linalg.norm(samples, dim=1).min().item()
+            max_norm=torch.linalg.norm(samples, dim=1).max().item()
+            mean_norm=torch.linalg.norm(samples, dim=1).mean().item()
+            image = plot_norms(samples=samples, return_tensor=True)
+            pl_module.log('min_norm', min_norm, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+            pl_module.log('max_norm', max_norm, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+            pl_module.log('mean_norm', mean_norm, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+            pl_module.logger.experiment.add_image('sample_norms_hist', image, pl_module.current_epoch)
 
 
 # CHECKPOINTS

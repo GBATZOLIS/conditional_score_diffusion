@@ -105,3 +105,40 @@ def plot_log_energy(score_model, t=0.0, X=None, Y=None):
     plt.gca().set_aspect('equal')
     plt.show()
     return Z
+
+
+def plot_spectrum(singular_values, return_tensor=False):
+    sing_vals = (np.array(singular_values)).mean(axis=0)
+    plt.rcParams.update({'font.size': 16})
+    plt.figure(figsize=(15,10))
+    plt.bar(list(range(len(sing_vals))),sing_vals)
+    plt.grid(alpha=0.5)
+    plt.title('Score Spectrum')
+    plt.xticks(np.arange(0, len(sing_vals)+1, 10))
+    if return_tensor:
+        buf = io.BytesIO()
+        plt.savefig(buf, format='jpeg')
+        buf.seek(0)
+        image = PIL.Image.open(buf)
+        image = transforms.ToTensor()(image)
+        plt.close()
+        return image
+    else:
+        plt.show()
+
+def plot_norms(samples, return_tensor=False):
+    norms=torch.linalg.norm(samples, dim=1).numpy()
+    plt.rcParams.update({'font.size': 16})
+    plt.figure(figsize=(10,10))
+    plt.grid(alpha=0.5)
+    plt.hist(norms, bins=50)
+    if return_tensor:
+        buf = io.BytesIO()
+        plt.savefig(buf, format='jpeg')
+        buf.seek(0)
+        image = PIL.Image.open(buf)
+        image = transforms.ToTensor()(image)
+        plt.close()
+        return image
+    else:
+        plt.show()

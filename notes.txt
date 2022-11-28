@@ -1,3 +1,9 @@
+TO DO:
+
 - Learning rate scheduler
 - Optuna
-- Separated spheres
+- Callback for score spectrum
+- Non-uniform distrbution on a manifold
+- Manifold of images
+- Elephant manifold
+- Union of different dims

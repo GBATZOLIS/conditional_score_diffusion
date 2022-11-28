@@ -184,4 +184,3 @@ def fisher_divergence(pl_module, data_module, t=0.01, grid=True):
 
       diff = diffusion**2 * torch.linalg.norm(s_gt - s_model, dim=1) ** 2
   return diff.mean().item()
-  

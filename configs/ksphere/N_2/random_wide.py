@@ -43,6 +43,6 @@ def get_config():
   #logging
   logging = config.logging
   logging.log_path = f'logs/ksphere/dim_{data.manifold_dim}/n_{data.n_spheres}/'
-  logging.log_name = f'separated_wide'
+  logging.log_name = f'random_wide'
 
   return config

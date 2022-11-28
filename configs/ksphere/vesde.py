@@ -47,7 +47,7 @@ def get_config():
   training.continuous = True
   training.sde = 'vesde'
   # callbacks
-  training.visualization_callback = None
+  training.visualization_callback = ['ScoreSpecturmVisualization', 'KSphereEvaluation']
   training.show_evolution = False 
 
   # validation
@@ -73,7 +73,7 @@ def get_config():
   data.use_data_mean=False 
 
   data.n_spheres = 1
-  data.radii = [1] * data.n_spheres
+  data.radii = 'unit'
   data.ambient_dim=100
   data.manifold_dim=10
   data.noise_std = 0

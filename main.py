@@ -4,6 +4,8 @@ from ml_collections.config_flags import config_flags
 import run_lib
 import pickle
 from configs.utils import read_config
+import uuid
+
 
 FLAGS = flags.FLAGS
 
@@ -38,6 +40,7 @@ def main(argv):
   if FLAGS.debug:
     config.training.gpus = 0
     config.logging.log_path = 'test_logs/'
+    config.logging.log_name = str(uuid.uuid4())
     
   if FLAGS.mode == 'train':
     run_lib.train(config, FLAGS.log_path, FLAGS.checkpoint_path, FLAGS.log_name)

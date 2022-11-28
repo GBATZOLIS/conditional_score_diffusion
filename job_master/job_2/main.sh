@@ -1,6 +1,6 @@
 #!/bin/bash 
 #! Name of the job: 
-#SBATCH -J separated_wide 
+#SBATCH -J random_wide 
 #! Which project should be charged (NB Wilkes2 projects end in '-GPU'): 
 #SBATCH --account SCHOENLIEB-SL3-GPU 
 #! How many whole nodes should be allocated? 
@@ -35,4 +35,4 @@ cd /home/js2164/rds/hpc-work/repos/score_sde_pytorch/
 python main.py --config configs/ksphere/N_2/random_wide.py \ 
  --mode train \ 
 --log_path logs/ksphere/dim_10/n_2/ \ 
---log_name separated_wide \ 
+--log_name random_wide \ 

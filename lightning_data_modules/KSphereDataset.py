@@ -2,7 +2,7 @@ import pytorch_lightning as pl
 import torch
 import numpy as np
 from torch.utils.data import random_split, Dataset, DataLoader 
-from . import utils
+import lightning_data_modules.utils as utils
 
 class KSphereDataset(Dataset):
 
@@ -16,6 +16,8 @@ class KSphereDataset(Dataset):
     def generate_data(self, n_samples, n_spheres, ambient_dim, 
                         manifold_dim, noise_std, embedding_type,
                         radii):
+            if radii == 'unit':
+                radii = [1] * n_spheres
             data = []
             for i in range(n_spheres):
                     # sample N(0, I) and normalize
@@ -44,7 +46,7 @@ class KSphereDataset(Dataset):
                         new_data = torch.cat([new_data, suffix_zeros], dim=1)
                     elif embedding_type == 'along_axis':
                         # embbedding which puts spheres in non-intersecting dimensions
-                        if n_spheres * (manifold_dim + 1) > ambient_dim:
+                        if (n_spheres - 1) + (manifold_dim + 1) > ambient_dim:
                             raise RuntimeError('Cant fit that many spheres.')
                         prefix_zeros = torch.zeros((n_samples, i))
                         new_data = torch.cat([prefix_zeros, new_data], dim=1)

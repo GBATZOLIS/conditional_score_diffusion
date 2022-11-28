@@ -31,18 +31,18 @@ def get_config():
   data = config.data
   data.n_spheres = 2
   data.manifold_dim=10
-  data.embedding_type = 'random_isometry'
+  data.embedding_type = 'along_axis'
 
   # model
   model = config.model
   model.sigma_min = 1e-2
   model.sigma_max = 4
-  model.hidden_layers = 2
-  model.hidden_nodes = 4096
+  model.hidden_layers = 5
+  model.hidden_nodes = 2048
 
   #logging
   logging = config.logging
   logging.log_path = f'logs/ksphere/dim_{data.manifold_dim}/n_{data.n_spheres}/'
-  logging.log_name = f'random_wide_shallow'
+  logging.log_name = f'along_axis_wide'
 
   return config
