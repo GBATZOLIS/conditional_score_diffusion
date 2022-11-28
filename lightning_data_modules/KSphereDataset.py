@@ -47,10 +47,9 @@ class KSphereDataset(Dataset):
         return len(self.data)
 
 class ConditionalKSphereDataset(Dataset):
-
     def __init__(self, config) -> None:
         super().__init__()
-        self.data = self.generate_data(config.data.data_samples, config.data.n_spheres, config.data.ambient_dim, config.data.manifold_dim, config.data.noise_std, config.data.separated)
+        self.labels, self.data = self.generate_data(config.data.data_samples, config.data.n_spheres, config.data.ambient_dim, config.data.manifold_dim, config.data.noise_std, config.data.separated)
 
     def generate_data(self, n_samples, n_spheres, ambient_dim, manifold_dim, noise_std, separated=False):
             data = []
@@ -87,7 +86,7 @@ class ConditionalKSphereDataset(Dataset):
 
             data = data[idx, ::]
             labels = labels[idx, ::]
-            return data
+            return labels, data
 
     def __getitem__(self, index):
         label = self.labels[index]
