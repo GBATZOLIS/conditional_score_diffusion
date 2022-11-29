@@ -58,14 +58,19 @@ class ConditionalKSphereDataset(Dataset):
                 radius = torch.linspace(start=0.5, end=1.5, steps = n_spheres)
             else:
                 radius = torch.ones(n_spheres)
+            
+            if type(manifold_dim) == int:
+                manifold_dims = [manifold_dim for _ in range(n_spheres)]
+            else:
+                manifold_dims = manifold_dim
 
             for i in range(n_spheres):
-                new_data = torch.randn((n_samples, manifold_dim+1))
+                new_data = torch.randn((n_samples, manifold_dims[i]+1))
                 norms = torch.linalg.norm(new_data, dim=1)
                 new_data = new_data / norms[:,None]
 
                 # random isometric embedding
-                embedding_matrix = torch.randn((ambient_dim, manifold_dim+1))
+                embedding_matrix = torch.randn((ambient_dim, manifold_dims[i]+1))
                 q, r = np.linalg.qr(embedding_matrix)
                 q = torch.from_numpy(q)
 
