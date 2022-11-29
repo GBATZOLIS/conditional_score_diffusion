@@ -71,7 +71,7 @@ def get_config():
   data.data_samples = 50000
   data.use_data_mean=False 
 
-  data.n_spheres = 2
+  data.n_spheres = 1
   data.ambient_dim=100
   data.manifold_dim=10
   data.separated = False
@@ -82,7 +82,7 @@ def get_config():
   
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = '/home/gb511/projects/manifold_dimension/ksphere/1/%s/checkpoints/best/last.ckpt' % logging.log_name
+  model.checkpoint_path = None #'/home/gb511/projects/manifold_dimension/ksphere/1/%s/checkpoints/best/last.ckpt' % logging.log_name
   model.sigma_max = 4
   model.sigma_min = 1e-2
 
