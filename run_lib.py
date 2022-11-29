@@ -373,11 +373,11 @@ def get_manifold_dimension(config):
     
     if conditional:
       Y, X = orig_batch
+      Y = Y.to(device)
     else:
       X = orig_batch
 
     X = X.to(device)
-    Y = Y.to(device)
     batchsize = X.size(0)
     ambient_dim = math.prod(X.shape[1:])
 
