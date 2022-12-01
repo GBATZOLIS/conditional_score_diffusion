@@ -367,6 +367,7 @@ def get_manifold_dimension(config):
 
   num_datapoints = 100
   singular_values = []
+  class_memberships = []
   for idx, orig_batch in tqdm(enumerate(train_dataloader)):
     if idx+1 >= num_datapoints:
       break
@@ -386,6 +387,7 @@ def get_manifold_dimension(config):
 
     if conditional:
       y = Y[0]
+      class_memberships.append(y.item())
       y = y.repeat([batchsize,]+[1 for i in range(len(y.shape))])
 
     num_batches = ambient_dim // batchsize + 1
@@ -432,7 +434,12 @@ def get_manifold_dimension(config):
     singular_values.append(s)
 
   with open(os.path.join(save_path, 'svd.pkl'), 'wb') as f:
-    info = {'singular_values': singular_values}
+    if conditional:
+      info = {'singular_values': singular_values,
+              'class_memberships': class_memberships}
+    else:
+      info = {'singular_values': singular_values}
+      
     pickle.dump(info, f)
   
 
