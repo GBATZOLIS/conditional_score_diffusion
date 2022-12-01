@@ -375,6 +375,7 @@ def get_manifold_dimension(config):
     if conditional:
       Y, X = orig_batch
       Y = Y.to(device)
+      print(X)
     else:
       X = orig_batch
 
@@ -439,7 +440,7 @@ def get_manifold_dimension(config):
               'class_memberships': class_memberships}
     else:
       info = {'singular_values': singular_values}
-      
+
     pickle.dump(info, f)
   
 
