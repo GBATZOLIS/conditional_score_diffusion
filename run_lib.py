@@ -357,7 +357,7 @@ def get_manifold_dimension(config):
   score_model = pl_module.score_model
   sde = pl_module.sde
 
-  if log_name == 'conditional':
+  if log_name.startswith('conditional'):
     conditional = True
   else:
     conditional = False
@@ -375,7 +375,7 @@ def get_manifold_dimension(config):
     if conditional:
       Y, X = orig_batch
       Y = Y.to(device)
-      print(X)
+      #print(X)
     else:
       X = orig_batch
 
