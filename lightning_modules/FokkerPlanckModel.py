@@ -16,7 +16,7 @@ from lightning_modules.BaseSdeGenerativeModel import BaseSdeGenerativeModel
 @utils.register_lightning_module(name='fokker-planck')
 class FokkerPlanckModel(BaseSdeGenerativeModel):
     def __init__(self, config, *args, **kwargs):
-        super().__init__()
+        super().__init__(config)
 
     def compute_fp_loss(self, batch):
         eps=1e-5

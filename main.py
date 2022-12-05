@@ -1,7 +1,7 @@
+import run_lib
 from absl import app
 from absl import flags
 from ml_collections.config_flags import config_flags
-import run_lib
 
 FLAGS = flags.FLAGS
 
