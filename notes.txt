@@ -7,3 +7,5 @@ TO DO:
 - Manifold of images
 - Elephant manifold
 - Union of different dims
+
+- Expolore non-uniform spectrum pointwise

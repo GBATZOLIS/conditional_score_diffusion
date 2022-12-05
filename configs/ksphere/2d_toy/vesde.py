@@ -30,7 +30,7 @@ def get_config():
   #logging
   config.logging = logging = ml_collections.ConfigDict()
   logging.log_path = '/home/gb511/projects/manifold_dimension/ksphere' #'logs/ksphere/'
-  logging.log_name = 've'
+  logging.log_name = '2d_toy'
   logging.top_k = 5
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
@@ -74,10 +74,10 @@ def get_config():
 
   data.n_spheres = 1
   data.radii = 'unit'
-  data.ambient_dim=100
-  data.manifold_dim=10
+  data.ambient_dim=2
+  data.manifold_dim=2
   data.noise_std = 0
-  data.embedding_type = 'random_isometry'
+  data.embedding_type = 'first'
   data.dim = data.ambient_dim
   data.num_channels = 0 
   data.shape = [data.dim]

@@ -18,7 +18,7 @@
             "program": "${file}",
             "args": [
                 "--config",
-                "configs/ksphere/N_2/vesde.py",
+                "configs/ksphere/2d_toy/vesde.py",
                 "--log_path",
                 "./test_logs",
                 "--debug",

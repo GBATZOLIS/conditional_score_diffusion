@@ -8,22 +8,24 @@ class KSphereDataset(Dataset):
 
     def __init__(self, config) -> None:
         super().__init__()
-        self.data = self.generate_data(config.data.data_samples, config.data.n_spheres, 
-                                        config.data.ambient_dim, config.data.manifold_dim,
-                                        config.data.noise_std, config.data.embedding_type,
-                                        config.data.radii)
+        self.data = self.generate_data(config.data.get('data_samples'), 
+                                        config.data.get('n_spheres'), 
+                                        config.data.get('ambient_dim'), 
+                                        config.data.get('manifold_dim'),
+                                        config.data.get('noise_std'), 
+                                        config.data.get('embedding_type'),
+                                        config.data.get('radii', 'unit'),
+                                        config.data.get('angle_std', -1)
+                                        )
 
     def generate_data(self, n_samples, n_spheres, ambient_dim, 
                         manifold_dim, noise_std, embedding_type,
-                        radii):
+                        radii, angle_std):
             if radii == 'unit':
                 radii = [1] * n_spheres
             data = []
             for i in range(n_spheres):
-                    # sample N(0, I) and normalize
-                    new_data = torch.randn((n_samples, manifold_dim+1))
-                    norms = torch.linalg.norm(new_data, dim=1)
-                    new_data = new_data / norms[:,None]
+                    new_data = self.sample_sphere(n_samples, manifold_dim, angle_std)
                     new_data = new_data * radii[i]
 
                     if embedding_type == 'random_isometry':
@@ -62,6 +64,28 @@ class KSphereDataset(Dataset):
             data = torch.cat(data, dim=0)
             return data
 
+    def sample_sphere(self, n_samples, manifold_dim, std=-1):
+
+        def polar_to_cartesian(angles):
+            xs = []
+            sin_prod=1
+            for i in range(len(angles)):
+                x_i = sin_prod * torch.cos(angles[i])
+                xs.append(x_i)
+                sin_prod *= torch.sin(angles[i])
+            xs.append(sin_prod)
+            return torch.stack(xs)[None, ...]
+
+        if std == -1:
+            new_data = torch.randn((n_samples, manifold_dim+1))
+            norms = torch.linalg.norm(new_data, dim=1)
+            new_data = new_data / norms[:,None]
+            return new_data
+        else:
+            sampled_angles = std * torch.randn((n_samples,manifold_dim))
+            return torch.cat([polar_to_cartesian(angles) for angles in sampled_angles], dim=0)    
+
+
     def __getitem__(self, index):
         item = self.data[index]
         return item 
@@ -71,7 +95,7 @@ class KSphereDataset(Dataset):
 
 
 @utils.register_lightning_datamodule(name='KSphere')
-class SyntheticDataModule(pl.LightningDataModule):
+class KSphereDataModule(pl.LightningDataModule):
     def __init__(self, config): 
         super().__init__()
         #Synthetic Dataset arguments

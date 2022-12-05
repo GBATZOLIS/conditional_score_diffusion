@@ -127,7 +127,7 @@ def plot_spectrum(singular_values, return_tensor=False):
         plt.show()
 
 def plot_norms(samples, return_tensor=False):
-    norms=torch.linalg.norm(samples, dim=1).numpy()
+    norms=torch.linalg.norm(samples, dim=1).cpu().detach().numpy()
     plt.rcParams.update({'font.size': 16})
     plt.figure(figsize=(10,10))
     plt.grid(alpha=0.5)

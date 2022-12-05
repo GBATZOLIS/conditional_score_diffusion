@@ -1,6 +1,6 @@
 #!/bin/bash 
 #! Name of the job: 
-#SBATCH -J along_axis_wide 
+#SBATCH -J non_uniform_0.5 
 #! Which project should be charged (NB Wilkes2 projects end in '-GPU'): 
 #SBATCH --account SCHOENLIEB-SL3-GPU 
 #! How many whole nodes should be allocated? 
@@ -32,7 +32,7 @@ conda activate score_sde
 REPO=/rds/user/js2164/hpc-work/repos/score_sde_pytorch/ 
  
 cd /home/js2164/rds/hpc-work/repos/score_sde_pytorch/ 
-python main.py --config configs/ksphere/N_2/along_axis_wide.py \ 
+python main.py --config configs/ksphere/N_1/non_uniform_05.py \ 
  --mode train \ 
---log_path logs/ksphere/dim_10/n_2/ \ 
---log_name along_axis_wide \ 
+--log_path logs/ksphere/dim_10/n_1/ \ 
+--log_name non_uniform_0.5 \ 
