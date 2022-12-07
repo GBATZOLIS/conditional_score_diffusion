@@ -1,6 +1,6 @@
 #!/bin/bash 
 #! Name of the job: 
-#SBATCH -J non_uniform_1 
+#SBATCH -J sine_line 
 #! Which project should be charged (NB Wilkes2 projects end in '-GPU'): 
 #SBATCH --account SCHOENLIEB-SL3-GPU 
 #! How many whole nodes should be allocated? 
@@ -32,7 +32,7 @@ conda activate score_sde
 REPO=/rds/user/js2164/hpc-work/repos/score_sde_pytorch/ 
  
 cd /home/js2164/rds/hpc-work/repos/score_sde_pytorch/ 
-python main.py --config configs/ksphere/N_1/non_uniform_1.py \ 
+python main.py --config configs/line/vesde.py \ 
  --mode train \ 
---log_path logs/ksphere/dim_10/n_1/ \ 
---log_name non_uniform_1 \ 
+--log_path logs/line \ 
+--log_name sine_line \ 

@@ -40,48 +40,57 @@ def get_manifold_dimension(config, name=None):
   num_datapoints = 120
   singular_values = []
   normalized_scores_list = []
-  for idx, orig_batch in tqdm(enumerate(train_dataloader)):
-    if idx+1 >= num_datapoints:
-      break
-    
-    orig_batch = orig_batch.to(device)
-    batchsize = orig_batch.size(0)
-    ambient_dim = math.prod(orig_batch.shape[1:])
+  idx = 0
+  with tqdm(total=num_datapoints) as pbar:
+    for _, orig_batch in enumerate(train_dataloader):
 
-    x = orig_batch[0]
-    x = x.repeat([batchsize,]+[1 for i in range(len(x.shape))])
+      orig_batch = orig_batch.to(device)
+      batchsize = orig_batch.size(0)
+      
+      if idx+1 >= num_datapoints:
+          break
+        
+      for x in orig_batch:
+        if idx+1 >= num_datapoints:
+          break
+        
+        ambient_dim = math.prod(x.shape[1:])
+        x = x.repeat([batchsize,]+[1 for i in range(len(x.shape))])
 
-    num_batches = ambient_dim // batchsize + 1
-    extra_in_last_batch = ambient_dim - (ambient_dim // batchsize) * batchsize
-    num_batches *= 8
+        num_batches = ambient_dim // batchsize + 1
+        extra_in_last_batch = ambient_dim - (ambient_dim // batchsize) * batchsize
+        num_batches *= 8
 
-    t = pl_module.sampling_eps
-    vec_t = torch.ones(x.size(0), device=device) * t
+        t = pl_module.sampling_eps
+        vec_t = torch.ones(x.size(0), device=device) * t
 
-    scores = []
-    for i in range(1, num_batches+1):
-      batch = x.clone()
+        scores = []
+        for i in range(1, num_batches+1):
+          batch = x.clone()
 
-      mean, std = sde.marginal_prob(batch, vec_t)
-      z = torch.randn_like(batch)
-      batch = mean + std[(...,) + (None,) * len(batch.shape[1:])] * z
-      score = score_fn(batch, vec_t).detach().cpu()
+          mean, std = sde.marginal_prob(batch, vec_t)
+          z = torch.randn_like(batch)
+          batch = mean + std[(...,) + (None,) * len(batch.shape[1:])] * z
+          score = score_fn(batch, vec_t).detach().cpu()
 
-      if i < num_batches:
-        scores.append(score)
-      else:
-        scores.append(score[:extra_in_last_batch])
-    
-    scores = torch.cat(scores, dim=0)
-    scores = torch.flatten(scores, start_dim=1)
+          if i < num_batches:
+            scores.append(score)
+          else:
+            scores.append(score[:extra_in_last_batch])
+        
+        scores = torch.cat(scores, dim=0)
+        scores = torch.flatten(scores, start_dim=1)
 
-    means = scores.mean(dim=0, keepdim=True)
-    normalized_scores = scores - means
-    normalized_scores_list.append(normalized_scores.tolist())
+        means = scores.mean(dim=0, keepdim=True)
+        normalized_scores = scores - means
+        normalized_scores_list.append(normalized_scores.tolist())
 
-    u, s, v = torch.linalg.svd(normalized_scores)
-    s = s.tolist()
-    singular_values.append(s)
+        u, s, v = torch.linalg.svd(normalized_scores)
+        s = s.tolist()
+        singular_values.append(s)
+
+        idx+=1
+        pbar.update(1)
 
   if name is None:
     name = 'svd'

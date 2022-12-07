@@ -29,8 +29,8 @@ def get_config():
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = 'logs/ksphere' #'logs/ksphere/'
-  logging.log_name = '2d_toy_2'
+  logging.log_path = 'logs/line'
+  logging.log_name = 'sine_line'
   logging.top_k = 5
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
@@ -47,7 +47,7 @@ def get_config():
   training.continuous = True
   training.sde = 'vesde'
   # callbacks
-  training.visualization_callback = ['ScoreSpecturmVisualization', '2DVectorFieldVisualization', '2DSamplesVisualization']
+  training.visualization_callback = ['ScoreSpecturmVisualization', 'KSphereEvaluation']
   training.show_evolution = False 
 
   # validation
@@ -66,18 +66,14 @@ def get_config():
 
    # data
   config.data = data = ml_collections.ConfigDict()
-  data.datamodule = 'KSphere'
+  data.datamodule = 'Line'
   data.create_dataset = False
   data.split = [0.8, 0.1, 0.1]
   data.data_samples = 50000
   data.use_data_mean=False 
 
-  data.n_spheres = 1
-  data.radii = 'unit'
-  data.ambient_dim=2
-  data.manifold_dim=1
+  data.ambient_dim=100
   data.noise_std = 0
-  data.embedding_type = 'first'
   data.dim = data.ambient_dim
   data.num_channels = 0 
   data.shape = [data.dim]

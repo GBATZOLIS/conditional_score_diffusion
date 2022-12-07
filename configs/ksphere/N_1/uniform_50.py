@@ -30,7 +30,7 @@ def get_config():
   # data
   data = config.data
   data.n_spheres = 1
-  data.manifold_dim=10
+  data.manifold_dim=50
   
   data.embedding_type = 'random_isometry'
   data.angle_std = -1
@@ -44,7 +44,7 @@ def get_config():
 
   #logging
   logging = config.logging
-  logging.log_path = f'logs/ksphere/dim_{data.manifold_dim}/n_{data.n_spheres}/'
+  logging.log_path = f'logs/ksphere/dim_{data.manifold_dim}/n_{data.n_spheres}/{data.embedding_type}/'
   logging.log_name = f'uniform_random'
 
   return config

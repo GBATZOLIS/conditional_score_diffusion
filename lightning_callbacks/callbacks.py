@@ -12,6 +12,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 import datetime
 import pickle
 from dim_reduction import get_manifold_dimension
+import logging
 
 @utils.register_callback(name='configuration')
 class ConfigurationSetterCallback(Callback):
@@ -30,11 +31,14 @@ class ConfigurationSetterCallback(Callback):
             print('LOGGING PATH EXISTS BUT NOT RESUMING FROM CHECKPOINT!')
             raise RuntimeError('LOGGING PATH EXISTS BUT NOT RESUMING FROM CHECKPOINT!')
 
-        # Pickle config file 
+        # Pickle the config file 
         if not os.path.exists(log_path):
             os.makedirs(log_path)
         with open(os.path.join(log_path, 'config.pkl'), 'wb') as file:
             pickle.dump(config, file)
+
+        # Create a log file
+        logging.basicConfig(filename=os.path.join(log_path, 'logs.log'), encoding='utf-8', level=logging.DEBUG, force=True)
     
     def on_test_epoch_start(self, trainer, pl_module):
         pl_module.configure_sde(pl_module.config)
@@ -414,7 +418,7 @@ class ScoreSpecturmVisualization(Callback):
     def on_validation_epoch_end(self,trainer, pl_module):
         if pl_module.current_epoch % 500 == 0:
             config = pl_module.config
-            config.model.checkpoint_path =  config.logging.log_path + config.logging.log_name + "/checkpoints/best/last.ckpt"
+            config.model.checkpoint_path = os.path.join(config.logging.log_path, config.logging.log_name, "checkpoints/best/last.ckpt")
             name=f'svd_{pl_module.current_epoch}'
             try:
                 get_manifold_dimension(config = config, name=name)
@@ -424,8 +428,9 @@ class ScoreSpecturmVisualization(Callback):
                 singular_values = svd['singular_values']
                 image = plot_spectrum(singular_values=singular_values, return_tensor=True)
                 pl_module.logger.experiment.add_image('score specturm', image, pl_module.current_epoch)
-            except:
-                print('Couldnt produce the score spectrum.')
+            except Exception as e:
+                logging.warning('Could not create a score spectrum')
+                logging.error(e)
 
 @utils.register_callback(name='KSphereEvaluation')
 class KSphereEvaluation(Callback):
