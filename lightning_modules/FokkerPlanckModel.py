@@ -19,44 +19,57 @@ class FokkerPlanckModel(BaseSdeGenerativeModel):
         super().__init__(config)
 
     def compute_fp_loss(self, batch):
+        
         eps=1e-5
-        loss_fp = 0
-
+        # sample times
         t = torch.rand(batch.shape[0], device=batch.device) * (self.sde.T - eps) + eps
+        # sample x_t form perturbation kernel
+        x_t = self.sde.perturb(batch, t) # WARNING P_1 or P_t
 
-        diffusion = self.sde.sde(torch.zeros_like(batch), t)[1]
-        # oneish = (1.0- eps) * torch.ones_like(t).to(self.device)
-        perturbed_data = self.sde.perturb(batch, t) # WARNING P_1 or P_t
+        # get the diffusion coeff
+        g = self.sde.sde_coefficients(torch.zeros_like(batch), t)[1]
+        # get the drift function    
+        if self.config.model.fp_mdoe == 'forward':
+            f_x =  lambda y: self.sde.sde_coefficients(y, t)[0]
+        elif self.config.model.fp_mdoe == 'reverse':
+            f_x =  lambda y: self.sde.sde_coefficients(y, t)[0] - g[...,None]**2 * self.score_model(y, t)
 
-        def fp_loss(x,t):
+        def fp_loss(f_x, g, x, t):
+            '''
+            Args:
+            x - batch of x_t's (B, ...)
+            t - batch of corresponding t's (B,)
+            f_x - drift function. Takes y and returns f(y,t) (B,D) -> (B,D)
+            g - diffucion coeffictent at t. (B,)
+
+            Returns:
+                difference - difference of RHS and LHS of corresponding Fokker-Planck (B,)
+            '''
+
             B = x.shape[0] # batch size
-            grad_norm_2 = torch.linalg.norm(self.score_model.score(x, t).view(B,-1), dim=1)**2
-
+            D = np.prod(x.shape[1:])
+            score_norm_sq = torch.linalg.norm(self.score_model.score(x, t).view(B,-1), dim=1)**2 # (B,)
             score_x = lambda y: self.score_model.score(y,t)
-            divergence = compute_divergence(score_x, x, hutchinson=self.config.training.hutchinson)    
-            #self.score_model.trace_hessian_log_energy(x, t) 
-            
+            score_divergence = compute_divergence(score_x, x, hutchinson=self.config.training.hutchinson) # (B,)
+            f_divergence = compute_divergence(f_x, x, hutchinson=self.config.training.hutchinson) # (B,)
+            f = f_x(x) # (B,D)
+            f_dot_s = torch.bmm(f.view(B, 1, D), self.score_model.score(x, t).view(B, D, 1)).squeeze() # (B,)
             log_energy_t = lambda s: self.score_model.log_energy(x, s) 
-            time_derivative = compute_grad(log_energy_t, t).squeeze(1)
-            #self.score_model.time_derivative_log_energy(x,t)
-
-            difference = (time_derivative - (diffusion**2 / 2) * (grad_norm_2 + divergence))
-            difference = diffusion**2 * difference # apply weighting
+            time_derivative = compute_grad(log_energy_t, t).squeeze(1) # (B,)
+            if self.config.model.fp_mdoe == 'reverse':
+                difference = -time_derivative - (0.5*g**2*(score_divergence + score_norm_sq) - f_dot_s - f_divergence) #(B,)
+            elif self.config.model.fp_mdoe == 'forward':
+                difference = time_derivative - (0.5*g**2*(score_divergence + score_norm_sq) - f_dot_s - f_divergence) #(B,)
             return difference
-
-        #difference = fp_loss(perturbed_data, t)
-        
-        #x_grad_fp_loss = compute_grad(lambda x: fp_loss(x,t), perturbed_data)
-        #loss_fp = (torch.linalg.norm(x_grad_fp_loss, dim=1)).mean()
-        
-        loss_fp = fp_loss(perturbed_data, t).abs().mean()
+            
+        loss_fp = fp_loss(f_x, g, x_t, t).abs().mean() # should we apply the likelihood weighting? 
         
         return loss_fp
 
     def compute_ballance_loss(self, batch):
         eps=1e-5
         t = torch.rand(batch.shape[0], device=batch.device) * (self.sde.T - eps) + eps
-        diffusion = self.sde.sde(torch.zeros_like(batch), t)[1]
+        diffusion = self.sde.sde_coefficients(torch.zeros_like(batch), t)[1]
         perturbed_data = self.sde.perturb(batch, t)
         norm_fp_model = torch.linalg.norm(self.score_model.score(perturbed_data, t, weight_corerctor=0), dim=1)**2
         norm_correction_model =torch.linalg.norm(self.score_model.score(perturbed_data, t, weight_fp=0), dim=1)**2

@@ -22,7 +22,7 @@ class SDE(abc.ABC):
     pass
 
   @abc.abstractmethod
-  def sde(self, x, t):
+  def sde_coefficients(self, x, t):
     pass
 
   @abc.abstractmethod
@@ -64,7 +64,7 @@ class SDE(abc.ABC):
       f, G
     """
     dt = 1 / self.N
-    drift, diffusion = self.sde(x, t)
+    drift, diffusion = self.sde_coefficients(x, t)
     f = drift * dt
     G = diffusion * torch.sqrt(torch.tensor(dt, device=t.device))
     return f, G
@@ -77,7 +77,7 @@ class SDE(abc.ABC):
     """
     N = self.N
     T = self.T
-    sde_fn = self.sde
+    sde_fn = self.sde_coefficients
     discretize_fn = self.discretize
 
     # Build the class for reverse-time SDE.
@@ -117,7 +117,7 @@ class cSDE(SDE): #conditional setting. Allow for conditional time-dependent scor
     """
     N = self.N
     T = self.T
-    sde_fn = self.sde
+    sde_fn = self.sde_coefficients
     discretize_fn = self.discretize
 
     # Build the class for reverse-time SDE.
@@ -169,7 +169,7 @@ class SNRSDE(SDE):
   def T(self):
     return 1
 
-  def sde(self, x, t):
+  def sde_coefficients(self, x, t):
     SNR = lambda t: torch.exp(self.log_SNR(t))
     d_log_SNR = self.d_log_SNR
     std = torch.sqrt(1 / (1 + SNR(t)))
@@ -207,8 +207,8 @@ class VVSDE(SDE):
   def T(self):
     return 1
 
-  def sde(self, x, t):
-    return super().sde(x, t)
+  def sde_coefficients(self, x, t):
+    return super().sde_coefficients(x, t)
 
   def marginal_prob(self, x, t):
     return super().marginal_prob(x, t)
@@ -241,7 +241,7 @@ class VPSDE(SDE):
   def T(self):
     return 1
 
-  def sde(self, x, t):
+  def sde_coefficients(self, x, t):
     beta_t = self.beta_0 + t * (self.beta_1 - self.beta_0)
     drift = -0.5 * beta_t[(...,)+(None,)*len(x.shape[1:])] * x
     diffusion = torch.sqrt(beta_t)
@@ -290,7 +290,7 @@ class subVPSDE(SDE):
   def T(self):
     return 1
 
-  def sde(self, x, t):
+  def sde_coefficients(self, x, t):
     beta_t = self.beta_0 + t * (self.beta_1 - self.beta_0)
     drift = -0.5 * beta_t[(...,)+(None,)*len(x.shape[1:])] * x
     discount = 1. - torch.exp(-2 * self.beta_0 * t - (self.beta_1 - self.beta_0) * t ** 2)
@@ -333,7 +333,7 @@ class VESDE(SDE):
   def T(self):
     return 1
 
-  def sde(self, x, t):
+  def sde_coefficients(self, x, t):
     sigma = self.sigma_min * (self.sigma_max / self.sigma_min) ** t
     drift = torch.zeros_like(x)
     diffusion = sigma * torch.sqrt(torch.tensor(2 * (np.log(self.sigma_max) - np.log(self.sigma_min))).type_as(t))
@@ -407,7 +407,7 @@ class cVESDE(cSDE):
   def T(self):
     return 1
 
-  def sde(self, x, t):
+  def sde_coefficients(self, x, t):
     sigma = self.sigma_min * (self.sigma_max / self.sigma_min) ** t
     drift = torch.zeros_like(x)
     diffusion = sigma * torch.sqrt(torch.tensor(2 * (np.log(self.sigma_max) - np.log(self.sigma_min)),

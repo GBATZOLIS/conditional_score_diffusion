@@ -86,7 +86,7 @@ def get_general_sde_loss_fn(sde, train, conditional=False, reduce_mean=True, con
       losses = torch.square(score * std[(...,) + (None,) * len(batch.shape[1:])] + z)
       losses = reduce_op(losses.reshape(losses.shape[0], -1), dim=-1)
     else:
-      g2 = sde.sde(torch.zeros_like(batch), t)[1] ** 2
+      g2 = sde.sde_coefficients(torch.zeros_like(batch), t)[1] ** 2
       losses = torch.square(score + z / std[(...,) + (None,) * len(batch.shape[1:])])
       losses = reduce_op(losses.reshape(losses.shape[0], -1), dim=-1) * g2
 
