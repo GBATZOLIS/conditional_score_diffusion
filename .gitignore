@@ -34,5 +34,5 @@ test_logs/
 wilkes_scripts/main.sh
 
 #Slurm out files
-slurm*
+#slurm*
 machine.file*
