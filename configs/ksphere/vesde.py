@@ -76,7 +76,7 @@ def get_config():
   #data.radii = 'unit'
   data.ambient_dim=100
   #data.manifold_dim=10
-  data.noise_std = 0
+  data.noise_std = 0.0
   data.embedding_type = 'random_isometry'
   data.dim = data.ambient_dim
   data.num_channels = 0 
