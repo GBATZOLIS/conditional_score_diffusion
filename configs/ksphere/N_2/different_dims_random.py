@@ -30,8 +30,13 @@ def get_config():
   # data
   data = config.data
   data.n_spheres = 2
-  data.radii = [0.25, 1]
-  data.manifold_dim=[5, 30]
+  data.ambient_dim= 100
+  data.radii = [1, 0.25]
+  data.manifold_dim=[10, 30]
+  data.noise_std=0.0
+
+  data.dim = data.ambient_dim
+  data.shape = [data.dim]
   
   data.embedding_type = 'random_isometry'
 
@@ -40,6 +45,7 @@ def get_config():
 
   # model
   model = config.model
+  model.state_size = data.dim
   model.sigma_min = 1e-2
   model.sigma_max = 4
   model.hidden_layers = 5
@@ -47,9 +53,7 @@ def get_config():
 
   #logging
   logging = config.logging
-  logging.log_path = f'logs/ksphere/dim_{data.manifold_dim}/n_{data.n_spheres}/{data.embedding_type}/'
+  logging.log_path = f'logs/ksphere/n_{data.n_spheres}/dim_{data.manifold_dim}/{data.embedding_type}/'
   logging.log_name = f'different_dims_different_radii'
-
-  model.checkpoint_path = 'logs/ksphere/dim_[5, 30]/n_2/random_isometry/different_dims_different_radii/checkpoints/best/last.ckpt'
 
   return config
