@@ -36,3 +36,6 @@ wilkes_scripts/main.sh
 #Slurm out files
 slurm*
 machine.file*
+
+#jobmaster jobs
+jobmaster/job_*
