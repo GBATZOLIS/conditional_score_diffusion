@@ -37,7 +37,8 @@ class KSphereDataset(Dataset):
 
                     if embedding_type == 'random_isometry':
                         # random isometric embedding
-                        embedding_matrix = torch.randn((ambient_dim, manifold_dim+1))
+                        randomness_generator = torch.Generator().manual_seed(0)
+                        embedding_matrix = torch.randn(size=(ambient_dim, manifold_dim+1), generator=randomness_generator)
                         q, r = np.linalg.qr(embedding_matrix)
                         q = torch.from_numpy(q)
                         new_data = (q @ new_data.T).T

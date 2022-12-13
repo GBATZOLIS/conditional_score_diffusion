@@ -30,7 +30,7 @@ class MammothDataset(Dataset):
             mammoth_list = json.load(f)
         
         mammoth = torch.tensor(mammoth_list)
-        mammoth = mammoth - mammoth.mean() 
+        mammoth = mammoth - mammoth.mean(0) 
         mammoth = mammoth / (mammoth.max() - mammoth.min())
         
         n_samples = mammoth.shape[0]
@@ -38,7 +38,8 @@ class MammothDataset(Dataset):
 
         if embedding_type == 'random_isometry':
             # random isometric embedding
-            embedding_matrix = torch.randn((ambient_dim, manifold_dim+1))
+            randomness_generator = torch.Generator().manual_seed(0)
+            embedding_matrix = torch.randn(size=(ambient_dim, manifold_dim+1), generator=randomness_generator)
             q, r = np.linalg.qr(embedding_matrix)
             q = torch.from_numpy(q)
             mammoth = (q @ mammoth.T).T
