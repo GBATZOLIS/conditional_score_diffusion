@@ -29,13 +29,14 @@ def get_config():
 
   # data
   data = config.data
-  data.n_spheres = 1
-  data.manifold_dim=10
+  data.n_spheres = 2
+  data.radii = [0.5, 1]
+  data.manifold_dim=[5, 30]
+  
   data.embedding_type = 'random_isometry'
-  data.angle_std = 0.75
 
   # dim_estimation
-  config.dim_estimation.num_datapoints = 1000
+  config.dim_estimation.num_datapoints = 200
 
   # model
   model = config.model
@@ -47,6 +48,8 @@ def get_config():
   #logging
   logging = config.logging
   logging.log_path = f'logs/ksphere/dim_{data.manifold_dim}/n_{data.n_spheres}/{data.embedding_type}/'
-  logging.log_name = f'non_uniform_{data.angle_std}'
+  logging.log_name = f'different_dims_different_radii'
+
+  model.checkpoint_path = 'logs/ksphere/dim_[5, 30]/n_2/random_isometry/different_dims_different_radii/checkpoints/best/last.ckpt'
 
   return config

@@ -14,17 +14,24 @@ class KSphereDataset(Dataset):
                                         config.data.get('manifold_dim'),
                                         config.data.get('noise_std'), 
                                         config.data.get('embedding_type'),
-                                        config.data.get('radii', 'unit'),
+                                        config.data.get('radii', []),
                                         config.data.get('angle_std', -1)
                                         )
 
     def generate_data(self, n_samples, n_spheres, ambient_dim, 
                         manifold_dim, noise_std, embedding_type,
                         radii, angle_std):
-            if radii == 'unit':
+            if radii == []:
                 radii = [1] * n_spheres
+
+            if isinstance(manifold_dim, int):
+                manifold_dims = [manifold_dim] * n_spheres
+            elif isinstance(manifold_dim, list):
+                manifold_dims = manifold_dim
+                
             data = []
             for i in range(n_spheres):
+                    manifold_dim = manifold_dims[i]
                     new_data = self.sample_sphere(n_samples, manifold_dim, angle_std)
                     new_data = new_data * radii[i]
 

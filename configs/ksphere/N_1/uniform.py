@@ -35,6 +35,9 @@ def get_config():
   data.embedding_type = 'random_isometry'
   data.angle_std = -1
 
+  # dim_estimation
+  config.dim_estimation.num_datapoints = 1000
+
   # model
   model = config.model
   model.sigma_min = 1e-2
@@ -44,7 +47,7 @@ def get_config():
 
   #logging
   logging = config.logging
-  logging.log_path = f'logs/ksphere/dim_{data.manifold_dim}/n_{data.n_spheres}/'
+  logging.log_path = f'logs/ksphere/dim_{data.manifold_dim}/n_{data.n_spheres}/{data.embedding_type}/'
   logging.log_name = f'uniform_random'
 
   return config

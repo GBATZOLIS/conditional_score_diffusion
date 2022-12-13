@@ -1,6 +1,6 @@
 #!/bin/bash 
 #! Name of the job: 
-#SBATCH -J sine_line 
+#SBATCH -J different_dims_different_radii 
 #! Which project should be charged (NB Wilkes2 projects end in '-GPU'): 
 #SBATCH --account SCHOENLIEB-SL3-GPU 
 #! How many whole nodes should be allocated? 
@@ -32,7 +32,7 @@ conda activate score_sde
 REPO=/rds/user/js2164/hpc-work/repos/score_sde_pytorch/ 
  
 cd /home/js2164/rds/hpc-work/repos/score_sde_pytorch/ 
-python main.py --config configs/line/vesde.py \ 
+python main.py --config configs/ksphere/N_2/different_dims_random.py \ 
  --mode train \ 
---log_path logs/line \ 
---log_name sine_line \ 
+--log_path logs/ksphere/dim_[5, 30]/n_2/random_isometry/ \ 
+--log_name different_dims_different_radii \ 
