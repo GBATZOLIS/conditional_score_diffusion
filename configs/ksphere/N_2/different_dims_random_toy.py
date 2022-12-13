@@ -34,6 +34,9 @@ def get_config():
   data.radii = [1, 0.25]
   data.manifold_dim=[1, 2]
   data.noise_std=0.01
+
+  data.dim = data.ambient_dim
+  data.shape = [data.dim]
   
   data.embedding_type = 'random_isometry'
 
@@ -42,6 +45,7 @@ def get_config():
 
   # model
   model = config.model
+  model.state_size = data.dim
   model.sigma_min = 1e-2
   model.sigma_max = 4
   model.hidden_layers = 5
