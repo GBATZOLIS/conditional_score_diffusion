@@ -40,4 +40,4 @@ slurm*
 machine.file*
 
 #jobmaster jobs
-jobmaster/job_*
+#jobmaster/job_*
