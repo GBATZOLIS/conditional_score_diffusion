@@ -1,11 +1,5 @@
 TO DO:
-
-- Learning rate scheduler
-- Optuna
-- Callback for score spectrum
-- Non-uniform distrbution on a manifold
-- Manifold of images
-- Elephant manifold
-- Union of different dims
-
-- Expolore non-uniform spectrum pointwise
+- log_frequency config for callbacks
+- jobmaster to hpc
+- jobmaster execture list of configs
+- nice mailse for hpc jobs
