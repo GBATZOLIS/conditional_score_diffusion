@@ -1,2 +1,3 @@
 config=configs/ksphere/N_2/different_dims_random_toy.py
-count=1
+count=0
+id=10315729

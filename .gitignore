@@ -38,6 +38,7 @@ wilkes_scripts/main.sh
 machine.file*
 slurm*
 machine.file*
+JOB*
 
 #jobmaster jobs
-#jobmaster/job_*
+jobmaster/job_*
