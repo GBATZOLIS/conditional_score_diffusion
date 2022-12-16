@@ -133,7 +133,7 @@ class JobMaster():
 
                 '#! What types of email messages do you wish to receive? \n',
                 '#SBATCH --mail-type=begin        # send email when job begins \n',
-                '#SBATCH --mail-type=end \n',
+                #'#SBATCH --mail-type=end \n',
                 '#SBATCH --mail-user=js2164@cam.ac.uk \n',
 
                 '#! Do not change: \n',

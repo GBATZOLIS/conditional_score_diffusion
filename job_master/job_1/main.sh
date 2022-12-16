@@ -1,6 +1,8 @@
 #!/bin/bash 
 #! Name of the job: 
 #SBATCH -J different_dims_different_radii_toy 
+#SBATCH -o JOB%j.out # File to which STDOUT will be written 
+#SBATCH -e JOB%j.out # File to which STDERR will be written 
 #! Which project should be charged (NB Wilkes2 projects end in '-GPU'): 
 #SBATCH --account SCHOENLIEB-SL3-GPU 
 #! How many whole nodes should be allocated? 
@@ -36,3 +38,5 @@ python main.py --config configs/ksphere/N_2/different_dims_random_toy.py \
  --mode train \ 
 --log_path logs/ksphere/n_2/dim_[1, 2]/random_isometry/ \ 
 --log_name different_dims_different_radii_toy \ 
+&& (cat JOB$SLURM_JOB_ID.out |mail -s "$SLURM_JOB_NAME Ended after $(secs_to_human $(($(date +%s) - ${start}))) id=$SLURM_JOB_ID" my@email.com && echo mail sended) \ 
+|| (cat JOB$SLURM_JOB_ID.out |mail -s "$SLURM_JOB_NAME Failed after $(secs_to_human $(($(date +%s) - ${start}))) id=$SLURM_JOB_ID" my@email.com && echo mail sended && exit $?)
