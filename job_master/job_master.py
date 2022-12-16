@@ -111,6 +111,8 @@ class JobMaster():
 
                 '#! Name of the job: \n',
                 f'#SBATCH -J {job.name} \n',
+                '#SBATCH -o JOB%j.out # File to which STDOUT will be written \n',
+                '#SBATCH -e JOB%j.out # File to which STDERR will be written \n',
 
                 '#! Which project should be charged (NB Wilkes2 projects end in \'-GPU\'): \n',
                 '#SBATCH --account SCHOENLIEB-SL3-GPU \n',
@@ -162,7 +164,8 @@ class JobMaster():
                             f' --checkpoint_path {job.checkpoint_path} \n' if job.checkpoint_path is not None else '',
                             f'--log_path {job.log} \\ \n',
                             f'--log_name {job.name} \\ \n'
-
+                            '&& (cat JOB$SLURM_JOB_ID.out |mail -s "$SLURM_JOB_NAME Ended after $(secs_to_human $(($(date +%s) - ${start}))) id=$SLURM_JOB_ID" my@email.com && echo mail sended) \\ \n', 
+                            '|| (cat JOB$SLURM_JOB_ID.out |mail -s "$SLURM_JOB_NAME Failed after $(secs_to_human $(($(date +%s) - ${start}))) id=$SLURM_JOB_ID" my@email.com && echo mail sended && exit $?)'
             ]
 
             main_sh.writelines(L)
