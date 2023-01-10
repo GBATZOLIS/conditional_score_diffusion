@@ -133,7 +133,7 @@ class JobMaster():
 
                 '#! What types of email messages do you wish to receive? \n',
                 '#SBATCH --mail-type=begin        # send email when job begins \n',
-                #'#SBATCH --mail-type=end \n',
+                '#SBATCH --mail-type=end \n',
                 '#SBATCH --mail-user=js2164@cam.ac.uk \n',
 
                 '#! Do not change: \n',
@@ -161,12 +161,9 @@ class JobMaster():
 
                 f'(python main.py --config {job.config} \\ \n',
                             f' --mode {job.mode} \\ \n',
-                            f' --checkpoint_path {job.checkpoint_path} \n' if job.checkpoint_path is not None else '',
-                            f'--log_path {job.log} \\ \n',
-                            f'--log_name {job.name} \\ \n',
-                            ') \\ \n',
-                '&& (cat JOB$SLURM_JOB_ID.out |mail -s "$SLURM_JOB_NAME Ended after $(secs_to_human $(($(date +%s) - ${start}))) id=$SLURM_JOB_ID" my@email.com && echo mail sended) \\ \n', 
-                '|| (cat JOB$SLURM_JOB_ID.out |mail -s "$SLURM_JOB_NAME Failed after $(secs_to_human $(($(date +%s) - ${start}))) id=$SLURM_JOB_ID" my@email.com && echo mail sended && exit $?)'
+                            #f' --checkpoint_path {job.checkpoint_path} \n' if job.checkpoint_path is not None else '',
+                            #f'--log_path {job.log} \\ \n',
+                            #f'--log_name {job.name} \\ \n',
             ]
 
             main_sh.writelines(L)
