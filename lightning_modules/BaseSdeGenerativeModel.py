@@ -65,13 +65,16 @@ class BaseSdeGenerativeModel(pl.LightningModule):
         self.log('eval_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         return loss
     
-    def sample(self, show_evolution=False, num_samples=None):
+    def sample(self, show_evolution=False, num_samples=None, ode=False):
+        sampling_config = self.config
+        if ode:
+            sampling_config.sampling.method = 'ode'
         # Construct the sampling function
         if num_samples is None:
             sampling_shape = self.default_sampling_shape
         else:
-            sampling_shape = [num_samples] +  self.config.data.shape
-        sampling_fn = get_sampling_fn(self.config, self.sde, sampling_shape, self.sampling_eps)
+            sampling_shape = [num_samples] +  sampling_config.data.shape
+        sampling_fn = get_sampling_fn(sampling_config, self.sde, sampling_shape, self.sampling_eps)
 
         return sampling_fn(self.score_model, show_evolution=show_evolution)
 

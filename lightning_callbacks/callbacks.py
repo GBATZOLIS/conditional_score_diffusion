@@ -203,18 +203,22 @@ class TwoDimVizualizer(Callback):
         if self.evolution:
              self.visualise_evolution(pl_module)
 
-    def on_validation_epoch_end(self,trainer, pl_module):
+    def on_validation_epoch_end(self, trainer, pl_module):
         if pl_module.current_epoch % 500 == 0:
             samples, _ = pl_module.sample()
             self.visualise_samples(samples, pl_module)
+            if pl_module.config.training.plot_ode:
+                ode_samples, _ = pl_module.sample(ode=True)
+                self.visualise_samples(ode_samples, pl_module, 'ode')
+
         if self.evolution and pl_module.current_epoch % 2500 == 0 and pl_module.current_epoch != 0:
             self.visualise_evolution(pl_module)
 
-    def visualise_samples(self, samples, pl_module):
+    def visualise_samples(self, samples, pl_module, method='sde'):
         samples_np =  samples.cpu().numpy()
         image = scatter(samples_np[:,0],samples_np[:,1], 
-                        title='samples epoch: ' + str(pl_module.current_epoch))
-        pl_module.logger.experiment.add_image('samples', image, pl_module.current_epoch)
+                        title=f'{method}_samples epoch: ' + str(pl_module.current_epoch))
+        pl_module.logger.experiment.add_image(f'samples_{method}', image, pl_module.current_epoch)           
         return image
 
     def visualise_evolution(self, pl_module):

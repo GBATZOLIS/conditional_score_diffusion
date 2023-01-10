@@ -54,6 +54,7 @@ def get_config():
 
   # callbacks
   training.visualization_callback = ['2DSamplesVisualization', '2DVectorFieldVisualization']
+  training.plot_ode = True
   training.show_evolution = True 
 
   # validation
@@ -87,7 +88,7 @@ def get_config():
   
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = None #'logs/circles/fokker_planck/proto/fp_1e-3/checkpoints/best/last.ckpt' #'logs/circles/fokker_planck/fp_grad-alpha_0_deep/checkpoints/best/last.ckpt'
+  model.checkpoint_path = 'logs/fokker_planck/fp_0/checkpoints/best/last.ckpt' #None 
 
   model.fp_mdoe = 'reverse'
 

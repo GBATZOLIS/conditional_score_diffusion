@@ -29,6 +29,7 @@ lightning_logs/
 run_log/
 logs/
 test_logs/
+old_logs/
 
 #Wilkes submission scripts
 wilkes_scripts/main.sh
