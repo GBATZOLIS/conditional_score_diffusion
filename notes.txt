@@ -2,4 +2,3 @@ TO DO:
 - log_frequency config for callbacks
 - jobmaster to hpc
 - jobmaster execture list of configs
-- nice mailse for hpc jobs
