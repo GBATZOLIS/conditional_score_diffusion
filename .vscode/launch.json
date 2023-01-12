@@ -22,7 +22,7 @@
                 "--log_path",
                 "./test_logs",
                 "--debug",
-                "True"
+                "False"
             ],
             "console": "integratedTerminal"
         },

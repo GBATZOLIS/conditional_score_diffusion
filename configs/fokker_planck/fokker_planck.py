@@ -88,7 +88,7 @@ def get_config():
   
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = 'logs/fokker_planck/fp_0/checkpoints/best/last.ckpt' #None 
+  model.checkpoint_path = 'logs/fokker_planck/fp_0/checkpoints/best/epoch=14209--eval_loss_epoch=7.046.ckpt' #None 
 
   model.fp_mdoe = 'reverse'
 

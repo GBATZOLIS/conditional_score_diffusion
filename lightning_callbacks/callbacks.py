@@ -200,6 +200,10 @@ class TwoDimVizualizer(Callback):
     def on_train_start(self, trainer, pl_module):
         samples, _ = pl_module.sample()
         self.visualise_samples(samples, pl_module)
+        if pl_module.config.training.plot_ode:
+            ode_samples, _ = pl_module.sample(ode=True)
+            self.visualise_samples(ode_samples, pl_module, 'ode')
+        
         if self.evolution:
              self.visualise_evolution(pl_module)
 

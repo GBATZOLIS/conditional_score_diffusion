@@ -8,6 +8,7 @@ from . import utils
 import torch.optim as optim
 import os
 import torch
+import copy
 
 @utils.register_lightning_module(name='base')
 class BaseSdeGenerativeModel(pl.LightningModule):
@@ -66,7 +67,7 @@ class BaseSdeGenerativeModel(pl.LightningModule):
         return loss
     
     def sample(self, show_evolution=False, num_samples=None, ode=False):
-        sampling_config = self.config
+        sampling_config = copy.deepcopy(self.config)
         if ode:
             sampling_config.sampling.method = 'ode'
         # Construct the sampling function
@@ -76,7 +77,10 @@ class BaseSdeGenerativeModel(pl.LightningModule):
             sampling_shape = [num_samples] +  sampling_config.data.shape
         sampling_fn = get_sampling_fn(sampling_config, self.sde, sampling_shape, self.sampling_eps)
 
-        return sampling_fn(self.score_model, show_evolution=show_evolution)
+        if ode:
+            return sampling_fn(self.score_model)
+        else:
+            return sampling_fn(self.score_model, show_evolution=show_evolution)
 
     def configure_optimizers(self):
         class scheduler_lambda_function:
