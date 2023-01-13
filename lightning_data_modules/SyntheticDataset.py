@@ -14,6 +14,7 @@ from torchvision.transforms.functional import normalize
 from sklearn.datasets import make_circles
 import sde_lib
 from utils import compute_grad
+import random
 
 class SyntheticDataset(Dataset):
     def __init__(self, config):
@@ -41,6 +42,38 @@ class SyntheticDataset(Dataset):
 
     def __len__(self):
         return len(self.data)
+
+class SquaresManifold(SyntheticDataset):
+    def __init__(self, config):
+        super().__init__(config)
+    
+    def create_dataset(self, config):
+        num_samples = config.data.data_samples
+        num_squares = config.data.num_squares #10
+        square_range = config.data.square_range #[3, 5]
+        img_size = config.data.image_size #32
+
+        data = []
+        for num in range(num_samples):
+            img = torch.zeros(size=(img_size, img_size))
+            for _ in range(num_squares):
+                side = random.choice(square_range)
+                start = (side+1)//2
+                finish = img_size - (side+1)//2
+                x = random.choice(np.arange(start, finish))
+                y = random.choice(np.arange(start, finish))
+                img = self.paint_the_square(img, x, y, side)   
+            data.append(img.to(torch.float32).unsqueeze(0))
+        
+        data = torch.stack(data)
+        return
+    
+    def paint_the_square(self, img, center_x, center_y, side):
+        for i in range(side):
+            for j in range(side):
+                img[center_x - ((side+1)//2 - 1) + i, center_y - ((side+1)//2 - 1) + j]+=1
+        return img
+
 
 class GaussianBubbles(SyntheticDataset):
     def __init__(self, config):
@@ -267,8 +300,11 @@ class SyntheticDataModule(pl.LightningDataModule):
             self.dataset = GaussianBubbles(self.config)
         elif self.dataset_type == 'Circles':
             self.dataset = Circles(self.config)
+        elif self.dataset_type == 'SquaresManifold':
+            self.dataset = SquaresManifold(self.config)
         else:
             raise NotImplemented
+
         l=len(self.dataset)
         self.train_data, self.valid_data, self.test_data = random_split(self.dataset, [int(self.split[0]*l), int(self.split[1]*l), int(self.split[2]*l)]) 
     
