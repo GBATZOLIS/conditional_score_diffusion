@@ -36,11 +36,11 @@ def get_config():
   # training
   config.training = training = ml_collections.ConfigDict()
   training.num_nodes = 1
-  training.gpus = 1
+  training.gpus = 0
   training.accelerator = None if training.gpus <= 1 else 'ddp'
   training.accumulate_grad_batches = 1
   training.lightning_module = 'base' 
-  config.training.batch_size = 256 
+  config.training.batch_size = 2
   training.workers = 4
   training.num_epochs = 10000
   training.n_iters = 2500000
@@ -60,7 +60,7 @@ def get_config():
 
   # validation
   config.validation = validation = ml_collections.ConfigDict()
-  validation.batch_size = 256 
+  validation.batch_size = 2
   validation.workers = 4
 
   # sampling
@@ -92,7 +92,7 @@ def get_config():
   data.dataset_type = 'SquaresManifold'
   data.create_dataset = False
   data.split = [0.8, 0.1, 0.1]
-  data.data_samples = 300000
+  data.data_samples = 150
   data.image_size = 32
   data.effective_image_size = data.image_size
   data.centered = False

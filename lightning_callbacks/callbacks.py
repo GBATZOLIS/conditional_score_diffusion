@@ -38,7 +38,7 @@ class ConfigurationSetterCallback(Callback):
             pickle.dump(config, file)
 
         # Create a log file
-        logging.basicConfig(filename=os.path.join(log_path, 'logs.log'), encoding='utf-8', level=logging.DEBUG, force=True)
+        logging.basicConfig(handlers=[logging.FileHandler(filename="./log_records.txt", encoding='utf-8')], level=logging.DEBUG, force=True)
     
     def on_test_epoch_start(self, trainer, pl_module):
         pl_module.configure_sde(pl_module.config)
