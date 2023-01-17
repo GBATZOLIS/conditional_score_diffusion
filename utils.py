@@ -13,6 +13,8 @@ import math
 from sklearn.neighbors import KernelDensity
 from models.utils import get_score_fn
 
+REPO_PATH_HOLIDAY = '/home/js2164/jan/repos/diffusion/score_sde_pytorch'
+
 def generate_grid(n=500, d=2, c=[0,0], tensor=False):
     x = np.linspace(-d + c[0], d + c[0], n)
     y = np.linspace(-d + c[1], d + c[1], n)
