@@ -116,7 +116,7 @@ def get_config():
   model.dropout = 0.1
   model.embedding_type = 'fourier'
 
-  model.name = 'ncsnpp' #'ncsnpp'
+  model.name = 'ddpm' #'ncsnpp'
   model.input_channels = model.output_channels = data.num_channels
   model.scale_by_sigma = True
   model.ema_rate = 0.999
