@@ -15,6 +15,7 @@ from sklearn.datasets import make_circles
 import sde_lib
 from utils import compute_grad
 import random
+from tqdm import tqdm
 
 class SyntheticDataset(Dataset):
     def __init__(self, config):
@@ -48,13 +49,16 @@ class SquaresManifold(SyntheticDataset):
         super().__init__(config)
     
     def create_dataset(self, config):
+        #make sure we are generating the same dataset when we resume training
+        random.seed(config.seed)
+
         num_samples = config.data.data_samples
         num_squares = config.data.num_squares #10
         square_range = config.data.square_range #[3, 5]
         img_size = config.data.image_size #32
 
         data = []
-        for num in range(num_samples):
+        for num in tqdm(range(num_samples)):
             img = torch.zeros(size=(img_size, img_size))
             for _ in range(num_squares):
                 side = random.choice(square_range)
@@ -66,7 +70,7 @@ class SquaresManifold(SyntheticDataset):
             data.append(img.to(torch.float32).unsqueeze(0))
         
         data = torch.stack(data)
-        return
+        return data, []
     
     def paint_the_square(self, img, center_x, center_y, side):
         for i in range(side):

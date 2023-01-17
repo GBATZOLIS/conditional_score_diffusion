@@ -20,13 +20,27 @@ import ml_collections
 import torch
 import math
 import numpy as np
+from datetime import timedelta
 
 def get_config():
   config = ml_collections.ConfigDict()
 
+  #logging
+  config.logging = logging = ml_collections.ConfigDict()
+  logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/dimension_reduction/experiments/squares_manifold/' #'logs/ksphere/'
+  logging.log_name = '10squares_3_5'
+  logging.top_k = 5
+  logging.every_n_epochs = 1000
+  logging.envery_timedelta = timedelta(minutes=1)
+
   # training
   config.training = training = ml_collections.ConfigDict()
-  config.training.batch_size = 256
+  training.num_nodes = 1
+  training.gpus = 1
+  training.accelerator = None if training.gpus <= 1 else 'ddp'
+  training.accumulate_grad_batches = 1
+  training.lightning_module = 'base' 
+  config.training.batch_size = 256 
   training.workers = 4
   training.num_epochs = 10000
   training.n_iters = 2500000
@@ -39,13 +53,14 @@ def get_config():
   training.snapshot_sampling = True
   training.likelihood_weighting = False
   training.continuous = True
-  training.reduce_mean = False #look more for that setting
+  training.reduce_mean = True #look more for that setting
   training.sde = 'vesde'
   training.visualization_callback = 'base'
+  training.show_evolution = False
 
   # validation
   config.validation = validation = ml_collections.ConfigDict()
-  validation.batch_size = 256
+  validation.batch_size = 256 
   validation.workers = 4
 
   # sampling
@@ -60,10 +75,11 @@ def get_config():
 
   # evaluation (this file is not modified at all - subject to change)
   config.eval = evaluate = ml_collections.ConfigDict()
+  evaluate.callback = None
   evaluate.workers = 4
   evaluate.begin_ckpt = 50
   evaluate.end_ckpt = 96
-  evaluate.batch_size = 512
+  evaluate.batch_size = 256
   evaluate.enable_sampling = True
   evaluate.num_samples = 50000
   evaluate.enable_loss = True
@@ -72,22 +88,26 @@ def get_config():
 
   # data
   config.data = data = ml_collections.ConfigDict()
-  data.dataset = 'Synthetic'
+  data.datamodule = 'Synthetic'
   data.dataset_type = 'SquaresManifold'
   data.create_dataset = False
   data.split = [0.8, 0.1, 0.1]
-  data.data_samples = 250000
+  data.data_samples = 300000
   data.image_size = 32
+  data.effective_image_size = data.image_size
+  data.centered = False
+  data.use_data_mean = False
   data.num_squares = 10
   data.square_range = [3, 5]
   data.mixtures = 4
+  data.return_labels = False
   data.return_mixtures = False #whether to return the mixture class of each point in the mixture.
   data.shape = [1, data.image_size, data.image_size]
   data.num_channels = 1
   
-
   # model
   config.model = model = ml_collections.ConfigDict()
+  model.checkpoint_path=None
   model.sigma_min = 0.01
   model.sigma_max = 50
   model.num_scales = 1000
@@ -96,7 +116,8 @@ def get_config():
   model.dropout = 0.1
   model.embedding_type = 'fourier'
 
-  model.name = 'ncsnpp'
+  model.name = 'ncsnpp' #'ncsnpp'
+  model.input_channels = model.output_channels = data.num_channels
   model.scale_by_sigma = True
   model.ema_rate = 0.999
   model.normalization = 'GroupNorm'
