@@ -1,9 +1,12 @@
 import os
 import subprocess
 import re
+import sys
+repo_path = '/home/js2164/rds/hpc-work/repos/score_sde_pytorch/'
+sys.path.append(repo_path)
 from configs.utils import read_config
 
-repo_path = '/home/js2164/rds/hpc-work/repos/score_sde_pytorch/'
+
 tmp_path = os.path.join(repo_path, 'job_master', 'tmp')
 main_sh_path = os.path.join(tmp_path, 'main.sh')
 
