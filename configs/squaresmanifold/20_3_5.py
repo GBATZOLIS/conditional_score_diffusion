@@ -28,7 +28,7 @@ def get_config():
   #logging
   config.logging = logging = ml_collections.ConfigDict()
   logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/dimension_detection/experiments/squares_manifold/' #'logs/ksphere/'
-  logging.log_name = '10squares_3_5'
+  logging.log_name = '20squares_3_5'
   logging.top_k = 5
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
