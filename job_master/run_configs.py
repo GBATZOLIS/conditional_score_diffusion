@@ -1,13 +1,15 @@
 import os
 import subprocess
 import re
+from configs.utils import read_config
 
 repo_path = '/home/js2164/rds/hpc-work/repos/score_sde_pytorch/'
 tmp_path = os.path.join(repo_path, 'job_master', 'tmp')
 main_sh_path = os.path.join(tmp_path, 'main.sh')
 
-def create_mainsh(config, mode = 'train'):
+def create_mainsh(config_path, mode = 'train'):
 
+        config = read_config(config_path)
         name = config.logging.log_name
         log_path = config.logging.log_path
 
