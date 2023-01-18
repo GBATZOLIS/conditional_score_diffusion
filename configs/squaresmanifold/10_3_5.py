@@ -40,7 +40,7 @@ def get_config():
   training.accelerator = None if training.gpus <= 1 else 'ddp'
   training.accumulate_grad_batches = 1
   training.lightning_module = 'base' 
-  config.training.batch_size = 256 
+  config.training.batch_size = 256
   training.workers = 4
   training.num_epochs = 10000
   training.n_iters = 2500000
@@ -60,7 +60,7 @@ def get_config():
 
   # validation
   config.validation = validation = ml_collections.ConfigDict()
-  validation.batch_size = 256 
+  validation.batch_size = 256
   validation.workers = 4
 
   # sampling
@@ -116,7 +116,7 @@ def get_config():
   model.dropout = 0.1
   model.embedding_type = 'fourier'
 
-  model.name = 'ncsnpp' #'ncsnpp'
+  model.name = 'ddpm' #'ncsnpp'
   model.input_channels = model.output_channels = data.num_channels
   model.scale_by_sigma = True
   model.ema_rate = 0.999

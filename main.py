@@ -38,7 +38,7 @@ def main(argv):
         config.model.checkpoint_path =  FLAGS.checkpoint_path
 
   if FLAGS.debug:
-    config.training.gpus = 0
+    #config.training.gpus = 0
     config.logging.log_path = 'test_logs/'
     config.logging.log_name = str(uuid.uuid4())
     
