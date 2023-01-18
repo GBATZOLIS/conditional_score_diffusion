@@ -71,7 +71,7 @@ def create_mainsh(config_path, mode = 'train'):
 
                 f'cd {repo_path} \n',
 
-                f'python main.py --config {config} \\ \n',
+                f'python main.py --config {config_path} \\ \n',
                             f' --mode {mode} \\ \n',
             ]
 
