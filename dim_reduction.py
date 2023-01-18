@@ -37,7 +37,7 @@ def get_manifold_dimension(config, name=None):
   score_fn = mutils.get_score_fn(sde, score_model, conditional=False, train=False, continuous=True)
   #---- end of setup ----
 
-  num_datapoints = config.get('dim_estimation.num_datapoints', 120)
+  num_datapoints = config.get('dim_estimation.num_datapoints', 20)
   singular_values = []
   normalized_scores_list = []
   idx = 0
@@ -92,8 +92,13 @@ def get_manifold_dimension(config, name=None):
         idx+=1
         pbar.update(1)
 
-  if name is None:
-    name = 'svd'
-  with open(os.path.join(save_path, f'{name}.pkl'), 'wb') as f:
-    info = {'singular_values':singular_values, 'normalized_scores': normalized_scores_list}
+  #if name is None:
+  #  name = 'svd'
+
+  with open(os.path.join(save_path, 'svd.pkl'), 'wb') as f:
+    info = {'singular_values':singular_values}
     pickle.dump(info, f)
+  
+  #with open(os.path.join(save_path, 'normalized_scores.pkl'), 'wb') as f:
+  #  info = {'normalized_scores': normalized_scores_list}
+  #  pickle.dump(info, f)
