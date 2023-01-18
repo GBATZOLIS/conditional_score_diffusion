@@ -18,7 +18,7 @@
             "program": "${file}",
             "args": [
                 "--config",
-                "configs/line/vesde.py",
+                "configs/ksphere/N_1/uniform_10.py",
                 "--log_path",
                 "./test_logs",
                 "--debug",

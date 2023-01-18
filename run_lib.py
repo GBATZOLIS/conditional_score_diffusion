@@ -1,4 +1,5 @@
-from models import ncsnpp, ddpm, ncsnv2, fcn, ddpm3D, fcn_potential, ddpm_potential, csdi #needed for model registration
+#from models import ncsnpp, ddpm, ncsnv2, fcn, ddpm3D, fcn_potential, ddpm_potential, csdi #needed for model registration
+from models import ddpm, ncsnv2, fcn, ddpm3D, fcn_potential, ddpm_potential, csdi #needed for model registration
 import pytorch_lightning as pl
 #from pytorch_lightning.plugins import DDPPlugin
 import numpy as np
