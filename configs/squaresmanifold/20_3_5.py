@@ -107,7 +107,7 @@ def get_config():
   
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path= '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/dimension_detection/experiments/squares_manifold/20squares_3_5/checkpoints/best/epoch=143--eval_loss_epoch=0.013.ckpt'
+  model.checkpoint_path= '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/dimension_detection/experiments/squares_manifold/20squares_3_5/checkpoints/best/epoch=232--eval_loss_epoch=0.013.ckpt'
   model.sigma_min = 0.01
   model.sigma_max = 50
   model.num_scales = 1000
