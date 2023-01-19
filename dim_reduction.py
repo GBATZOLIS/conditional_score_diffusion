@@ -37,7 +37,7 @@ def get_manifold_dimension(config, name=None):
   score_fn = mutils.get_score_fn(sde, score_model, conditional=False, train=False, continuous=True)
   #---- end of setup ----
 
-  num_datapoints = config.get('dim_estimation.num_datapoints', 120)
+  num_datapoints = config.get('dim_estimation.num_datapoints', 20)
   singular_values = []
   normalized_scores_list = []
   idx = 0
@@ -83,7 +83,7 @@ def get_manifold_dimension(config, name=None):
 
         means = scores.mean(dim=0, keepdim=True)
         normalized_scores = scores - means
-        normalized_scores_list.append(normalized_scores.tolist())
+        #normalized_scores_list.append(normalized_scores.tolist())
 
         u, s, v = torch.linalg.svd(normalized_scores)
         s = s.tolist()
