@@ -110,7 +110,7 @@ class FixedSquaresManifold(SyntheticDataset):
             for i in range(num_squares):
                 x, y, side = squares_info[i]
                 img = self.paint_the_square(img, x, y, side)   
-            data.append(img.to(torch.float32))
+            data.append(img.to(torch.float32).unsqueeze(0))
         
         data = torch.stack(data)
         return data, []
