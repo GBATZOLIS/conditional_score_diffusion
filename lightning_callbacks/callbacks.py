@@ -417,9 +417,9 @@ class ScoreSpecturmVisualization(Callback):
 
         
 
-    def on_validation_epoch_end(self,trainer, pl_module):
-        if pl_module.current_epoch % 500 == 0:
-            config = pl_module.config
+    def on_validation_epoch_end(self, trainer, pl_module):
+        config = pl_module.config
+        if pl_module.current_epoch %  config.logging.svd_frequency == 0:
             config.model.checkpoint_path = os.path.join(config.logging.log_path, config.logging.log_name, "checkpoints/best/last.ckpt")
             name=f'svd_{pl_module.current_epoch}'
             try:
@@ -441,8 +441,9 @@ class KSphereEvaluation(Callback):
         self.evolution = False #show_evolution
 
     def on_validation_epoch_end(self,trainer, pl_module):
-        if pl_module.current_epoch % 500 == 0:
-            config = pl_module.config
+        config = pl_module.config
+        if pl_module.current_epoch % config.logging.svd_frequency == 0:
+            
             samples, _ = pl_module.sample(num_samples=1000)
             min_norm=torch.linalg.norm(samples, dim=1).min().item()
             max_norm=torch.linalg.norm(samples, dim=1).max().item()
