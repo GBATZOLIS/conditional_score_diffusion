@@ -27,9 +27,11 @@ class ConfigurationSetterCallback(Callback):
 
         # If log_path exists make sure you are resuming
         log_path = os.path.join(config.logging.log_path, config.logging.log_name)
-        if config.model.checkpoint_path is None and os.path.exists(log_path):
-            print('LOGGING PATH EXISTS BUT NOT RESUMING FROM CHECKPOINT!')
-            raise RuntimeError('LOGGING PATH EXISTS BUT NOT RESUMING FROM CHECKPOINT!')
+        
+        #this needs improvement. you might have created the log_path in an unsuccessful run but you might have nothing there (checkpoints etc.)
+        #if config.model.checkpoint_path is None and os.path.exists(log_path):
+        #    print('LOGGING PATH EXISTS BUT NOT RESUMING FROM CHECKPOINT!')
+        #    raise RuntimeError('LOGGING PATH EXISTS BUT NOT RESUMING FROM CHECKPOINT!')
 
         # Pickle the config file 
         if not os.path.exists(log_path):
