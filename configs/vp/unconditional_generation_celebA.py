@@ -6,17 +6,25 @@ import numpy as np
 def get_config():
   config = ml_collections.ConfigDict()
 
+  #logging
+  config.logging = logging = ml_collections.ConfigDict()
+  logging.log_path = #'/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/dimension_detection/experiments/celebA/' 
+  logging.log_name = 'real_celebA'
+  logging.top_k = 5
+  logging.every_n_epochs = 1000
+  logging.envery_timedelta = timedelta(minutes=1)
+
   # training
   config.training = training = ml_collections.ConfigDict()
   config.training.lightning_module = 'base'
-  training.batch_size = 54
+  training.batch_size = 128
   training.num_nodes = 1
-  training.gpus = 2
+  training.gpus = 1
   training.accelerator = None if training.gpus == 1 else 'ddp'
   training.accumulate_grad_batches = 1
   training.workers = 4
   training.num_epochs = 10000
-  training.n_iters = 2400001
+  training.n_iters = 2500000
 
   #----- to be removed -----
   training.snapshot_freq = 5000
@@ -35,8 +43,12 @@ def get_config():
   training.likelihood_weighting = True
   training.continuous = True
   training.reduce_mean = True 
-  training.sde = 'vpsde'
-  
+  training.sde = 'vesde'
+
+  # validation
+  config.validation = validation = ml_collections.ConfigDict()
+  validation.batch_size = 128
+  validation.workers = 4
 
   # sampling
   config.sampling = sampling = ml_collections.ConfigDict()
@@ -51,7 +63,7 @@ def get_config():
   # evaluation (this file is not modified at all - subject to change)
   config.eval = evaluate = ml_collections.ConfigDict()
   evaluate.workers = 4
-  evaluate.batch_size = training.batch_size//2
+  evaluate.batch_size = training.batch_size
   evaluate.enable_sampling = True
   evaluate.num_samples = 50000
   evaluate.enable_loss = True
@@ -60,10 +72,10 @@ def get_config():
 
   # data
   config.data = data = ml_collections.ConfigDict()
-  data.base_dir = 'datasets'
+  data.datamodule = 'image'
+  data.base_dir = #'datasets' ->put the directory where you have the dataset: /datasets/. It will load .../datasets/celebA
   data.dataset = 'celebA'
   data.use_data_mean = False
-  data.datamodule = 'image'
   data.create_dataset = False
   data.split = [0.8, 0.1, 0.1]
   data.image_size = 64
@@ -87,7 +99,7 @@ def get_config():
   model.embedding_type = 'fourier'
 
    # model architecture
-  model.name = 'ncsnpp'
+  model.name = 'ddpm'
   model.scale_by_sigma = False
   model.ema_rate = 0.9999
   model.normalization = 'GroupNorm'
