@@ -78,6 +78,49 @@ class SquaresManifold(SyntheticDataset):
                 img[center_x - ((side+1)//2 - 1) + i, center_y - ((side+1)//2 - 1) + j]+=1
         return img
 
+class FixedSquaresManifold(SyntheticDataset):
+    def __init__(self, config):
+        super().__init__(config)
+    
+    def get_the_squares(self, seed, num_squares, square_range, img_size):
+        random.seed(seed)
+        squares_info = []
+        for _ in range(num_squares):
+            side = random.choice(square_range)
+            start = (side+1)//2
+            finish = img_size - (side+1)//2
+            x = random.choice(np.arange(start, finish))
+            y = random.choice(np.arange(start, finish))
+            squares_info.append([x, y, side])
+
+        return squares_info
+
+    def create_dataset(self, config):
+        num_samples = config.data.data_samples
+        num_squares = config.data.num_squares #10
+        square_range = config.data.square_range #[3, 5]
+        img_size = config.data.image_size #32
+        seed = config.seed 
+
+        squares_info = self.get_the_squares(seed, num_squares, square_range, img_size)
+
+        data = []
+        for num in range(num_samples):
+            img = torch.zeros(size=(img_size, img_size))
+            for i in range(num_squares):
+                x, y, side = squares_info[i]
+                img = self.paint_the_square(img, x, y, side)   
+            data.append(img.to(torch.float32).unsqueeze(0))
+        
+        data = torch.stack(data)
+        return data, []
+    
+    def paint_the_square(self, img, center_x, center_y, side):
+        c = random.random()
+        for i in range(side):
+            for j in range(side):
+                img[center_x - ((side+1)//2 - 1) + i, center_y - ((side+1)//2 - 1) + j]+=c
+        return img
 
 class GaussianBubbles(SyntheticDataset):
     def __init__(self, config):
@@ -306,6 +349,8 @@ class SyntheticDataModule(pl.LightningDataModule):
             self.dataset = Circles(self.config)
         elif self.dataset_type == 'SquaresManifold':
             self.dataset = SquaresManifold(self.config)
+        elif self.dataset_type == 'FixedSquaresManifold':
+            self.dataset = FixedSquaresManifold(self.config)
         else:
             raise NotImplemented
 

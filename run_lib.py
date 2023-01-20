@@ -10,7 +10,7 @@ from lightning_callbacks import callbacks, HaarMultiScaleCallback, PairedCallbac
 from lightning_callbacks.HaarMultiScaleCallback import normalise_per_image, permute_channels, normalise, normalise_per_band, create_supergrid
 from lightning_callbacks.utils import get_callbacks
 
-from lightning_data_modules import HaarDecomposedDataset, ImageDatasets, PairedDataset, SyntheticDataset, SyntheticPairedDataset, Synthetic1DConditionalDataset, SyntheticTimeSeries, SRDataset, SRFLOWDataset, CryptoDataset, KSphereDataset, MammothDataset, LineDataset #needed for datamodule registration
+from lightning_data_modules import HaarDecomposedDataset, ImageDatasets, PairedDataset, SyntheticDataset, SyntheticPairedDataset, Synthetic1DConditionalDataset, SyntheticTimeSeries, SRDataset, SRFLOWDataset, KSphereDataset, MammothDataset, LineDataset, GanDataset #needed for datamodule registration
 from lightning_data_modules.utils import create_lightning_datamodule
 
 from lightning_modules import BaseSdeGenerativeModel, HaarMultiScaleSdeGenerativeModel, ConditionalSdeGenerativeModel, ConservativeSdeGenerativeModel, FokkerPlanckModel #need for lightning module registration
@@ -331,7 +331,6 @@ def multi_scale_test(master_config, log_path):
 
 def get_manifold_dimension(config, name=None):
   dim_reduction.get_manifold_dimension(config, name)
-  
 
 def compute_data_stats(config):
   compute_dataset_statistics.compute_dataset_statistics(config)
