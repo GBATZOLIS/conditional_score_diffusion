@@ -70,6 +70,7 @@ def get_config():
   evaluate.enable_loss = True
   evaluate.enable_bpd = False
   evaluate.bpd_dataset = 'test'
+  evaluate.callback = None
 
   # data
   config.data = data = ml_collections.ConfigDict()
@@ -123,6 +124,8 @@ def get_config():
   model.embedding_type = 'positional'
   model.fourier_scale = 16
   model.conv_size = 3
+  model.input_channels = data.num_channels
+  model.output_channels = data.num_channels
 
   # optimization
   config.optim = optim = ml_collections.ConfigDict()

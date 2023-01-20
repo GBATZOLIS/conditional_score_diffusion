@@ -32,7 +32,6 @@ class SyntheticDataModule(pl.LightningDataModule):
         #Synthetic Dataset arguments
         self.config = config
         self.split = config.data.split
-        self.dataset_type = self.config.data.dataset_type
 
         #DataLoader arguments
         self.train_workers = config.training.workers
