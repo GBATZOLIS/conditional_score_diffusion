@@ -46,7 +46,7 @@ def get_config():
 
   #logging
   logging = config.logging
-  logging.log_path = f'logs/ksphere/dim_{data.manifold_dim}/n_{data.n_spheres}/{data.embedding_type}/'
+  logging.log_path = f'logs/ksphere/n_{data.n_spheres}/dim_{data.manifold_dim}/{data.embedding_type}/'
   logging.log_name = f'non_uniform_{data.angle_std}'
 
   return config
