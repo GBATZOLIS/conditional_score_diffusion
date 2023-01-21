@@ -1,3 +1,4 @@
-config=configs/ksphere/N_1/non_uniform_05.py
-count=0
-id=9686028
+config=configs/celebA/gan_10.py
+count=1
+partition=pascal
+id=12873907

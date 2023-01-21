@@ -1,6 +1,8 @@
 #!/bin/bash 
 #! Name of the job: 
-#SBATCH -J non_uniform_0.5_sig_0.001 
+#SBATCH -J real_celebA_crop_ampere 
+#SBATCH -o JOB%j.out # File to which STDOUT will be written 
+#SBATCH -e JOB%j.out # File to which STDERR will be written 
 #! Which project should be charged (NB Wilkes2 projects end in '-GPU'): 
 #SBATCH --account SCHOENLIEB-SL3-GPU 
 #! How many whole nodes should be allocated? 
@@ -17,7 +19,7 @@
 #SBATCH --mail-type=begin        # send email when job begins 
 #SBATCH --mail-type=end 
 #SBATCH --mail-user=js2164@cam.ac.uk 
-#! Do not change: 
+#! Partition: 
 #SBATCH -p ampere 
  
 . /etc/profile.d/modules.sh                # Leave this line (enables the module command) 
@@ -32,7 +34,5 @@ conda activate score_sde
 REPO=/rds/user/js2164/hpc-work/repos/score_sde_pytorch/ 
  
 cd /home/js2164/rds/hpc-work/repos/score_sde_pytorch/ 
-python main.py --config configs/ksphere/N_1/non_uniform_05_smaler_sig.py \ 
+python main.py --config configs/celebA/ddpm.py \ 
  --mode train \ 
---log_path logs/ksphere/dim_10/n_1/random_isometry/ \ 
---log_name non_uniform_0.5_sig_0.001 \ 

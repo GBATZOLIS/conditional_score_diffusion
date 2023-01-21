@@ -1,5 +1,7 @@
-repo_path='/home/js2164/jan/repos/diffusion/score_sde_pytorch'
 import os 
 import sys
+from pathlib import Path
+repo_path=Path('.').absolute().parent.absolute()
+print(f'Moving cwd to {repo_path}')
 os.chdir(repo_path)
 sys.path.append(repo_path)

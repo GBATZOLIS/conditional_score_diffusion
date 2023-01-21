@@ -3,10 +3,18 @@ import torch
 import math
 import numpy as np
 from configs.jan.default import get_default_configs
-
+from datetime import timedelta
 
 def get_config():
   config = get_default_configs()
+
+  #logging
+  config.logging = logging = ml_collections.ConfigDict()
+  logging.log_path = 'logs/celebA/'#'/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/dimension_detection/experiments/celebA/'
+  logging.log_name = 'real_celebA_crop'
+  logging.top_k = 5
+  logging.every_n_epochs = 1000
+  logging.envery_timedelta = timedelta(minutes=1)
 
   # training
   training = config.training 

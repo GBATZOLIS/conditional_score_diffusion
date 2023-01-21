@@ -1,6 +1,6 @@
 #!/bin/bash 
 #! Name of the job: 
-#SBATCH -J different_dims_different_radii_toy 
+#SBATCH -J real_celebA_crop 
 #SBATCH -o JOB%j.out # File to which STDOUT will be written 
 #SBATCH -e JOB%j.out # File to which STDERR will be written 
 #! Which project should be charged (NB Wilkes2 projects end in '-GPU'): 
@@ -17,9 +17,10 @@
 #SBATCH --time=12:00:00 
 #! What types of email messages do you wish to receive? 
 #SBATCH --mail-type=begin        # send email when job begins 
+#SBATCH --mail-type=end 
 #SBATCH --mail-user=js2164@cam.ac.uk 
-#! Do not change: 
-#SBATCH -p ampere 
+#! Partition: 
+#SBATCH -p pascal 
  
 . /etc/profile.d/modules.sh                # Leave this line (enables the module command) 
 module purge                               # Removes all modules still loaded 
@@ -30,15 +31,8 @@ module list
 nvidia-smi 
 source /home/js2164/.bashrc 
 conda activate score_sde 
-
 REPO=/rds/user/js2164/hpc-work/repos/score_sde_pytorch/ 
  
 cd /home/js2164/rds/hpc-work/repos/score_sde_pytorch/ 
-
-( python main.py \
---config configs/ksphere/N_2/different_dims_random_toy.py \
---mode train \
---log_path logs/ksphere/n_2/dim_[1, 2]/random_isometry/ \
---log_name different_dims_different_radii_toy ) \
-&& (cat $SLURM_SUBMIT_DIR/JOB$SLURM_JOB_ID.out |mail -s "$SLURM_JOB_NAME Ended after $(secs_to_human $(($(date +%s) - ${start}))) id=$SLURM_JOB_ID" js2164@cam.ac.uk && echo mail sended) \
-|| (cat $SLURM_SUBMIT_DIR/JOB$SLURM_JOB_ID.out |mail -s "$SLURM_JOB_NAME Failed after $(secs_to_human $(($(date +%s) - ${start}))) id=$SLURM_JOB_ID" js2164@cam.ac.uk && echo mail sended && exit $?)
+python main.py --config configs/jan/celebA/default.py \ 
+ --mode train \ 

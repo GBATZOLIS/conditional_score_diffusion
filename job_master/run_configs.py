@@ -10,7 +10,7 @@ from configs.utils import read_config
 tmp_path = os.path.join(repo_path, 'job_master', 'tmp')
 main_sh_path = os.path.join(tmp_path, 'main.sh')
 
-def create_mainsh(config_path, mode = 'train'):
+def create_mainsh(config_path, mode = 'train', partition='ampere'):
 
         config = read_config(config_path)
         name = config.logging.log_name
@@ -49,7 +49,7 @@ def create_mainsh(config_path, mode = 'train'):
                 '#SBATCH --mail-user=js2164@cam.ac.uk \n',
 
                 '#! Do not change: \n',
-                '#SBATCH -p ampere \n',
+                f'#SBATCH -p {partition} \n',
                 ' \n',
 
                 '. /etc/profile.d/modules.sh                # Leave this line (enables the module command) \n',

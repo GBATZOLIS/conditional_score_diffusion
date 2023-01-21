@@ -12,18 +12,14 @@ class GanDataset(Dataset):
         self.config = config
         self.data_path = self.config.data.data_path
         self.latent_dim = self.config.data.latent_dim
+        self.data = torch.load(os.path.join(self.data_path, f'latent_dim_{self.latent_dim}/data.pt'))
 
     def __getitem__(self, index):
-        i = index // int(1e4)
-        j = index % int(1e4)
-        with open(os.path.join(self.data_path, f'latent_dim_{self.latent_dim}_part_{i}'), 'rb') as f:
-            X = pickle.load(f)
-        item = X[j]
-        
+        item = self.data[index]
         return item 
 
     def __len__(self):
-        return int(1e5)
+        return len(self.data)
 
 @utils.register_lightning_datamodule(name='Gan')
 class SyntheticDataModule(pl.LightningDataModule):

@@ -10,7 +10,7 @@ def get_config():
   #logging
   config.logging = logging = ml_collections.ConfigDict()
   logging.log_path = 'logs/celebA/'#'/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/dimension_detection/experiments/celebA/'
-  logging.log_name = 'real_celebA_crop'
+  logging.log_name = 'real_celebA_crop_ampere'
   logging.top_k = 5
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
@@ -73,10 +73,29 @@ def get_config():
   evaluate.callback = None
 
   # data
+  # config.data = data = ml_collections.ConfigDict()
+  # data.datamodule = 'image'
+  # data.base_dir = '/rds/user/js2164/hpc-work/data' #'datasets' ->put the directory where you have the dataset: /datasets/. It will load .../datasets/celebA
+  # data.dataset = 'celeba'
+  # data.use_data_mean = False
+  # data.create_dataset = False
+  # data.split = [0.8, 0.1, 0.1]
+  # data.image_size = 64
+  # data.effective_image_size = data.image_size
+  # data.shape = [3, data.image_size, data.image_size]
+  # data.centered = False
+  # data.random_flip = False
+  # data.crop = True
+  # data.uniform_dequantization = False
+  # data.num_channels = data.shape[0] #the number of channels the model sees as input.
+
+  # data
   config.data = data = ml_collections.ConfigDict()
-  data.datamodule = 'image'
-  data.base_dir = '/rds/user/js2164/hpc-work/data' #'datasets' ->put the directory where you have the dataset: /datasets/. It will load .../datasets/celebA
+  data.base_dir = '/rds/user/js2164/hpc-work/data/'
   data.dataset = 'celeba'
+  data.task = 'generation'
+  data.datamodule = 'unpaired_PKLDataset'
+  data.scale = 4 #?
   data.use_data_mean = False
   data.create_dataset = False
   data.split = [0.8, 0.1, 0.1]
@@ -84,7 +103,7 @@ def get_config():
   data.effective_image_size = data.image_size
   data.shape = [3, data.image_size, data.image_size]
   data.centered = False
-  data.random_flip = False
+  data.use_flip = True
   data.crop = True
   data.uniform_dequantization = False
   data.num_channels = data.shape[0] #the number of channels the model sees as input.

@@ -13,7 +13,7 @@ def get_config():
   config.data = data = ml_collections.ConfigDict()
   data.datamodule = 'Gan'
   data.data_path = '/rds/user/js2164/hpc-work/data/gan_data' #'datasets' ->put the directory where you have the dataset: /datasets/. It will load .../datasets/celebA
-  data.latent_dim = 10
+  data.latent_dim = 50
   data.use_data_mean = False
   data.create_dataset = False
   data.split = [0.8, 0.1, 0.1]
