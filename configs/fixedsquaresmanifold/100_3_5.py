@@ -28,7 +28,7 @@ def get_config():
   #logging
   config.logging = logging = ml_collections.ConfigDict()
   logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/dimension_detection/experiments/fixed_squares_manifold/' 
-  logging.log_name = '10squares_3_5'
+  logging.log_name = '100squares_3_5'
   logging.top_k = 5
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
@@ -92,12 +92,12 @@ def get_config():
   data.dataset_type = 'FixedSquaresManifold'
   data.create_dataset = False
   data.split = [0.8, 0.1, 0.1]
-  data.data_samples = 5000 #500000
+  data.data_samples = 1000 #500000
   data.image_size = 32
   data.effective_image_size = data.image_size
   data.centered = False
   data.use_data_mean = False
-  data.num_squares = 10
+  data.num_squares = 100
   data.square_range = [3, 5]
   data.mixtures = 4
   data.return_labels = False
@@ -107,7 +107,7 @@ def get_config():
   
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/dimension_detection/experiments/fixed_squares_manifold/10squares_3_5/checkpoints/best/last.ckpt'
+  model.checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/dimension_detection/experiments/fixed_squares_manifold/%s/checkpoints/best/last.ckpt' % logging.log_name
   model.sigma_min = 0.01
   model.sigma_max = 50
   model.num_scales = 1000
