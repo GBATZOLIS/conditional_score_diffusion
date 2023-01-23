@@ -122,6 +122,48 @@ class FixedSquaresManifold(SyntheticDataset):
                 img[center_x - ((side+1)//2 - 1) + i, center_y - ((side+1)//2 - 1) + j]+=c
         return img
 
+class FixedGaussiansManifold(SyntheticDataset):
+    def __init__(self, config):
+        super().__init__(config)
+    
+    def get_the_gaussian_centers(self, seed, num_gaussians, std_range, img_size):
+        random.seed(seed)
+        guassians_info = []
+        for _ in range(num_gaussians):
+            x = random.choice(np.arange(0, img_size))
+            y = random.choice(np.arange(0, img_size))
+            guassians_info.append([x, y])
+
+        return guassians_info
+
+    def create_dataset(self, config):
+        num_samples = config.data.data_samples
+        num_gaussians = config.data.num_gaussians #10
+        std_range = config.data.std_range #[1, 5]
+        img_size = config.data.image_size #32
+        seed = config.seed 
+
+        centers_info = self.get_the_gaussian_centers(seed, num_gaussians, std_range, img_size)
+
+        data = []
+        for num in range(num_samples):
+            img = torch.zeros(size=(img_size, img_size))
+            for i in range(num_gaussians):
+                x, y = centers_info[i]
+                img = self.paint_the_gaussian(img, x, y, std_range)    
+            data.append(img.to(torch.float32).unsqueeze(0))
+        
+        data = torch.stack(data)
+        return data, []
+    
+    def paint_the_gaussian(self, img, center_x, center_y, std_range):
+        std = random.uniform(std_range[0], std_range[1])
+        c = 1/(np.sqrt(2*np.pi)*std)
+        for i in range(img.size(0)):
+            for j in range(img.size(1)):
+                img[i, j]+=c*np.exp(-1/(2*std**2)*((i-center_x)**2+(j-center_y)**2))
+        return img
+
 class GaussianBubbles(SyntheticDataset):
     def __init__(self, config):
         super().__init__(config)
@@ -351,6 +393,8 @@ class SyntheticDataModule(pl.LightningDataModule):
             self.dataset = SquaresManifold(self.config)
         elif self.dataset_type == 'FixedSquaresManifold':
             self.dataset = FixedSquaresManifold(self.config)
+        elif self.dataset_type == 'FixedGaussiansManifold':
+            self.dataset = FixedGaussiansManifold(self.config)
         else:
             raise NotImplemented
 
