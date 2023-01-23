@@ -378,15 +378,15 @@ class VESDE(SDE):
     dims_to_reduce=tuple(range(len(z.shape))[1:])
     return -N / 2. * np.log(2 * np.pi * self.sigma_max ** 2) - torch.sum(z ** 2, dim=dims_to_reduce) / (2 * self.sigma_max ** 2)
 
-  # def discretize(self, x, t):
-  #   """SMLD(NCSN) discretization."""
-  #   timestep = (t * (self.N - 1) / self.T).long()
-  #   sigma = self.discrete_sigmas.to(t.device)[timestep]
-  #   adjacent_sigma = torch.where(timestep == 0, torch.zeros_like(t),
-  #                                self.discrete_sigmas[timestep - 1].to(t.device))
-  #   f = torch.zeros_like(x)
-  #   G = torch.sqrt(sigma ** 2 - adjacent_sigma ** 2)
-  #   return f, G
+  def discretize(self, x, t):
+    """SMLD(NCSN) discretization."""
+    timestep = (t * (self.N - 1) / self.T).long()
+    sigma = self.discrete_sigmas.to(t.device)[timestep]
+    adjacent_sigma = torch.where(timestep == 0, torch.zeros_like(t),
+                                 self.discrete_sigmas[timestep - 1].to(t.device))
+    f = torch.zeros_like(x)
+    G = torch.sqrt(sigma ** 2 - adjacent_sigma ** 2)
+    return f, G
 
 class cVESDE(cSDE):
   def __init__(self, sigma_min=0.01, sigma_max=50, N=1000, data_mean=None):

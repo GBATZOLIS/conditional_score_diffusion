@@ -10,7 +10,7 @@ def get_config():
   #logging
   config.logging = logging = ml_collections.ConfigDict()
   logging.log_path = 'logs/celebA/'#'/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/dimension_detection/experiments/celebA/'
-  logging.log_name = 'real_celebA_crop_ampere_2'
+  logging.log_name = 'real_celebA_crop_ampere_VE_STABLE'
   logging.top_k = 5
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
@@ -55,11 +55,11 @@ def get_config():
   config.sampling = sampling = ml_collections.ConfigDict()
   sampling.method = 'pc'
   sampling.predictor = 'reverse_diffusion'
-  sampling.corrector = 'none'
+  sampling.corrector = 'langevin'
   sampling.n_steps_each = 1
   sampling.noise_removal = True
   sampling.probability_flow = False
-  sampling.snr = 0.16 #0.15 in VE sde (you typically need to play with this term - more details in the main paper)
+  sampling.snr = 0.15 #0.15 in VE sde (you typically need to play with this term - more details in the main paper)
 
   # evaluation (this file is not modified at all - subject to change)
   config.eval = evaluate = ml_collections.ConfigDict()
@@ -110,14 +110,14 @@ def get_config():
 
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = '/home/js2164/rds/hpc-work/repos/score_sde_pytorch/logs/celebA/real_celebA_crop_ampere_2/checkpoints/best/last.ckpt'
+  model.checkpoint_path = None #'/home/js2164/rds/hpc-work/repos/score_sde_pytorch/logs/celebA/real_celebA_crop_ampere_2/checkpoints/best/last.ckpt'
   model.num_scales = 1000
   model.sigma_max = np.sqrt(np.prod(data.shape))
   model.sigma_min = 0.01
   model.beta_min = 0.1
   model.beta_max = 20.
   model.dropout = 0.1
-  model.embedding_type = 'fourier'
+  model.embedding_type = 'positional'
 
    # model architecture
   model.name = 'ddpm'
