@@ -26,7 +26,9 @@ line_config = read_config('configs/line/vesde.py')
 non_uniform_10_1_config = read_config('configs/ksphere/N_1/non_uniform_1.py')
 non_uniform_10_075_config = read_config('configs/ksphere/N_1/non_uniform_075.py')
 non_uniform_10_05_config = read_config('configs/ksphere/N_1/non_uniform_05.py')
-squares_10_3_5_config = read_config('configs/squaresmanifold/10_3_5.py')
+squares_10_3_5_config = read_config('configs/fixedsquaresmanifold/10_3_5.py')
+squares_20_3_5_config = read_config('configs/fixedsquaresmanifold/20_3_5.py')
+squares_100_3_5_config = read_config('configs/fixedsquaresmanifold/100_3_5.py')
 
 configs_dict = {
     'mammoth': mammoth_config,
@@ -36,11 +38,13 @@ configs_dict = {
     'non_uniform_10_1': non_uniform_10_1_config,
     'non_uniform_10_075': non_uniform_10_075_config,
     'non_uniform_10_05': non_uniform_10_05_config,
-    'squares_10_3_5': squares_10_3_5_config
+    'squares_10': squares_10_3_5_config,
+    'squares_20': squares_20_3_5_config,
+    'squares_100': squares_100_3_5_config,
 }
 
 # create a df for results
-results = pd.DataFrame(columns=configs_dict.keys(), index=['mle_5', 'mle_20', 'lpca', 'ppca', 'danco'])
+results = pd.DataFrame(columns=configs_dict.keys(), index=['mle_5', 'mle_20', 'lpca', 'ppca'])
 results.index.name = 'method'
 
 # load what is already saved
@@ -55,7 +59,7 @@ for name, config in configs_dict.items():
     train_dataloader = DataModule.train_dataloader()
     X=[]
     for _, x in enumerate(train_dataloader):
-        X.append(x)
+        X.append(x.view(x.shape[0],-1))
     data_np = torch.cat(X, dim=0).numpy()
     data_np.reshape(data_np.shape[0],-1).shape
     dim = data_np.shape[1]
@@ -93,10 +97,3 @@ for name, config in configs_dict.items():
         results.to_csv('benchmark.csv')
     print(f'ppca on {name} DONE')
 
-
-    # DANCo (k=10)
-    if pd.isna(results[name].loc['danco']):
-        danco = intdimr.dancoDimEst(data_np, k=10, D=100).rx2('dim.est')
-        results[name].loc['danco'] = danco
-        results.to_csv('benchmark.csv')
-    print(f'danco on {name} DONE')
