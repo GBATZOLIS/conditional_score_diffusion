@@ -1,6 +1,6 @@
 #!/bin/bash 
 #! Name of the job: 
-#SBATCH -J real_celebA_crop 
+#SBATCH -J real_celebA_crop_ampere_VE_STABLE 
 #SBATCH -o JOB%j.out # File to which STDOUT will be written 
 #SBATCH -e JOB%j.out # File to which STDERR will be written 
 #! Which project should be charged (NB Wilkes2 projects end in '-GPU'): 
@@ -20,7 +20,7 @@
 #SBATCH --mail-type=end 
 #SBATCH --mail-user=js2164@cam.ac.uk 
 #! Partition: 
-#SBATCH -p pascal 
+#SBATCH -p ampere 
  
 . /etc/profile.d/modules.sh                # Leave this line (enables the module command) 
 module purge                               # Removes all modules still loaded 
@@ -34,5 +34,5 @@ conda activate score_sde
 REPO=/rds/user/js2164/hpc-work/repos/score_sde_pytorch/ 
  
 cd /home/js2164/rds/hpc-work/repos/score_sde_pytorch/ 
-python main.py --config configs/jan/celebA/default.py \ 
+python main.py --config configs/celebA/ddpm.py \ 
  --mode train \ 

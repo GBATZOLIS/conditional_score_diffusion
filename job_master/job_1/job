@@ -1,4 +1,3 @@
-config=configs/jan/celebA/default.py
-count=1
-partition=pascal
-id=12872825
+config=configs/celebA/ddpm.py
+count=0
+id=13082891

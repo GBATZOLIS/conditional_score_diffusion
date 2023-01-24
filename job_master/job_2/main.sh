@@ -1,6 +1,6 @@
 #!/bin/bash 
 #! Name of the job: 
-#SBATCH -J real_celebA_crop_ampere_2 
+#SBATCH -J real_celebA_crop_ampere_VE_STABLE_v2 
 #SBATCH -o JOB%j.out # File to which STDOUT will be written 
 #SBATCH -e JOB%j.out # File to which STDERR will be written 
 #! Which project should be charged (NB Wilkes2 projects end in '-GPU'): 

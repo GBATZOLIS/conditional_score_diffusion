@@ -1,4 +1,3 @@
-config=configs/celebA/gan_10.py
-count=1
-partition=pascal
-id=12873907
+config=configs/celebA/ddpm.py
+count=0
+id=13131028

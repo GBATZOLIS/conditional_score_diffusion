@@ -9,8 +9,8 @@ def get_config():
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = 'logs/celebA/'#'/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/dimension_detection/experiments/celebA/'
-  logging.log_name = 'real_celebA_crop_ampere_VE_STABLE'
+  logging.log_path = 'logs/celebA/' #'/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/dimension_detection/experiments/celebA/'
+  logging.log_name = 'true_master_model_v2'
   logging.top_k = 5
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
@@ -113,7 +113,7 @@ def get_config():
   model.checkpoint_path = None #'/home/js2164/rds/hpc-work/repos/score_sde_pytorch/logs/celebA/real_celebA_crop_ampere_2/checkpoints/best/last.ckpt'
   model.num_scales = 1000
   model.sigma_max = np.sqrt(np.prod(data.shape))
-  model.sigma_min = 0.01
+  model.sigma_min = 5e-3 #0.01
   model.beta_min = 0.1
   model.beta_max = 20.
   model.dropout = 0.1
@@ -121,22 +121,22 @@ def get_config():
 
    # model architecture
   model.name = 'ddpm'
-  model.scale_by_sigma = False
-  model.ema_rate = 0.9999
+  model.scale_by_sigma = True
+  model.ema_rate = 0.999
   model.normalization = 'GroupNorm'
   model.nonlinearity = 'swish'
-  model.nf = 128
-  model.ch_mult = (1, 1, 2, 2)
-  model.num_res_blocks = 3
-  model.attn_resolutions = (16,)
+  model.nf = 96
+  model.ch_mult =  (1, 1, 2, 2, 3, 3)
+  model.num_res_blocks = 2
+  model.attn_resolutions = (20, 10, 5)
   model.resamp_with_conv = True
   model.conditional = True
-  model.fir = False
+  model.fir = True
   model.fir_kernel = [1, 3, 3, 1]
   model.skip_rescale = True
   model.resblock_type = 'biggan'
-  model.progressive = 'none'
-  model.progressive_input = 'none'
+  model.progressive = 'output_skip'
+  model.progressive_input = 'input_skip'
   model.progressive_combine = 'sum'
   model.attention_type = 'ddpm'
   model.init_scale = 0.
