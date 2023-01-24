@@ -1,6 +1,6 @@
 #!/bin/bash 
 #! Name of the job: 
-#SBATCH -J true_master_model_v2 
+#SBATCH -J gan_50 
 #SBATCH -o JOB%j.out # File to which STDOUT will be written 
 #SBATCH -e JOB%j.out # File to which STDERR will be written 
 #! Which project should be charged (NB Wilkes2 projects end in '-GPU'): 
@@ -34,5 +34,5 @@ conda activate score_sde
 REPO=/rds/user/js2164/hpc-work/repos/score_sde_pytorch/ 
  
 cd /home/js2164/rds/hpc-work/repos/score_sde_pytorch/ 
-python main.py --config configs/celebA/ddpm.py \ 
+python main.py --config configs/celebA/gan_50.py \ 
  --mode train \ 
