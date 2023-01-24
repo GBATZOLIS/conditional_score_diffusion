@@ -28,7 +28,7 @@ def get_config():
   #logging
   config.logging = logging = ml_collections.ConfigDict()
   logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/dimension_detection/experiments/fixed_gaussians_manifold/' 
-  logging.log_name = '10'
+  logging.log_name = '20'
   logging.top_k = 5
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
@@ -97,7 +97,7 @@ def get_config():
   data.effective_image_size = data.image_size
   data.centered = False
   data.use_data_mean = False
-  data.num_gaussians = 10
+  data.num_gaussians = 20
   data.std_range = [1, 5]
   data.mixtures = 4
   data.return_labels = False
@@ -107,7 +107,7 @@ def get_config():
   
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = None #'/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/dimension_detection/experiments/fixed_gaussians_manifold/10/checkpoints/best/last.ckpt'
+  model.checkpoint_path = None #'/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/dimension_detection/experiments/fixed_gaussians_manifold/20/checkpoints/best/last.ckpt'
   model.sigma_min = 0.01
   model.sigma_max = 50
   model.num_scales = 1000

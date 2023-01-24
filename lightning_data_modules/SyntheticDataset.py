@@ -129,10 +129,13 @@ class FixedGaussiansManifold(SyntheticDataset):
     def get_the_gaussian_centers(self, seed, num_gaussians, std_range, img_size):
         random.seed(seed)
         guassians_info = []
-        for _ in range(num_gaussians):
-            x = random.choice(np.arange(0, img_size))
-            y = random.choice(np.arange(0, img_size))
-            guassians_info.append([x, y])
+        pairs = []
+        for i in range(img_size):
+            for j in range(img_size):
+                pairs.append([i,j])
+        
+        #select the centers without replacement
+        guassians_info = random.sample(pairs, k=num_gaussians)
 
         return guassians_info
 
@@ -150,7 +153,15 @@ class FixedGaussiansManifold(SyntheticDataset):
             img = torch.zeros(size=(img_size, img_size))
             for i in range(num_gaussians):
                 x, y = centers_info[i]
+
+                #paint the gaussians efficiently
                 img = self.paint_the_gaussian(img, x, y, std_range)    
+            
+            #scale the image to [0, 1] range
+            min_val, max_val = torch.min(img), torch.max(img)
+            img -= min_val
+            img /= max_val-min_val
+
             data.append(img.to(torch.float32).unsqueeze(0))
         
         data = torch.stack(data)
@@ -159,9 +170,16 @@ class FixedGaussiansManifold(SyntheticDataset):
     def paint_the_gaussian(self, img, center_x, center_y, std_range):
         std = random.uniform(std_range[0], std_range[1])
         c = 1/(np.sqrt(2*np.pi)*std)
-        for i in range(img.size(0)):
-            for j in range(img.size(1)):
-                img[i, j]+=c*np.exp(-1/(2*std**2)*((i-center_x)**2+(j-center_y)**2))
+        new_img = torch.zeros_like(img)
+        
+        x = torch.tensor(np.arange(img.size(0)))
+        y = torch.tensor(np.arange(img.size(1)))
+        xx, yy = torch.meshgrid((x,y), indexing='ij')
+
+        d = -1/(2*std**2)
+        new_img = np.exp(d*((xx-center_x)**2+(yy-center_y)**2))
+        new_img *= c
+        img += new_img
         return img
 
 class GaussianBubbles(SyntheticDataset):
