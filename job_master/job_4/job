@@ -1,3 +1,3 @@
-config=configs/celebA/ddpm.py
+config=configs/celebA/gan_100.py
 count=0
-id=13130434
+id=13193681
