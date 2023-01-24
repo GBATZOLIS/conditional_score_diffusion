@@ -29,6 +29,9 @@ non_uniform_10_05_config = read_config('configs/ksphere/N_1/non_uniform_05.py')
 squares_10_3_5_config = read_config('configs/fixedsquaresmanifold/10_3_5.py')
 squares_20_3_5_config = read_config('configs/fixedsquaresmanifold/20_3_5.py')
 squares_100_3_5_config = read_config('configs/fixedsquaresmanifold/100_3_5.py')
+gaussian_manifold_10 = read_config('configs/fixedgaussiansmanifold/10.py')
+gaussian_manifold_20 = read_config('configs/fixedgaussiansmanifold/20.py')
+gaussian_manifold_100 = read_config('configs/fixedgaussiansmanifold/100.py')
 
 configs_dict = {
     'mammoth': mammoth_config,
@@ -41,6 +44,10 @@ configs_dict = {
     'squares_10': squares_10_3_5_config,
     'squares_20': squares_20_3_5_config,
     'squares_100': squares_100_3_5_config,
+    'gaussian_manifold_10': gaussian_manifold_10,
+    'gaussian_manifold_20': gaussian_manifold_20,
+    'gaussian_manifold_100': gaussian_manifold_100
+
 }
 
 # create a df for results
@@ -92,7 +99,7 @@ for name, config in configs_dict.items():
     #PPCA
     if pd.isna(results[name].loc['ppca']):
         pca = PCA(n_components='mle')
-        pca.fit(data_np)
+        pca.fit(data_np.astype(np.float64))
         results[name].loc['ppca'] = pca.n_components_
         results.to_csv('benchmark.csv')
     print(f'ppca on {name} DONE')
