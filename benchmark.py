@@ -55,21 +55,23 @@ results = pd.DataFrame(columns=configs_dict.keys(), index=['mle_5', 'mle_20', 'l
 results.index.name = 'method'
 
 # load what is already saved
-exisiting_results = pd.read_csv('benchmark.csv', index_col='method')
+file_name='benchmark_hpc.csv'
+exisiting_results = pd.read_csv(file_name, index_col='method')
 results.update(exisiting_results)
 
-
+print('--------- STARTING BENCHAMRK -----------')
 
 for name, config in configs_dict.items():
-    DataModule = create_lightning_datamodule(config)
-    DataModule.setup()
-    train_dataloader = DataModule.train_dataloader()
-    X=[]
-    for _, x in enumerate(train_dataloader):
-        X.append(x.view(x.shape[0],-1))
-    data_np = torch.cat(X, dim=0).numpy()
-    data_np.reshape(data_np.shape[0],-1).shape
-    dim = data_np.shape[1]
+    if pd.isna(results[name]).any():
+        DataModule = create_lightning_datamodule(config)
+        DataModule.setup()
+        train_dataloader = DataModule.train_dataloader()
+        X=[]
+        for _, x in enumerate(train_dataloader):
+            X.append(x.view(x.shape[0],-1))
+        data_np = torch.cat(X, dim=0).numpy()
+        data_np.reshape(data_np.shape[0],-1).shape
+        dim = data_np.shape[1]
 
     #MLE estimator k=5
     if pd.isna(results[name].loc['mle_5']):
@@ -77,7 +79,7 @@ for name, config in configs_dict.items():
         #mle = intdimr.maxLikPointwiseDimEst(data_r, k=k).rx2('dim.est')
         mle = intdimr.maxLikGlobalDimEst(data_np, k=k).rx2('dim.est')
         results[name].loc['mle_5'] = mle[0]
-        results.to_csv('benchmark.csv')
+        results.to_csv(file_name)
     print(f'mle_5 on {name} DONE')
 
     #MLE estimator k=20
@@ -86,14 +88,14 @@ for name, config in configs_dict.items():
         #mle = intdimr.maxLikPointwiseDimEst(data_r, k=k).rx2('dim.est')
         mle = intdimr.maxLikGlobalDimEst(data_np, k=k).rx2('dim.est')
         results[name].loc['mle_20'] = mle[0]
-        results.to_csv('benchmark.csv')
+        results.to_csv(file_name)
     print(f'mle_20 on {name} DONE')
 
     #Local PCE
     if pd.isna(results[name].loc['lpca']):
         lpca = intdimr.pcaLocalDimEst(data_np, 'FO').rx2('dim.est')
         results[name].loc['lpca'] = lpca[0]
-        results.to_csv('benchmark.csv')
+        results.to_csv(file_name)
     print(f'lpca on {name} DONE')
 
     #PPCA
@@ -101,6 +103,6 @@ for name, config in configs_dict.items():
         pca = PCA(n_components='mle')
         pca.fit(data_np.astype(np.float64))
         results[name].loc['ppca'] = pca.n_components_
-        results.to_csv('benchmark.csv')
+        results.to_csv(file_name)
     print(f'ppca on {name} DONE')
 
