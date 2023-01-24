@@ -4,7 +4,7 @@ import math
 import numpy as np
 from datetime import timedelta
 #from configs.celebA.ddpm import get_config as default_celeba
-from configs.jan.celebA.default import get_config as default_celeba
+from configs.celebA.ddpm import get_config as default_celeba
 
 def get_config():
   config = default_celeba()
