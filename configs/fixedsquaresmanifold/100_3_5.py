@@ -92,7 +92,7 @@ def get_config():
   data.dataset_type = 'FixedSquaresManifold'
   data.create_dataset = False
   data.split = [0.8, 0.1, 0.1]
-  data.data_samples = 1000 #500000
+  data.data_samples = 5000 #500000
   data.image_size = 32
   data.effective_image_size = data.image_size
   data.centered = False
