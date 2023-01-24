@@ -54,8 +54,8 @@ def get_config():
   # sampling
   config.sampling = sampling = ml_collections.ConfigDict()
   sampling.method = 'pc'
-  sampling.predictor = 'reverse_diffusion'
-  sampling.corrector = 'langevin'
+  sampling.predictor = 'euler_maruyama'
+  sampling.corrector = 'none'
   sampling.n_steps_each = 1
   sampling.noise_removal = True
   sampling.probability_flow = False
@@ -119,24 +119,24 @@ def get_config():
   model.dropout = 0.1
   model.embedding_type = 'positional'
 
-   # model architecture
+  # model architecture
   model.name = 'ddpm'
-  model.scale_by_sigma = True
-  model.ema_rate = 0.999
+  model.scale_by_sigma = False
+  model.ema_rate = 0.9999
   model.normalization = 'GroupNorm'
   model.nonlinearity = 'swish'
-  model.nf = 96
-  model.ch_mult =  (1, 1, 2, 2, 3, 3)
-  model.num_res_blocks = 2
-  model.attn_resolutions = (20, 10, 5)
+  model.nf = 128
+  model.ch_mult = (1, 1, 2, 2)
+  model.num_res_blocks = 3
+  model.attn_resolutions = (16,)
   model.resamp_with_conv = True
   model.conditional = True
-  model.fir = True
+  model.fir = False
   model.fir_kernel = [1, 3, 3, 1]
   model.skip_rescale = True
   model.resblock_type = 'biggan'
-  model.progressive = 'output_skip'
-  model.progressive_input = 'input_skip'
+  model.progressive = 'none'
+  model.progressive_input = 'none'
   model.progressive_combine = 'sum'
   model.attention_type = 'ddpm'
   model.init_scale = 0.
