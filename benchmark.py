@@ -92,7 +92,7 @@ for name, config in configs_dict.items():
     #PPCA
     if pd.isna(results[name].loc['ppca']):
         pca = PCA(n_components='mle')
-        pca.fit(data_np)
+        pca.fit(data_np.astype(np.float64))
         results[name].loc['ppca'] = pca.n_components_
         results.to_csv('benchmark.csv')
     print(f'ppca on {name} DONE')
