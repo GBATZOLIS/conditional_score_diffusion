@@ -55,7 +55,7 @@ results = pd.DataFrame(columns=configs_dict.keys(), index=['mle_5', 'mle_20', 'l
 results.index.name = 'method'
 
 # load what is already saved
-file_name='benchmark.csv'
+file_name='benchmark_hpc.csv'
 exisiting_results = pd.read_csv(file_name, index_col='method')
 results.update(exisiting_results)
 
