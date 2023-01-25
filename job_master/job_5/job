@@ -1,4 +1,4 @@
-config=configs/celebA/gan_100.py
-count=1
+config=configs/celebA/test.py
+count=0
 partition=pascal
-id=12874519
+id=13242646
