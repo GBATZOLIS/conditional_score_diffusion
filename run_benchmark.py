@@ -1,4 +1,3 @@
-
 import argparse
 from benchmark import Benchmark
 from configs.utils import read_config
@@ -43,7 +42,7 @@ def main(args):
     benchmark = Benchmark(file_name=args.file, configs_dict=configs_dict)
     benchmark.run()
 
-if __name__ == 'main':
+if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--file', type=str, default='benchmark.csv')
     parser.add_argument('--max_samples', type=int, default=-1)

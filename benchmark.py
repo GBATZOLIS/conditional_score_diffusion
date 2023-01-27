@@ -2,7 +2,6 @@ import torch
 import numpy as np
 import pandas as pd
 import os
-from matplotlib import pyplot as plt
 from lightning_data_modules import HaarDecomposedDataset, ImageDatasets, PairedDataset, SyntheticDataset, SyntheticPairedDataset, Synthetic1DConditionalDataset, SyntheticTimeSeries, SRDataset, SRFLOWDataset, CryptoDataset, KSphereDataset, MammothDataset, LineDataset
 from lightning_data_modules.utils import create_lightning_datamodule
 from sklearn.decomposition import PCA
@@ -22,8 +21,10 @@ class Benchmark():
 
     def __init__(self, file_name, configs_dict) -> None:
         self.file_name = file_name
+        self.estimators = ['mle_5', 'mle_20', 'lpca', 'ppca']
+        self.configs_dict = configs_dict
         # create a df for results
-        self.results = pd.DataFrame(columns=configs_dict.keys(), index=['mle_5', 'mle_20', 'lpca', 'ppca'])
+        self.results = pd.DataFrame(columns=configs_dict.keys(), index=self.estimators)
         self.results.index.name = 'method'
         # load what is already saved
         if os.path.exists(self.file_name):
@@ -51,7 +52,7 @@ class Benchmark():
 
 
     def evaluate_estimator(self, data, estimator_type, dataset_name):
-        if pd.isna(self.results[dataset_name].loc['mle_5']):
+        if pd.isna(self.results[dataset_name].loc[estimator_type]):
             print(f'{estimator_type} on {dataset_name} START')
             if estimator_type == 'mle_5':
                 k=5
