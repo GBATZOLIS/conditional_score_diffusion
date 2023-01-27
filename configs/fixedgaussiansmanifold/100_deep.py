@@ -92,7 +92,7 @@ def get_config():
   data.dataset_type = 'FixedGaussiansManifold'
   data.create_dataset = False
   data.split = [0.8, 0.1, 0.1]
-  data.data_samples = 500000
+  data.data_samples = 5000
   data.image_size = 32
   data.effective_image_size = data.image_size
   data.centered = False
@@ -122,7 +122,7 @@ def get_config():
   model.ema_rate = 0.999
   model.normalization = 'GroupNorm'
   model.nonlinearity = 'swish'
-  model.nf = 196
+  model.nf = 256
   model.ch_mult = (1, 2, 2, 2)
   model.num_res_blocks = 4
   model.attn_resolutions = (16, 8)
