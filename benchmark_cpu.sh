@@ -33,4 +33,4 @@ conda activate score_sde
 REPO=/rds/user/js2164/hpc-work/repos/score_sde_pytorch/ 
  
 cd /home/js2164/rds/hpc-work/repos/score_sde_pytorch/ 
-python benchmark.py
+python run_benchmark.py --file benchmark_skylake.csv
