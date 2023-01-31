@@ -1,10 +1,25 @@
 import pytorch_lightning as pl
 from torch.utils.data import Dataset, DataLoader, random_split
 from torchvision  import transforms, datasets
+
 import PIL.Image as Image
 from . import utils
 import os
 import glob
+
+class MNISTDataset(datasets.MNIST):
+    def __init__(self, config):
+        super().__init__(root=config.data.base_dir, train=True, download=config.data.create_dataset)
+
+        transforms_list=[
+            transforms.Pad(2,fill=0), #left and right 2+2=4 padding
+            transforms.ToTensor()]
+        self.transform = transforms.Compose(transforms_list)
+    
+    def __getitem__(self, index):
+        x, y = super().__getitem__(index)
+        x = self.transform(x)
+        return x
 
 def load_file_paths(dataset_base_dir):
     listOfFiles = [os.path.join(dataset_base_dir, f) for f in os.listdir(dataset_base_dir)]
@@ -60,8 +75,12 @@ class ImageDataModule(pl.LightningDataModule):
         self.val_batch = config.eval.batch_size
         self.test_batch = config.eval.batch_size
 
-    def setup(self, stage=None): 
-        data = ImageDataset(self.config)
+    def setup(self, stage=None):
+        if self.config.dataset == 'mnist':
+            data = MNISTDataset(self.config)
+        else:
+            data = ImageDataset(self.config)
+        
         print(len(data))
         l=len(data)
         self.train_data, self.valid_data, self.test_data = random_split(data, [int(self.split[0]*l), int(self.split[1]*l), l - int(self.split[0]*l) - int(self.split[1]*l)]) 
