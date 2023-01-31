@@ -98,7 +98,7 @@ def get_config():
   data.split = [0.8, 0.1, 0.1]
   data.image_size = 32
   data.effective_image_size = data.image_size
-  data.shape = [3, data.image_size, data.image_size]
+  data.shape = [1, data.image_size, data.image_size]
   data.centered = False
   data.use_flip = False
   data.crop = False
