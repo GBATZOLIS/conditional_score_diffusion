@@ -99,10 +99,10 @@ def get_config():
   data.image_size = 32
   data.effective_image_size = data.image_size
   data.shape = [3, data.image_size, data.image_size]
-  #data.centered = False
-  #data.use_flip = True
-  #data.crop = True
-  #data.uniform_dequantization = False
+  data.centered = False
+  data.use_flip = False
+  data.crop = False
+  data.uniform_dequantization = False
   data.num_channels = data.shape[0] #the number of channels the model sees as input.
   
   # model
