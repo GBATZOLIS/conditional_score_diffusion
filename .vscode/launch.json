@@ -12,6 +12,19 @@
             "console": "integratedTerminal"
         },
         {
+            "name": "Test_Benchmark",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "args": [
+                "--file",
+                "benchmark_small.csv",
+                "--max_samples",
+                "10000"
+            ],
+            "console": "integratedTerminal"
+        },
+        {
             "name": "Test",
             "type": "python",
             "request": "launch",

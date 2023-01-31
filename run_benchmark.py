@@ -17,6 +17,7 @@ def main(args):
     gaussian_manifold_10 = read_config('configs/fixedgaussiansmanifold/10.py')
     gaussian_manifold_20 = read_config('configs/fixedgaussiansmanifold/20.py')
     gaussian_manifold_100 = read_config('configs/fixedgaussiansmanifold/100.py')
+    mnist = read_config('configs/mnist/unconditional.py')
 
     configs_dict = {
         'mammoth': mammoth_config,
@@ -31,7 +32,8 @@ def main(args):
         'squares_100': squares_100_3_5_config,
         'gaussian_manifold_10': gaussian_manifold_10,
         'gaussian_manifold_20': gaussian_manifold_20,
-        'gaussian_manifold_100': gaussian_manifold_100
+        'gaussian_manifold_100': gaussian_manifold_100,
+        'mnist': mnist
 
     }
 
