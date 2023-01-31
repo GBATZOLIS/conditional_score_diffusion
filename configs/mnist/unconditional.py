@@ -27,7 +27,7 @@ def get_config():
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = 'logs/mnist/' 
+  logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/dimension_detection/experiments/mnist/' 
   logging.log_name = 'unconditional'
   logging.top_k = 5
   logging.every_n_epochs = 1000
@@ -40,7 +40,7 @@ def get_config():
   training.accelerator = None if training.gpus <= 1 else 'ddp'
   training.accumulate_grad_batches = 1
   training.lightning_module = 'base' 
-  config.training.batch_size = 32 #256
+  config.training.batch_size = 256
   training.workers = 4
   training.num_epochs = 10000
   training.n_iters = 2500000
@@ -60,7 +60,7 @@ def get_config():
 
   # validation
   config.validation = validation = ml_collections.ConfigDict()
-  validation.batch_size = 32 #256
+  validation.batch_size = 256
   validation.workers = 4
 
   # sampling
@@ -79,7 +79,7 @@ def get_config():
   evaluate.workers = 4
   evaluate.begin_ckpt = 50
   evaluate.end_ckpt = 96
-  evaluate.batch_size = 32 #256
+  evaluate.batch_size = 256
   evaluate.enable_sampling = True
   evaluate.num_samples = 50000
   evaluate.enable_loss = True
@@ -88,7 +88,7 @@ def get_config():
 
   # data
   config.data = data = ml_collections.ConfigDict()
-  data.base_dir = '/store/CIA/js2164/data'
+  data.base_dir = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/datasets'
   data.dataset = 'mnist'
   #data.task = 'generation'
   data.datamodule = 'image'
