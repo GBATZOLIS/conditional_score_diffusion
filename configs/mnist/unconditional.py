@@ -94,7 +94,7 @@ def get_config():
   data.datamodule = 'image'
   #data.scale = 4 #?
   data.use_data_mean = False
-  data.create_dataset = True
+  data.create_dataset = False
   data.split = [0.8, 0.1, 0.1]
   data.image_size = 32
   data.effective_image_size = data.image_size
