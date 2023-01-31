@@ -15,13 +15,13 @@ class ConditionalSdeGenerativeModel(BaseSdeGenerativeModel.BaseSdeGenerativeMode
         super().__init__(config)
 
     def configure_sde(self, config):
-        if config.training.sde.lower() == 'vpsde':
+        if config.model.sde.lower() == 'vpsde':
             self.sde = sde_lib.VPSDE(beta_min=config.model.beta_min, beta_max=config.model.beta_max, N=config.model.num_scales)
             self.sampling_eps = 1e-3
-        elif config.training.sde.lower() == 'subvpsde':
+        elif config.model.sde.lower() == 'subvpsde':
             self.sde = sde_lib.subVPSDE(beta_min=config.model.beta_min, beta_max=config.model.beta_max, N=config.model.num_scales)
             self.sampling_eps = 1e-3
-        elif config.training.sde.lower() == 'vesde':            
+        elif config.model.sde.lower() == 'vesde':            
             if config.data.use_data_mean:
                 data_mean_path = os.path.join(config.data.base_dir, 'datasets_mean', '%s_%d' % (config.data.dataset, config.data.image_size), 'mean.pt')
                 data_mean = torch.load(data_mean_path)
@@ -38,7 +38,7 @@ class ConditionalSdeGenerativeModel(BaseSdeGenerativeModel.BaseSdeGenerativeMode
                 self.sde = {'x':sde_x, 'y':sde_y}
             
         else:
-            raise NotImplementedError(f"SDE {config.training.sde} unknown.")
+            raise NotImplementedError(f"SDE {config.model.sde} unknown.")
     
     def configure_loss_fn(self, config, train):
         if config.training.continuous:
@@ -85,13 +85,13 @@ class DecreasingVarianceConditionalSdeGenerativeModel(ConditionalSdeGenerativeMo
         self.register_buffer('sigma_max_y', torch.tensor(config.model.sigma_max_x).float())
 
     def configure_sde(self, config, sigma_max_y = None):
-        if config.training.sde.lower() == 'vpsde':
+        if config.model.sde.lower() == 'vpsde':
             self.sde = sde_lib.VPSDE(beta_min=config.model.beta_min, beta_max=config.model.beta_max, N=config.model.num_scales)
             self.sampling_eps = 1e-3
-        elif config.training.sde.lower() == 'subvpsde':
+        elif config.model.sde.lower() == 'subvpsde':
             self.sde = sde_lib.subVPSDE(beta_min=config.model.beta_min, beta_max=config.model.beta_max, N=config.model.num_scales)
             self.sampling_eps = 1e-3
-        elif config.training.sde.lower() == 'vesde':
+        elif config.model.sde.lower() == 'vesde':
             if sigma_max_y is None:
                 sigma_max_y = torch.tensor(config.model.sigma_max_y).float()
             else:
@@ -110,10 +110,10 @@ class DecreasingVarianceConditionalSdeGenerativeModel(ConditionalSdeGenerativeMo
             self.sde = {'x':sde_x, 'y':sde_y}
             self.sampling_eps = 1e-5
         else:
-            raise NotImplementedError(f"SDE {config.training.sde} unknown.")
+            raise NotImplementedError(f"SDE {config.model.sde} unknown.")
     
     def reconfigure_conditioning_sde(self, config, sigma_max_y = None):
-        if config.training.sde.lower() == 'vesde':
+        if config.model.sde.lower() == 'vesde':
             if sigma_max_y is None:
                 sigma_max_y = torch.tensor(config.model.sigma_max_y).float()
             else:
@@ -122,7 +122,7 @@ class DecreasingVarianceConditionalSdeGenerativeModel(ConditionalSdeGenerativeMo
             self.sigma_max_y = sigma_max_y
             self.sde['y'] = sde_lib.VESDE(sigma_min=config.model.sigma_min_y, sigma_max=sigma_max_y.cpu(), N=config.model.num_scales)
         else:
-            raise NotImplementedError(f"Conditioning SDE {config.training.sde} not supported yet.")
+            raise NotImplementedError(f"Conditioning SDE {config.model.sde} not supported yet.")
     
     def test_step(self, batch, batch_idx):
         print('Test batch %d' % batch_idx)
@@ -135,13 +135,13 @@ class DecreasingVarianceConditionalSdeGenerativeModel(ConditionalSdeGenerativeMo
         self.register_buffer('sigma_min_y', torch.tensor(config.model.sigma_min_y).float())
 
     def configure_sde(self, config, sigma_min_y = None, sigma_max_y = None):
-        if config.training.sde.lower() == 'vpsde':
+        if config.model.sde.lower() == 'vpsde':
             self.sde = sde_lib.VPSDE(beta_min=config.model.beta_min, beta_max=config.model.beta_max, N=config.model.num_scales)
             self.sampling_eps = 1e-3
-        elif config.training.sde.lower() == 'subvpsde':
+        elif config.model.sde.lower() == 'subvpsde':
             self.sde = sde_lib.subVPSDE(beta_min=config.model.beta_min, beta_max=config.model.beta_max, N=config.model.num_scales)
             self.sampling_eps = 1e-3
-        elif config.training.sde.lower() == 'vesde':
+        elif config.model.sde.lower() == 'vesde':
             if sigma_max_y is None:
                 sigma_max_y = torch.tensor(config.model.sigma_max_y).float()
             else:
@@ -168,10 +168,10 @@ class DecreasingVarianceConditionalSdeGenerativeModel(ConditionalSdeGenerativeMo
             self.sde = {'x':sde_x, 'y':sde_y}
             self.sampling_eps = 1e-5
         else:
-            raise NotImplementedError(f"SDE {config.training.sde} unknown.")
+            raise NotImplementedError(f"SDE {config.model.sde} unknown.")
     
     def reconfigure_conditioning_sde(self, config, sigma_min_y=None, sigma_max_y = None):
-        if config.training.sde.lower() == 'vesde':
+        if config.model.sde.lower() == 'vesde':
             if sigma_max_y is None:
                 sigma_max_y = torch.tensor(config.model.sigma_max_y).float()
             else:
@@ -187,7 +187,7 @@ class DecreasingVarianceConditionalSdeGenerativeModel(ConditionalSdeGenerativeMo
             
             self.sde['y'] = sde_lib.VESDE(sigma_min=sigma_min_y.cpu(), sigma_max=sigma_max_y.cpu(), N=config.model.num_scales)
         else:
-            raise NotImplementedError(f"Conditioning SDE {config.training.sde} not supported yet.")
+            raise NotImplementedError(f"Conditioning SDE {config.model.sde} not supported yet.")
     
     def test_step(self, batch, batch_idx):
         print('Test batch %d' % batch_idx)

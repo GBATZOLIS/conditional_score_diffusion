@@ -65,7 +65,7 @@ def get_general_sde_loss_fn(sde, train, conditional=False, reduce_mean=True, con
   Returns:
     A loss function.
   """
-  reduce_op = torch.mean if reduce_mean else lambda *args, **kwargs: 0.5 * torch.sum(*args, **kwargs)
+  reduce_op = torch.mean if reduce_mean else lambda *args, **kwargs: 0.5 * torch.sum(*args, **kwargs) # Why 1/2?
   
   if conditional:
     if isinstance(sde, dict):
@@ -182,9 +182,9 @@ def get_general_sde_loss_fn(sde, train, conditional=False, reduce_mean=True, con
       else:
         g2 = sde.sde(torch.zeros_like(batch), t)[1] ** 2
         losses = torch.square(score + z / std[(...,) + (None,) * len(batch.shape[1:])])
-        losses = reduce_op(losses.reshape(losses.shape[0], -1), dim=-1) * g2
+        losses = reduce_op(losses.reshape(losses.shape[0], -1), dim=-1) * g2 # reduce over dims
 
-      loss = torch.mean(losses)
+      loss = torch.mean(losses) # reduce over samplels
       return loss
 
   return loss_fn

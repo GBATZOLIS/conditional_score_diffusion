@@ -262,15 +262,15 @@ class VPSDE(SDE):
     logps = -N / 2. * np.log(2 * np.pi) - torch.sum(z ** 2, dim=(1, 2, 3)) / 2.
     return logps
 
-  def discretize(self, x, t):
-    """DDPM discretization."""
-    timestep = (t * (self.N - 1) / self.T).long()
-    beta = self.discrete_betas.to(x.device)[timestep]
-    alpha = self.alphas.to(x.device)[timestep]
-    sqrt_beta = torch.sqrt(beta)
-    f = torch.sqrt(alpha)[(...,)+(None,)*len(x.shape[1:])] * x - x
-    G = sqrt_beta
-    return f, G
+  # def discretize(self, x, t):
+  #   """DDPM discretization."""
+  #   timestep = (t * (self.N - 1) / self.T).long()
+  #   beta = self.discrete_betas.to(x.device)[timestep]
+  #   alpha = self.alphas.to(x.device)[timestep]
+  #   sqrt_beta = torch.sqrt(beta)
+  #   f = torch.sqrt(alpha)[(...,)+(None,)*len(x.shape[1:])] * x - x
+  #   G = sqrt_beta
+  #   return f, G
 
 
 class subVPSDE(SDE):
@@ -434,13 +434,13 @@ class cVESDE(cSDE):
     N = np.prod(shape[1:])
     return -N / 2. * np.log(2 * np.pi * self.sigma_max ** 2) - torch.sum(z ** 2, dim=(1, 2, 3)) / (2 * self.sigma_max ** 2)
 
-  def discretize(self, x, t):
-    """SMLD(NCSN) discretization."""
-    timestep = (t * (self.N - 1) / self.T).long()
-    sigma = self.discrete_sigmas.to(t.device)[timestep]
-    adjacent_sigma = torch.where(timestep == 0, torch.zeros_like(t),
-                                 self.discrete_sigmas[timestep - 1].to(t.device))
-    f = torch.zeros_like(x)
-    G = torch.sqrt(sigma ** 2 - adjacent_sigma ** 2)
-    return f, G
+  # def discretize(self, x, t):
+  #   """SMLD(NCSN) discretization."""
+  #   timestep = (t * (self.N - 1) / self.T).long()
+  #   sigma = self.discrete_sigmas.to(t.device)[timestep]
+  #   adjacent_sigma = torch.where(timestep == 0, torch.zeros_like(t),
+  #                                self.discrete_sigmas[timestep - 1].to(t.device))
+  #   f = torch.zeros_like(x)
+  #   G = torch.sqrt(sigma ** 2 - adjacent_sigma ** 2)
+  #   return f, G
   

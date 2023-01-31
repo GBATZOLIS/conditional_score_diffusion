@@ -1,4 +1,23 @@
 TO DO:
+- Ground truth models to study robustness to perturbation empirically
 - log_frequency config for callbacks
-- jobmaster to hpc
-- jobmaster execture list of configs
+- fix checkopoint loading via args
+- fix sampling
+- fix division by simgma 
+- clean up duplicated code
+- clean up config files
+- SNR parametrisation
+
+
+
+DIVISION BY SIGMA: 
+- get_score_fn
+- inside the model
+- in Langevin corrector
+
+PASSING SIGMA VS PASSING TIME:
+- encodings
+
+
+Q:
+- Why is configuration a callback and not a part of runlib?

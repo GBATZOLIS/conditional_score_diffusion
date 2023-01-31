@@ -56,7 +56,7 @@ class NCSNpp(pl.LightningModule):
     self.num_resolutions = num_resolutions = len(ch_mult)
     self.all_resolutions = all_resolutions = [config.data.effective_image_size // (2 ** i) for i in range(num_resolutions)]
 
-    self.conditional = conditional = config.model.conditional  # noise-conditional
+    self.conditional = conditional = config.model.noise_conditional  # noise-conditional
     fir = config.model.fir
     fir_kernel = config.model.fir_kernel
     self.skip_rescale = skip_rescale = config.model.skip_rescale

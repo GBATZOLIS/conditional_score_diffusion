@@ -27,13 +27,13 @@ class FokkerPlanckModel(pl.LightningModule):
 
     def configure_sde(self, config):
         # Setup SDEs
-        if config.training.sde.lower() == 'vpsde':
+        if config.model.sde.lower() == 'vpsde':
             self.sde = sde_lib.VPSDE(beta_min=config.model.beta_min, beta_max=config.model.beta_max, N=config.model.num_scales)
             self.sampling_eps = 1e-3
-        elif config.training.sde.lower() == 'subvpsde':
+        elif config.model.sde.lower() == 'subvpsde':
             self.sde = sde_lib.subVPSDE(beta_min=config.model.beta_min, beta_max=config.model.beta_max, N=config.model.num_scales)
             self.sampling_eps = 1e-3
-        elif config.training.sde.lower() == 'vesde':
+        elif config.model.sde.lower() == 'vesde':
             if config.data.use_data_mean:
                 data_mean_path = os.path.join(config.data.base_dir, 'datasets_mean', '%s_%d' % (config.data.dataset, config.data.image_size), 'mean.pt')
                 data_mean = torch.load(data_mean_path)
@@ -41,28 +41,28 @@ class FokkerPlanckModel(pl.LightningModule):
                 data_mean = None
             self.sde = sde_lib.VESDE(sigma_min=config.model.sigma_min, sigma_max=config.model.sigma_max, N=config.model.num_scales, data_mean=data_mean)
             self.sampling_eps = 1e-5
-        elif config.training.sde.lower() == 'snrsde':
+        elif config.model.sde.lower() == 'snrsde':
             self.sde = sde_lib.SNRSDE(N=config.model.num_scales)
             self.sampling_eps = 1e-3
         else:
-            raise NotImplementedError(f"SDE {config.training.sde} unknown.")
+            raise NotImplementedError(f"SDE {config.model.sde} unknown.")
 
     def configure_loss_fn(self, config, train):
-        if config.training.continuous:
-            loss_fn = get_general_sde_loss_fn(self.sde, train, reduce_mean=config.training.reduce_mean,
-                                    continuous=True, likelihood_weighting=config.training.likelihood_weighting)
+        if config.model.continuous:
+            loss_fn = get_general_sde_loss_fn(self.sde, train, reduce_mean=config.model.reduce_mean,
+                                    continuous=True, likelihood_weighting=config.model.likelihood_weighting)
         return loss_fn
 
     def configure_default_sampling_shape(self, config):
         #Sampling settings
         self.data_shape = config.data.shape
-        self.default_sampling_shape = [config.training.batch_size] +  self.data_shape
+        self.default_sampling_shape = [config.model.batch_size] +  self.data_shape
 
 
     def compute_fp_loss(self, batch):
         eps=1e-5
         #x = batch
-        #n_chunks = self.config.training.n_chunks
+        #n_chunks = self.config.model.n_chunks
         loss_fp = 0
         # t=[]
         # x_chunked = torch.chunk(x, n_chunks, dim=0)
@@ -83,7 +83,7 @@ class FokkerPlanckModel(pl.LightningModule):
             grad_norm_2 = torch.linalg.norm(self.score_model.score(x, t).view(B,-1), dim=1)**2
 
             score_x = lambda y: self.score_model.score(y,t)
-            divergence = compute_divergence(score_x, x, hutchinson=self.config.training.hutchinson)    
+            divergence = compute_divergence(score_x, x, hutchinson=self.config.model.hutchinson)    
             #self.score_model.trace_hessian_log_energy(x, t) 
             
             log_energy_t = lambda s: self.score_model.log_energy(x, s) 
@@ -130,23 +130,23 @@ class FokkerPlanckModel(pl.LightningModule):
         
 
 
-        N = self.config.training.num_epochs
+        N = self.config.model.num_epochs
         t = self.current_epoch / N
         # For projection
         #t = ((self.current_epoch - (N-1)) / N)
         
         # constant weight
-        if self.config.training.schedule == 'constant':
-            weight = self.config.training.alpha 
+        if self.config.model.schedule == 'constant':
+            weight = self.config.model.alpha 
         # geometric schedule
-        elif self.config.training.schedule == 'geometric':
-            weight = self.config.training.alpha_min * (self.config.training.alpha_max / self.config.training.alpha_min) ** t
+        elif self.config.model.schedule == 'geometric':
+            weight = self.config.model.alpha_min * (self.config.model.alpha_max / self.config.model.alpha_min) ** t
         # linear schedule
-        elif self.config.training.schedule == 'linear':
-            weight = (1 - t) * self.config.training.alpha_min  + t * self.config.training.alpha_max
+        elif self.config.model.schedule == 'linear':
+            weight = (1 - t) * self.config.model.alpha_min  + t * self.config.model.alpha_max
 
         # maxout
-        #weight = max(weight, self.config.training.alpha_max)
+        #weight = max(weight, self.config.model.alpha_max)
 
         # loss
         loss = loss_dsm + weight * loss_fp #+ weight * ballance_loss

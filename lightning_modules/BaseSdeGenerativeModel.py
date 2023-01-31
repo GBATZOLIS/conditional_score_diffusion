@@ -25,13 +25,13 @@ class BaseSdeGenerativeModel(pl.LightningModule):
 
     def configure_sde(self, config):
         # Setup SDEs
-        if config.training.sde.lower() == 'vpsde':
+        if config.model.sde.lower() == 'vpsde':
             self.sde = sde_lib.VPSDE(beta_min=config.model.beta_min, beta_max=config.model.beta_max, N=config.model.num_scales)
             self.sampling_eps = 1e-3
-        elif config.training.sde.lower() == 'subvpsde':
+        elif config.model.sde.lower() == 'subvpsde':
             self.sde = sde_lib.subVPSDE(beta_min=config.model.beta_min, beta_max=config.model.beta_max, N=config.model.num_scales)
             self.sampling_eps = 1e-3
-        elif config.training.sde.lower() == 'vesde':
+        elif config.model.sde.lower() == 'vesde':
             if config.data.use_data_mean:
                 data_mean_path = os.path.join(config.data.base_dir, 'datasets_mean', '%s_%d' % (config.data.dataset, config.data.image_size), 'mean.pt')
                 data_mean = torch.load(data_mean_path)
@@ -39,11 +39,11 @@ class BaseSdeGenerativeModel(pl.LightningModule):
                 data_mean = None
             self.sde = sde_lib.VESDE(sigma_min=config.model.sigma_min, sigma_max=config.model.sigma_max, N=config.model.num_scales, data_mean=data_mean)
             self.sampling_eps = 1e-5
-        elif config.training.sde.lower() == 'snrsde':
+        elif config.model.sde.lower() == 'snrsde':
             self.sde = sde_lib.SNRSDE(N=config.model.num_scales)
             self.sampling_eps = 1e-3
         else:
-            raise NotImplementedError(f"SDE {config.training.sde} unknown.")
+            raise NotImplementedError(f"SDE {config.model.sde} unknown.")
 
     def configure_loss_fn(self, config, train):
         if config.training.continuous:
