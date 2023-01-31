@@ -76,7 +76,7 @@ class ImageDataModule(pl.LightningDataModule):
         self.test_batch = config.eval.batch_size
 
     def setup(self, stage=None):
-        if self.config.dataset == 'mnist':
+        if self.config.data.dataset == 'mnist':
             data = MNISTDataset(self.config)
         else:
             data = ImageDataset(self.config)
