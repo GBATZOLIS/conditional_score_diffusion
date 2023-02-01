@@ -9,6 +9,92 @@ from tqdm import tqdm
 import pickle
 
 
+def get_conditional_manifold_dimension(config, name=None):
+  #---- create the setup ---
+  log_path = config.logging.log_path
+  log_name = config.logging.log_name
+  save_path = os.path.join(log_path, log_name, 'svd')
+  Path(save_path).mkdir(parents=True, exist_ok=True)
+
+  DataModule = create_lightning_datamodule(config)
+  DataModule.setup()
+  train_dataloader = DataModule.train_dataloader()
+    
+  pl_module = create_lightning_module(config)
+  pl_module = pl_module.load_from_checkpoint(config.model.checkpoint_path)
+  pl_module.configure_sde(config)
+
+  device = config.device
+  pl_module = pl_module.to(device)
+  pl_module.eval()
+  
+  score_model = pl_module.score_model
+  sde = pl_module.sde
+  score_fn = mutils.get_score_fn(sde, score_model, conditional=False, train=False, continuous=True)
+  #---- end of setup ----
+
+  num_datapoints = config.get('dim_estimation.num_datapoints', 100)
+  singular_values = []
+  labels = []
+  idx = 0
+  with tqdm(total=num_datapoints) as pbar:
+    for orig_batch, orig_labels in train_dataloader:
+      #orig_batch = orig_batch.to(device)
+      batchsize = orig_batch.size(0)
+      
+      if idx+1 >= num_datapoints:
+          break
+        
+      for x, y in zip(orig_batch, orig_labels):
+        if idx+1 >= num_datapoints:
+          break
+        
+        ambient_dim = math.prod(x.shape[1:])
+        x = x.repeat([batchsize,]+[1 for i in range(len(x.shape))])
+
+        num_batches = ambient_dim // batchsize + 1
+        extra_in_last_batch = ambient_dim - (ambient_dim // batchsize) * batchsize
+        num_batches *= 4
+
+        t = pl_module.sampling_eps
+        vec_t = torch.ones(x.size(0), device=device) * t
+
+        scores = []
+        for i in range(1, num_batches+1):
+          batch = x.clone()
+
+          mean, std = sde.marginal_prob(batch, vec_t)
+          z = torch.randn_like(batch)
+          batch = mean + std[(...,) + (None,) * len(batch.shape[1:])] * z
+          score = score_fn(batch, vec_t).detach().cpu()
+
+          if i < num_batches:
+            scores.append(score)
+          else:
+            scores.append(score[:extra_in_last_batch])
+        
+        scores = torch.cat(scores, dim=0)
+        scores = torch.flatten(scores, start_dim=1)
+
+        means = scores.mean(dim=0, keepdim=True)
+        normalized_scores = scores - means
+
+        u, s, v = torch.linalg.svd(normalized_scores)
+        s = s.tolist()
+        singular_values.append(s)
+        labels.append(y.item())
+
+        idx+=1
+        pbar.update(1)
+
+  with open(os.path.join(save_path, 'svd.pkl'), 'wb') as f:
+    info = {'singular_values':singular_values}
+    pickle.dump(info, f)
+  
+  with open(os.path.join(save_path, 'labels.pkl'), 'wb') as f:
+    info = {'labels': labels}
+    pickle.dump(info, f)
+
 def get_manifold_dimension(config, name=None):
   #---- create the setup ---
   log_path = config.logging.log_path
