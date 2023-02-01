@@ -52,6 +52,8 @@ def main(argv):
     run_lib.compute_data_stats(config)
   elif FLAGS.mode == 'manifold_dimension':
     run_lib.get_manifold_dimension(config)
+  elif FLAGS.mode == 'conditional_manifold_dimension':
+    run_lib.get_conditional_manifold_dimension(config)
 
 if __name__ == "__main__":
   app.run(main)
