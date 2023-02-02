@@ -332,5 +332,8 @@ def multi_scale_test(master_config, log_path):
 def get_manifold_dimension(config, name=None):
   dim_reduction.get_manifold_dimension(config, name)
 
+def get_conditional_manifold_dimension(config, name=None):
+  dim_reduction.get_conditional_manifold_dimension(config, name)
+
 def compute_data_stats(config):
   compute_dataset_statistics.compute_dataset_statistics(config)
