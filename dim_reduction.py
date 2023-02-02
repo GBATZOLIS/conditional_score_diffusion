@@ -33,7 +33,7 @@ def get_conditional_manifold_dimension(config, name=None):
   score_fn = mutils.get_score_fn(sde, score_model, conditional=False, train=False, continuous=True)
   #---- end of setup ----
 
-  num_datapoints = config.get('dim_estimation.num_datapoints', 100)
+  num_datapoints = config.get('dim_estimation.num_datapoints', 25)
   singular_values = []
   labels = []
   idx = 0
@@ -49,6 +49,7 @@ def get_conditional_manifold_dimension(config, name=None):
         if idx+1 >= num_datapoints:
           break
         
+        x = x.to(device)
         ambient_dim = math.prod(x.shape[1:])
         x = x.repeat([batchsize,]+[1 for i in range(len(x.shape))])
 
