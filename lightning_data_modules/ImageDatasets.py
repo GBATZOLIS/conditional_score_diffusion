@@ -10,15 +10,18 @@ import glob
 class MNISTDataset(datasets.MNIST):
     def __init__(self, config):
         super().__init__(root=config.data.base_dir, train=True, download=True)
-
         transforms_list=[transforms.ToTensor(), transforms.Pad(2, fill=0)] #left and right 2+2=4 padding
-            
         self.transform_my = transforms.Compose(transforms_list)
+
+        self.return_labels = config.data.return_labels
     
     def __getitem__(self, index):
         x, y = super().__getitem__(index)
         x = self.transform_my(x)
-        return x
+        if self.return_labels:
+            return x, y
+        else:
+            return x
 
 def load_file_paths(dataset_base_dir):
     listOfFiles = [os.path.join(dataset_base_dir, f) for f in os.listdir(dataset_base_dir)]
