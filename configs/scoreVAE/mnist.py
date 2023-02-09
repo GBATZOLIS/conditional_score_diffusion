@@ -9,7 +9,7 @@ def get_config():
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/score_vae/experiments/mnist/' #'/Users/gbatz97/Desktop/score-based-modelling/projects/scoreVAE/debug/experiments/mnist'
+  logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/mnist/' #'/Users/gbatz97/Desktop/score-based-modelling/projects/scoreVAE/debug/experiments/mnist'
   logging.log_name = '150'
   logging.top_k = 5
   logging.every_n_epochs = 1000
