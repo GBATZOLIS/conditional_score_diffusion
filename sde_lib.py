@@ -444,3 +444,95 @@ class cVESDE(cSDE):
     G = torch.sqrt(sigma ** 2 - adjacent_sigma ** 2)
     return f, G
   
+
+class cVPSDE(cSDE):
+  def __init__(self, beta_min=0.1, beta_max=20, N=1000):
+    """Construct a Variance Preserving SDE.
+    Args:
+      beta_min: value of beta(0)
+      beta_max: value of beta(1)
+      N: number of discretization steps
+    """
+    super().__init__(N)
+    self.beta_0 = beta_min
+    self.beta_1 = beta_max
+    self.N = N
+    self.discrete_betas = torch.linspace(beta_min / N, beta_max / N, N)
+    self.alphas = 1. - self.discrete_betas
+    self.alphas_cumprod = torch.cumprod(self.alphas, dim=0)
+    self.sqrt_alphas_cumprod = torch.sqrt(self.alphas_cumprod)
+    self.sqrt_1m_alphas_cumprod = torch.sqrt(1. - self.alphas_cumprod)
+
+  @property
+  def T(self):
+    return 1
+
+  def sde(self, x, t):
+    beta_t = self.beta_0 + t * (self.beta_1 - self.beta_0)
+    drift = -0.5 * beta_t[(...,)+(None,)*len(x.shape[1:])] * x
+    diffusion = torch.sqrt(beta_t)
+    return drift, diffusion
+
+  def marginal_prob(self, x, t): #perturbation kernel
+    log_mean_coeff = -0.25 * t ** 2 * (self.beta_1 - self.beta_0) - 0.5 * t * self.beta_0
+    mean = torch.exp(log_mean_coeff[(...,)+(None,)*len(x.shape[1:])]) * x
+    std = torch.sqrt(1. - torch.exp(2. * log_mean_coeff))
+    return mean, std
+
+  def prior_sampling(self, shape):
+    return torch.randn(*shape)
+
+  def prior_logp(self, z):
+    shape = z.shape
+    N = np.prod(shape[1:])
+    logps = -N / 2. * np.log(2 * np.pi) - torch.sum(z ** 2, dim=(1, 2, 3)) / 2.
+    return logps
+
+  def discretize(self, x, t):
+    """DDPM discretization."""
+    timestep = (t * (self.N - 1) / self.T).long()
+    beta = self.discrete_betas.to(x.device)[timestep]
+    alpha = self.alphas.to(x.device)[timestep]
+    sqrt_beta = torch.sqrt(beta)
+    f = torch.sqrt(alpha)[(...,)+(None,)*len(x.shape[1:])] * x - x
+    G = sqrt_beta
+    return f, G
+
+class csubVPSDE(cSDE):
+  def __init__(self, beta_min=0.1, beta_max=20, N=1000):
+    """Construct the sub-VP SDE that excels at likelihoods.
+    Args:
+      beta_min: value of beta(0)
+      beta_max: value of beta(1)
+      N: number of discretization steps
+    """
+    super().__init__(N)
+    self.beta_0 = beta_min
+    self.beta_1 = beta_max
+    self.N = N
+
+  @property
+  def T(self):
+    return 1
+
+  def sde(self, x, t):
+    beta_t = self.beta_0 + t * (self.beta_1 - self.beta_0)
+    drift = -0.5 * beta_t[(...,)+(None,)*len(x.shape[1:])] * x
+    discount = 1. - torch.exp(-2 * self.beta_0 * t - (self.beta_1 - self.beta_0) * t ** 2)
+    diffusion = torch.sqrt(beta_t * discount)
+    return drift, diffusion
+
+  def marginal_prob(self, x, t):
+    log_mean_coeff = -0.25 * t ** 2 * (self.beta_1 - self.beta_0) - 0.5 * t * self.beta_0
+    mean = torch.exp(log_mean_coeff)[(...,)+(None,)*len(x.shape[1:])] * x
+    std = 1 - torch.exp(2. * log_mean_coeff)
+    return mean, std
+
+  def prior_sampling(self, shape):
+    return torch.randn(*shape)
+
+  def prior_logp(self, z):
+    shape = z.shape
+    N = np.prod(shape[1:])
+
+    return -N / 2. * np.log(2 * np.pi) - torch.sum(z ** 2, dim=(1, 2, 3)) / 2.

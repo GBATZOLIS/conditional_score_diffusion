@@ -220,9 +220,9 @@ def get_pc_conditional_sampler(sde, shape, predictor, corrector, snr, p_steps,
 
           evolution['x'], evolution['y'] = torch.stack(evolution['x']), torch.stack(evolution['y'])
           sampling_info = {'evolution': evolution}
-          return x_mean if denoise else x, sampling_info
+          return x_mean if denoise else x
         else:
-          return x_mean if denoise else x, {}
+          return x_mean if denoise else x
           
     return pc_conditional_sampler
 

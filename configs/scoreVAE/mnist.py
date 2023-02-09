@@ -1,21 +1,3 @@
-# coding=utf-8
-# Copyright 2020 The Google Research Authors.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
-# Lint as: python3
-"""Config file for synthetic dataset."""
-
 import ml_collections
 import torch
 import math
@@ -27,59 +9,63 @@ def get_config():
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/dimension_detection/experiments/mnist/' 
-  logging.log_name = 'unconditional'
+  logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/score_vae/experiments/mnist/' #'/Users/gbatz97/Desktop/score-based-modelling/projects/scoreVAE/debug/experiments/mnist'
+  logging.log_name = '150'
   logging.top_k = 5
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
 
   # training
   config.training = training = ml_collections.ConfigDict()
+  config.training.lightning_module = 'score_vae'
+  training.conditioning_approach = 'sr3'
+  training.batch_size = 64 #1
   training.num_nodes = 1
   training.gpus = 1
-  training.accelerator = None if training.gpus <= 1 else 'ddp'
+  training.accelerator = None if training.gpus == 1 else 'ddp'
   training.accumulate_grad_batches = 1
-  training.lightning_module = 'base' 
-  config.training.batch_size = 256
-  training.workers = 4
+  training.workers = 4*training.gpus
+  #----- to be removed -----
   training.num_epochs = 10000
   training.n_iters = 2500000
   training.snapshot_freq = 5000
-  training.log_freq = 50
+  training.log_freq = 250
   training.eval_freq = 2500
-  ## store additional checkpoints for preemption in cloud computing environments
-  training.snapshot_freq_for_preemption = 5000
-  ## produce samples at each snapshot.
-  training.snapshot_sampling = True
-  training.likelihood_weighting = False
-  training.continuous = True
-  training.reduce_mean = True #look more for that setting
-  training.sde = 'vesde'
+  #------              --------
+  
   training.visualization_callback = 'base'
   training.show_evolution = False
 
+  training.likelihood_weighting = True
+  training.continuous = True
+  training.reduce_mean = True 
+  training.sde = 'vpsde'
+
+  ##new related to the training of Score VAE
+  training.variational = False
+
   # validation
   config.validation = validation = ml_collections.ConfigDict()
-  validation.batch_size = 256
-  validation.workers = 4
+  validation.batch_size = training.batch_size
+  validation.workers = training.workers
 
   # sampling
   config.sampling = sampling = ml_collections.ConfigDict()
   sampling.method = 'pc'
-  sampling.predictor = 'euler_maruyama'
-  sampling.corrector = 'none'
+  sampling.predictor = 'conditional_reverse_diffusion'
+  sampling.corrector = 'conditional_none'
   sampling.n_steps_each = 1
   sampling.noise_removal = True
   sampling.probability_flow = False
-  sampling.snr = 0.075 #0.15 in VE sde (you typically need to play with this term - more details in the main paper)
+  sampling.snr = 0.15 #0.15 in VE sde (you typically need to play with this term - more details in the main paper)
 
   # evaluation (this file is not modified at all - subject to change)
   config.eval = evaluate = ml_collections.ConfigDict()
   evaluate.callback = None
-  evaluate.workers = 4
+  evaluate.workers = training.workers
   evaluate.begin_ckpt = 50
   evaluate.end_ckpt = 96
-  evaluate.batch_size = 256
+  evaluate.batch_size = 1
   evaluate.enable_sampling = True
   evaluate.num_samples = 50000
   evaluate.enable_loss = True
@@ -88,25 +74,26 @@ def get_config():
 
   # data
   config.data = data = ml_collections.ConfigDict()
-  data.base_dir = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/datasets'
+  data.base_dir = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/datasets' #'/Users/gbatz97/Desktop/score-based-modelling/projects/scoreVAE/debug/datasets' 
   data.dataset = 'mnist'
   data.datamodule = 'image'
-  data.return_labels = True
+  data.return_labels = False
   data.use_data_mean = False
   data.create_dataset = False
   data.split = [0.8, 0.1, 0.1]
   data.image_size = 32
   data.effective_image_size = data.image_size
   data.shape = [1, data.image_size, data.image_size]
+  data.latent_dim = 150
   data.centered = False
   data.use_flip = False
   data.crop = False
   data.uniform_dequantization = False
   data.num_channels = data.shape[0] #the number of channels the model sees as input.
-  
+
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/dimension_detection/experiments/mnist/unconditional/checkpoints/best/epoch=446--eval_loss_epoch=0.025.ckpt'
+  model.checkpoint_path = None
   model.sigma_min = 0.01
   model.sigma_max = 50
   model.num_scales = 1000
@@ -115,7 +102,8 @@ def get_config():
   model.dropout = 0.1
   model.embedding_type = 'fourier'
 
-  model.name = 'ddpm' #'ncsnpp'
+  model.name = 'ddpm_decoder' 
+  model.encoder_name = 'ddpm_encoder'
   model.input_channels = model.output_channels = data.num_channels
   model.scale_by_sigma = True
   model.ema_rate = 0.999
@@ -150,7 +138,6 @@ def get_config():
   optim.grad_clip = 1.
 
   config.seed = 42
-  config.device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
-
+  #config.device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
 
   return config

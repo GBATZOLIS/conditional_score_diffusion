@@ -110,13 +110,16 @@ def get_ddpm_params(config):
     'num_diffusion_timesteps': num_diffusion_timesteps
   }
 
+def create_encoder(config):
+  """Create the encoder model"""
+  model_name = config.model.encoder_name
+  encoder = get_model(model_name)(config)
+  return encoder
 
 def create_model(config):
   """Create the score model."""
   model_name = config.model.name
   score_model = get_model(model_name)(config)
-  #score_model = score_model.to(config.device)
-  #score_model = torch.nn.DataParallel(score_model)
   return score_model
 
 
@@ -188,7 +191,7 @@ def get_score_fn(sde, model, conditional=False, train=False, continuous=False):
         raise NotImplementedError('This combination of SDEs is not supported for conditional SDEs yet.')
     else:
       """COVERS THE SR3 CONDITIONAL SCORE ESTIMATOR"""
-      if isinstance(sde, sde_lib.VPSDE) or isinstance(sde, sde_lib.subVPSDE):
+      if isinstance(sde, (sde_lib.VPSDE, sde_lib.cVPSDE, sde_lib.subVPSDE, sde_lib.csubVPSDE)):
         def score_fn(x, t):
           # Scale neural network output by standard deviation and flip sign
           if continuous or isinstance(sde, sde_lib.subVPSDE):
