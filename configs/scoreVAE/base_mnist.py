@@ -102,7 +102,7 @@ def get_config():
   model.dropout = 0.1
   model.embedding_type = 'fourier'
 
-  model.name = 'ddpm_decoder' 
+  model.name = 'ddpm' 
   model.encoder_name = 'ddpm_encoder'
   model.input_channels = model.output_channels = data.num_channels
   model.scale_by_sigma = True
