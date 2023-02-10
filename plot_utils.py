@@ -111,7 +111,7 @@ def plot_spectrum(singular_values, return_tensor=False):
     sing_vals = (np.array(singular_values)).mean(axis=0)
     plt.rcParams.update({'font.size': 16})
     plt.figure(figsize=(15,10))
-    plt.bar(list(range(len(sing_vals))),sing_vals)
+    plt.bar(list(range(1, len(sing_vals)+1)),sing_vals)
     plt.grid(alpha=0.5)
     plt.title('Score Spectrum')
     plt.xticks(np.arange(0, len(sing_vals)+1, 10))
