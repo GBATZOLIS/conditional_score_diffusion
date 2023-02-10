@@ -8399,3 +8399,6 @@ DEBUG:matplotlib.colorbar:Setting pcolormesh
 DEBUG:matplotlib.colorbar:locator: <matplotlib.ticker.FixedLocator object at 0x2ac462f87d60>
 DEBUG:matplotlib.colorbar:Using fixed locator on colorbar
 DEBUG:matplotlib.colorbar:Setting pcolormesh
+DEBUG:matplotlib.colorbar:locator: <matplotlib.ticker.FixedLocator object at 0x2ac462f70280>
+DEBUG:matplotlib.colorbar:Using fixed locator on colorbar
+DEBUG:matplotlib.colorbar:Setting pcolormesh
