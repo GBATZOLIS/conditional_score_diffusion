@@ -19,7 +19,7 @@ def get_config():
   config.training = training = ml_collections.ConfigDict()
   config.training.lightning_module = 'score_vae'
   training.conditioning_approach = 'sr3'
-  training.batch_size = 64 #1
+  training.batch_size = 256
   training.num_nodes = 1
   training.gpus = 1
   training.accelerator = None if training.gpus == 1 else 'ddp'
@@ -93,7 +93,7 @@ def get_config():
 
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/mnist/150/checkpoints/best/last.ckpt' #None
+  model.checkpoint_path = None
   model.sigma_min = 0.01
   model.sigma_max = 50
   model.num_scales = 1000
@@ -106,7 +106,7 @@ def get_config():
   model.encoder_name = 'ddpm_encoder'
   model.input_channels = model.output_channels = data.num_channels
   model.scale_by_sigma = True
-  model.ema_rate = 0.999
+  model.ema_rate = 0.9999
   model.normalization = 'GroupNorm'
   model.nonlinearity = 'swish'
   model.nf = 128

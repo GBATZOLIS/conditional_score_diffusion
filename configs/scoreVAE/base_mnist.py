@@ -19,7 +19,7 @@ def get_config():
   config.training = training = ml_collections.ConfigDict()
   config.training.lightning_module = 'base'
   #training.conditioning_approach = 'sr3'
-  training.batch_size = 64 #1
+  training.batch_size = 256 
   training.num_nodes = 1
   training.gpus = 1
   training.accelerator = None if training.gpus == 1 else 'ddp'
@@ -106,7 +106,7 @@ def get_config():
   model.encoder_name = 'ddpm_encoder'
   model.input_channels = model.output_channels = data.num_channels
   model.scale_by_sigma = True
-  model.ema_rate = 0.999
+  model.ema_rate = 0.9999
   model.normalization = 'GroupNorm'
   model.nonlinearity = 'swish'
   model.nf = 128
