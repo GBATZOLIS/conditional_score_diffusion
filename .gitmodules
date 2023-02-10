@@ -1,0 +1,3 @@
+[submodule "job_master"]
+	path = job_master
+	url = git@github.com:jstanczuk/job_master.git
