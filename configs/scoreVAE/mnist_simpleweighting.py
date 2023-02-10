@@ -93,7 +93,7 @@ def get_config():
 
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = None #'/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/mnist/150/checkpoints/best/last.ckpt' #None
+  model.checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/mnist/150_simple/checkpoints/best/epoch=127--eval_loss_epoch=0.010.ckpt'
   model.sigma_min = 0.01
   model.sigma_max = 50
   model.num_scales = 1000
