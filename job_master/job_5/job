@@ -1,4 +1,0 @@
-config=configs/celebA/gan_100.py
-count=1
-partition=pascal
-id=12874519

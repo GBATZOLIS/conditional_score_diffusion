@@ -21,6 +21,7 @@ import torch
 import math
 import numpy as np
 from datetime import timedelta
+from configs.utils import get_path
 
 def get_config():
   config = ml_collections.ConfigDict()
@@ -88,11 +89,12 @@ def get_config():
 
   # data
   config.data = data = ml_collections.ConfigDict()
-  data.base_dir = '/store/CIA/js2164/data'
+  data.base_dir = get_path('data_path')
   data.dataset = 'mnist'
   #data.task = 'generation'
   data.datamodule = 'image'
   #data.scale = 4 #?
+  data.return_labels = True
   data.use_data_mean = False
   data.create_dataset = False
   data.split = [0.8, 0.1, 0.1]

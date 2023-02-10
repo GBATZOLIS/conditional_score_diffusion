@@ -153,7 +153,7 @@ def get_model_fn(model, train=False):
 
 
 
-def get_score_fn(sde, model, conditional=False, train=False, continuous=False):
+def get_score_fn(sde, model, conditional=False, train=False, continuous=True):
   """Wraps `score_fn` so that the model output corresponds to a real time-dependent score function.
   Args:
     sde: An `sde_lib.SDE` object that represents the forward SDE.
@@ -164,6 +164,17 @@ def get_score_fn(sde, model, conditional=False, train=False, continuous=False):
     A score function.
   """
   model_fn = get_model_fn(model, train=train)
+
+  # GT Score
+  from models.ksphere_gt import KSphereGT
+  if isinstance(model, KSphereGT):
+    def score_fn(x, t):
+        std = sde.marginal_prob(torch.zeros_like(x), t)[1]
+        score = model_fn(x, std)
+        return score
+    return score_fn
+
+
 
   if conditional:
     """COVERS OUR CONDITIONAL SCORE ESTIMATOR"""

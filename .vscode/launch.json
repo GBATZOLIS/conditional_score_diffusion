@@ -12,26 +12,13 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "Test_Benchmark",
-            "type": "python",
-            "request": "launch",
-            "program": "${file}",
-            "args": [
-                "--file",
-                "benchmark_small.csv",
-                "--max_samples",
-                "10000"
-            ],
-            "console": "integratedTerminal"
-        },
-        {
             "name": "Test",
             "type": "python",
             "request": "launch",
             "program": "${file}",
             "args": [
                 "--config",
-                "configs/celebA/ddpm.py",
+                "configs/ksphere/N_1/uniform_10_GT.py",
                 "--log_path",
                 "./test_logs",
                 "--debug",
