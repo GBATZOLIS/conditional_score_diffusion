@@ -48,7 +48,7 @@ def get_config():
   training.continuous = True
   training.sde = 'vesde'
   # callbacks
-  training.visualization_callback = ['ScoreSpecturmVisualization', 'KSphereEvaluation']
+  training.visualization_callback = ['ScoreSpecturmVisualization']
   training.show_evolution = False 
 
   # validation

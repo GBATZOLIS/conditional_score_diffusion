@@ -24,7 +24,7 @@ class DanielDataset(Dataset):
         x = x - x.min(0)
         i = x.max(0) - x.min(0)
         x = x / i * 2 - 1
-        return torch.from_numpy(x)
+        return torch.tensor(x, dtype=torch.float32)
 
 @utils.register_lightning_datamodule(name='Daniel')
 class DanielDataModule(pl.LightningDataModule):
@@ -47,7 +47,9 @@ class DanielDataModule(pl.LightningDataModule):
 
         self.dataset = DanielDataset(self.config)
         l=len(self.dataset)
-        self.train_data, self.valid_data, self.test_data = random_split(self.dataset, [int(self.split[0]*l), int(self.split[1]*l), int(self.split[2]*l)]) 
+        l_train, l_val = int(self.split[0]*l), int(self.split[1]*l)
+        l_test = l - (l_train + l_val)
+        self.train_data, self.valid_data, self.test_data = random_split(self.dataset, [l_train, l_val, l_test]) 
     
     def train_dataloader(self):
         return DataLoader(self.train_data, batch_size = self.train_batch, num_workers=self.train_workers, shuffle=True)  
