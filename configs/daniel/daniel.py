@@ -67,7 +67,7 @@ def get_config():
 
    # data
   config.data = data = ml_collections.ConfigDict()
-  data.datamodule = 'KSphere'
+  data.datamodule = 'Daniel'
   data.create_dataset = False
   data.split = [0.8, 0.1, 0.1]
   data.data_samples = 50000

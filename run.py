@@ -8,13 +8,15 @@ from job_master.run_configs import run_configs
 #     'configs/ksphere/robustness/1.py',
 # ]
 
-configs = [
-    'configs/ksphere/sample_complexity/1.py',
-    'configs/ksphere/sample_complexity/10.py',
-    # 'configs/ksphere/sample_complexity/10000.py',
-    # 'configs/ksphere/sample_complexity/100000.py',
-    # 'configs/ksphere/sample_complexity/1000000.py',
-]
+# configs = [
+#     'configs/ksphere/sample_complexity/1.py',
+#     'configs/ksphere/sample_complexity/10.py',
+#     'configs/ksphere/sample_complexity/10000.py',
+#     'configs/ksphere/sample_complexity/100000.py',
+#     'configs/ksphere/sample_complexity/1000000.py',
+# ]
 
 
-run_configs(configs)
+configs = ['configs/daniel/daniel.py']
+
+run_configs(configs, partition='pascal')

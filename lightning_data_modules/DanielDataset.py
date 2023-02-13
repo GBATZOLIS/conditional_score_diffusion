@@ -18,13 +18,13 @@ class DanielDataset(Dataset):
     def __len__(self):
         return len(self.data)
 
-    def get_data(path):
+    def get_data(self, path):
         x = np.load(path)
         # normalize to (-1,1) range
         x = x - x.min(0)
         i = x.max(0) - x.min(0)
         x = x / i * 2 - 1
-        return x
+        return torch.from_numpy(x)
 
 @utils.register_lightning_datamodule(name='Daniel')
 class DanielDataModule(pl.LightningDataModule):
