@@ -1,11 +1,18 @@
 import importlib
 import re
 import subprocess
+import pickle
 
 def read_config(config_path):
-    module_name = re.findall('configs/[\w|/ | \.]+.py', config_path)[0][:-3].replace('/','.')
-    module = importlib.import_module(module_name)
-    config = module.get_config()
+    if config_path[-3:] == 'pkl':
+        with open(config_path, 'rb') as file:
+            config = pickle.load(file)
+    elif config_path[-2:] == 'py':
+        module_name = re.findall('configs/[\w|/ | \.]+.py', config_path)[0][:-3].replace('/','.')
+        module = importlib.import_module(module_name)
+        config = module.get_config()
+    else:
+        raise RuntimeError('Unsupported config format.')
     return config
 
 
