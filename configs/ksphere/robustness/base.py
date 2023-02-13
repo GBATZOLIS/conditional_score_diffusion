@@ -31,6 +31,7 @@ def get_config():
   data = config.data
   data.n_spheres = 1
   data.manifold_dim=25
+  data.noise_std = 0.0
   
   data.embedding_type = 'random_isometry'
   data.angle_std = -1

@@ -3,6 +3,7 @@ import torch
 import io
 import torchvision.transforms as transforms
 import PIL
+import pickle
 import numpy as np
 import copy
 from matplotlib import pyplot as plt
@@ -107,14 +108,18 @@ def plot_log_energy(score_model, t=0.0, X=None, Y=None):
     return Z
 
 
-def plot_spectrum(singular_values, return_tensor=False):
-    sing_vals = (np.array(singular_values)).mean(axis=0)
+def plot_spectrum(svd, return_tensor=False, mode='first'):
+    singular_values = extract_sing_vals(svd, mode)
+    sing_vals = singular_values[0]
+    
     plt.rcParams.update({'font.size': 16})
     plt.figure(figsize=(15,10))
-    plt.bar(list(range(1, len(sing_vals)+1)),sing_vals)
     plt.grid(alpha=0.5)
     plt.title('Score Spectrum')
     plt.xticks(np.arange(0, len(sing_vals)+1, 10))
+    for sing_vals in singular_values:
+        #plt.bar(list(range(1, len(sing_vals)+1)),sing_vals)
+        plt.plot(list(range(1, len(sing_vals)+1)),sing_vals)
     if return_tensor:
         buf = io.BytesIO()
         plt.savefig(buf, format='jpeg')
@@ -123,8 +128,6 @@ def plot_spectrum(singular_values, return_tensor=False):
         image = transforms.ToTensor()(image)
         plt.close()
         return image
-    else:
-        plt.show()
 
 def plot_norms(samples, return_tensor=False):
     norms=torch.linalg.norm(samples, dim=1).cpu().detach().numpy()
@@ -142,3 +145,60 @@ def plot_norms(samples, return_tensor=False):
         return image
     else:
         plt.show()
+
+def plot_distribution(svd, mode='first'):
+
+    def softmax(x):
+        """Compute softmax values for each sets of scores in x."""
+        e_x = np.exp(x - np.max(x))
+        return e_x / e_x.sum(axis=0) # only difference
+    
+    singular_values = extract_sing_vals(svd, mode)
+    sing_vals = singular_values[0]
+    
+    plt.rcParams.update({'font.size': 16})
+    plt.figure(figsize=(15,10))
+    plt.grid(alpha=0.5)
+    plt.title('Dimension distribution')
+    dims=[]
+    for sing_vals in singular_values:
+        s=sing_vals
+        norm_factor = s[1]-s[2]
+        diff = [(s[i]-s[i+1])/norm_factor for i in range(1, len(s)-1)]
+        soft = softmax(diff)
+        plt.plot(list(range(1,1+len(soft)))[::-1],soft)
+        #plt.xticks(np.arange(0, len(sing_vals)+1, 10))
+        dim = len(soft)-soft.argmax()
+        dims.append(dim)       
+
+def extract_sing_vals(svd, mode='first'):
+    print(f'Aggregation mode: {mode}')
+    singular_vals = svd['singular_values']
+    if mode == 'first':
+        return [singular_vals[0]]
+    elif mode == 'all':
+        return singular_vals
+    
+def plot_dims(svd):
+    def softmax(x):
+        """Compute softmax values for each sets of scores in x."""
+        e_x = np.exp(x - np.max(x))
+        return e_x / e_x.sum(axis=0) # only difference
+    
+    singular_values = extract_sing_vals(svd, 'all')
+    sing_vals = singular_values[0]
+    
+    plt.rcParams.update({'font.size': 16})
+    plt.figure(figsize=(15,10))
+    plt.grid(alpha=0.5)
+    plt.title('Dims')
+    dims=[]
+    for sing_vals in singular_values:
+        s=sing_vals
+        norm_factor = s[1]-s[2]
+        diff = [(s[i]-s[i+1])/norm_factor for i in range(1, len(s)-1)]
+        soft = softmax(diff)
+        dim = len(soft)-soft.argmax()
+        dims.append(dim)      
+    plt.hist(dims)
+    return dims
