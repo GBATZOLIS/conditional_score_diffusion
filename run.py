@@ -1,11 +1,20 @@
 from job_master.run_configs import run_configs
 
+# configs = [
+#     'configs/ksphere/robustness/0_005.py',
+#     'configs/ksphere/robustness/0_01.py',
+#     'configs/ksphere/robustness/0_015.py',
+#     'configs/ksphere/robustness/0_1.py',
+#     'configs/ksphere/robustness/1.py',
+# ]
+
 configs = [
-    'configs/ksphere/robustness/0.py',
-    'configs/ksphere/robustness/0_25.py',
-    'configs/ksphere/robustness/0_5.py',
-    'configs/ksphere/robustness/0_75.py',
-    'configs/ksphere/robustness/1.py',
+    'configs/ksphere/sample_complexity/1.py',
+    'configs/ksphere/sample_complexity/10.py',
+    # 'configs/ksphere/sample_complexity/10000.py',
+    # 'configs/ksphere/sample_complexity/100000.py',
+    # 'configs/ksphere/sample_complexity/1000000.py',
 ]
+
 
 run_configs(configs)
