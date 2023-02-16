@@ -19,8 +19,8 @@ def get_config():
   config.training = training = ml_collections.ConfigDict()
   config.training.lightning_module = 'score_vae'
   training.conditioning_approach = 'sr3'
-  training.batch_size = 256
-  training.t_batch_size = 1
+  training.batch_size = 36
+  training.t_batch_size = 2
   training.num_nodes = 1
   training.gpus = 1
   training.accelerator = None if training.gpus == 1 else 'ddp'
