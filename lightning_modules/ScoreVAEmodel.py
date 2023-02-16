@@ -48,7 +48,7 @@ class ScoreVAEmodel(BaseSdeGenerativeModel.BaseSdeGenerativeModel):
         loss = self.eval_loss_fn(self.encoder, self.score_model, batch)
         self.log('eval_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
 
-        if batch_idx == 0:
+        if batch_idx == 0 and self.epoch % 10 == 1:
             reconstruction = self.sample(batch)
 
             reconstruction =  reconstruction.cpu()
@@ -63,7 +63,7 @@ class ScoreVAEmodel(BaseSdeGenerativeModel.BaseSdeGenerativeModel):
             L2norm = torch.linalg.vector_norm(difference, ord=2, dim=1)
             avg_L2norm = torch.mean(L2norm)
 
-            self.log('reconstruction_loss', avg_L2norm, on_epoch=True, logger=True)
+            self.log('reconstruction_loss', avg_L2norm, logger=True)
 
         return loss
 
