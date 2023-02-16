@@ -11604,3 +11604,59 @@ DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/score_sde_pytorc
 DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/score_sde_pytorch/test_logs/test34b50608-65d5-4a4f-8482-d9d155e75e5c/checkpoints/best/last.ckpt
 DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/score_sde_pytorch/test_logs/test34b50608-65d5-4a4f-8482-d9d155e75e5c/checkpoints/best/epoch=22--eval_loss_epoch=397.041.ckpt
 DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/score_sde_pytorch/test_logs/test34b50608-65d5-4a4f-8482-d9d155e75e5c/checkpoints/best/last.ckpt
+WARNING:root:Could not create a score spectrum
+ERROR:root:[Errno 2] No such file or directory: '/rds/user/js2164/hpc-work/repos/score_sde_pytorch/logs/daniel/test/checkpoints/best/last.ckpt'
+WARNING:root:Could not create a score spectrum
+ERROR:root:[Errno 2] No such file or directory: '/rds/user/js2164/hpc-work/repos/score_sde_pytorch/logs/daniel/test/checkpoints/best/last.ckpt'
+WARNING:root:Could not create a score spectrum
+ERROR:root:[Errno 2] No such file or directory: 'logs/daniel/test/svd/svd_1000.pkl'
+WARNING:root:Could not create a score spectrum
+ERROR:root:[Errno 2] No such file or directory: 'logs/daniel/test/svd/svd_2000.pkl'
+WARNING:root:Could not create a score spectrum
+ERROR:root:[Errno 2] No such file or directory: 'logs/daniel/test/svd/svd_3000.pkl'
+WARNING:root:Could not create a score spectrum
+ERROR:root:[Errno 2] No such file or directory: 'logs/daniel/test/svd/svd_4000.pkl'
+WARNING:root:Could not create a score spectrum
+ERROR:root:[Errno 2] No such file or directory: 'logs/daniel/test/svd/svd_5000.pkl'
+WARNING:root:Could not create a score spectrum
+ERROR:root:[Errno 2] No such file or directory: 'logs/daniel/test/svd/svd_6000.pkl'
+WARNING:root:Could not create a score spectrum
+ERROR:root:[Errno 2] No such file or directory: 'logs/daniel/test/svd/svd_7000.pkl'
+WARNING:root:Could not create a score spectrum
+ERROR:root:[Errno 2] No such file or directory: 'logs/daniel/test/svd/svd_8000.pkl'
+WARNING:root:Could not create a score spectrum
+ERROR:root:[Errno 2] No such file or directory: 'logs/daniel/test/svd/svd_9000.pkl'
+WARNING:root:Could not create a score spectrum
+ERROR:root:[Errno 2] No such file or directory: 'logs/daniel/test/svd/svd_10000.pkl'
+WARNING:root:Could not create a score spectrum
+ERROR:root:[Errno 2] No such file or directory: 'logs/daniel/test/svd/svd_11000.pkl'
+WARNING:root:Could not create a score spectrum
+ERROR:root:[Errno 2] No such file or directory: 'logs/daniel/test/svd/svd_12000.pkl'
+WARNING:root:Could not create a score spectrum
+ERROR:root:[Errno 2] No such file or directory: 'logs/daniel/test/svd/svd_13000.pkl'
+WARNING:root:Could not create a score spectrum
+ERROR:root:[Errno 2] No such file or directory: 'logs/daniel/test/svd/svd_14000.pkl'
+WARNING:root:Could not create a score spectrum
+ERROR:root:[Errno 2] No such file or directory: 'logs/daniel/test/svd/svd_15000.pkl'
+WARNING:root:Could not create a score spectrum
+ERROR:root:[Errno 2] No such file or directory: 'logs/daniel/test/svd/svd_16000.pkl'
+WARNING:root:Could not create a score spectrum
+ERROR:root:[Errno 2] No such file or directory: 'logs/daniel/test/svd/svd_17000.pkl'
+WARNING:root:Could not create a score spectrum
+ERROR:root:[Errno 2] No such file or directory: 'logs/daniel/test/svd/svd_18000.pkl'
+WARNING:root:Could not create a score spectrum
+ERROR:root:[Errno 2] No such file or directory: 'logs/daniel/test/svd/svd_19000.pkl'
+WARNING:root:Could not create a score spectrum
+ERROR:root:[Errno 2] No such file or directory: 'logs/daniel/test/svd/svd_20000.pkl'
+WARNING:root:Could not create a score spectrum
+ERROR:root:[Errno 2] No such file or directory: 'logs/daniel/test/svd/svd_21000.pkl'
+WARNING:root:Could not create a score spectrum
+ERROR:root:[Errno 2] No such file or directory: 'logs/daniel/test/svd/svd_22000.pkl'
+WARNING:root:Could not create a score spectrum
+ERROR:root:[Errno 2] No such file or directory: 'logs/daniel/test/svd/svd_23000.pkl'
+WARNING:root:Could not create a score spectrum
+ERROR:root:[Errno 2] No such file or directory: 'logs/daniel/test/svd/svd_24000.pkl'
+WARNING:root:Could not create a score spectrum
+ERROR:root:[Errno 2] No such file or directory: 'logs/daniel/test/svd/svd_25000.pkl'
+WARNING:root:Could not create a score spectrum
+ERROR:root:[Errno 2] No such file or directory: 'logs/daniel/test/svd/svd_26000.pkl'
