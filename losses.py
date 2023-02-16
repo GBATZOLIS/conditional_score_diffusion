@@ -78,7 +78,7 @@ def get_scoreVAE_loss_fn(sde, train, variational=False, likelihood_weighting=Tru
 
       t_losses+=losses
 
-    loss = torch.mean(t_losses)
+    loss = torch.mean(t_losses/t_batch_size)
     return loss
   
   return loss_fn

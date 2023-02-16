@@ -10,7 +10,7 @@ def get_config():
   #logging
   config.logging = logging = ml_collections.ConfigDict()
   logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/mnist/' #'/Users/gbatz97/Desktop/score-based-modelling/projects/scoreVAE/debug/experiments/mnist'
-  logging.log_name = 'modified_loss'
+  logging.log_name = 'modified_loss_ampere'
   logging.top_k = 5
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
@@ -19,7 +19,7 @@ def get_config():
   config.training = training = ml_collections.ConfigDict()
   config.training.lightning_module = 'score_vae'
   training.conditioning_approach = 'sr3'
-  training.batch_size = 36
+  training.batch_size = 256
   training.t_batch_size = 2
   training.num_nodes = 1
   training.gpus = 1
@@ -94,7 +94,7 @@ def get_config():
 
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/mnist/150/checkpoints/best/epoch=381--eval_loss_epoch=0.436.ckpt' 
+  model.checkpoint_path = None 
   model.sigma_min = 0.01
   model.sigma_max = 50
   model.num_scales = 1000
