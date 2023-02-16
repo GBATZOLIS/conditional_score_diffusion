@@ -47,8 +47,8 @@ class ScoreVAEmodel(BaseSdeGenerativeModel.BaseSdeGenerativeModel):
         loss = self.eval_loss_fn(self.encoder, self.score_model, batch)
         self.log('eval_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
 
-        if batch_idx == 1:
-            reconstruction = self.sample(batch, p_steps=250)
+        if batch_idx == 0:
+            reconstruction = self.sample(batch)
 
             reconstruction =  reconstruction.cpu()
             grid_reconstruction = torchvision.utils.make_grid(reconstruction, nrow=int(np.sqrt(batch.size(0))), normalize=True, scale_each=True)

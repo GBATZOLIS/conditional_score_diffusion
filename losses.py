@@ -51,6 +51,38 @@ def optimization_manager(config):
 
   return optimize_fn
 
+def get_new_scoreVAE_loss_fn(sde, train, variational=False, likelihood_weighting=True, eps=1e-5, t_batch=1):
+  def loss_fn(encoder, score_model, batch):
+    x = batch
+    y = encoder(x)
+
+    score_fn = mutils.get_score_fn(sde, score_model, conditional=True, train=train, continuous=True)
+    
+    t_losses = torch.zeros(size=(x.size(0),)).type_as(x)
+    for i in range(t_batch):
+      t = torch.rand(x.shape[0]).type_as(x) * (sde.T - eps) + eps
+      z = torch.randn_like(x)
+      mean, std = sde.marginal_prob(x, t)
+      perturbed_x = mean + std[(...,) + (None,) * len(x.shape[1:])] * z
+      perturbed_data = {'x':perturbed_x, 'y':y}
+
+      score = score_fn(perturbed_data, t)
+
+      f, g = sde.sde(torch.zeros_like(x), t, True)
+      g2 = g ** 2
+      grad_log_pert_kernel = -1 * z / std[(...,) + (None,) * len(x.shape[1:])]
+      losses = torch.square(score - grad_log_pert_kernel)-torch.square(grad_log_pert_kernel)
+      losses = torch.sum(losses.reshape(losses.shape[0], -1), dim=-1) * g2
+      losses -= 2*torch.sum(f.reshape(f.shape[0], -1), dim=-1)
+      losses *= 1/2
+
+      t_losses+=losses
+
+    loss = torch.mean(losses)
+    return loss
+  
+  return loss_fn
+
 def get_scoreVAE_loss_fn(sde, train, variational=False, likelihood_weighting=True, eps=1e-5):
   reduce_op = torch.mean #if reduce_mean else lambda *args, **kwargs: 0.5 * torch.sum(*args, **kwargs)
   def loss_fn(encoder, score_model, batch):
