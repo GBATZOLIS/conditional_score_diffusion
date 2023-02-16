@@ -35,7 +35,8 @@ class ScoreVAEmodel(BaseSdeGenerativeModel.BaseSdeGenerativeModel):
         loss_fn = get_scoreVAE_loss_fn(self.sde, train, 
                                         variational=config.training.variational, 
                                         likelihood_weighting=config.training.likelihood_weighting,
-                                        eps=self.sampling_eps)
+                                        eps=self.sampling_eps,
+                                        t_batch_size=config.training.t_batch_size)
         return loss_fn
     
     def training_step(self, batch, batch_idx):

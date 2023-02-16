@@ -51,7 +51,7 @@ def optimization_manager(config):
 
   return optimize_fn
 
-def get_new_scoreVAE_loss_fn(sde, train, variational=False, likelihood_weighting=True, eps=1e-5, t_batch=1):
+def get_scoreVAE_loss_fn(sde, train, variational=False, likelihood_weighting=True, eps=1e-5, t_batch_size=1):
   def loss_fn(encoder, score_model, batch):
     x = batch
     y = encoder(x)
@@ -59,7 +59,7 @@ def get_new_scoreVAE_loss_fn(sde, train, variational=False, likelihood_weighting
     score_fn = mutils.get_score_fn(sde, score_model, conditional=True, train=train, continuous=True)
     
     t_losses = torch.zeros(size=(x.size(0),)).type_as(x)
-    for i in range(t_batch):
+    for _ in range(t_batch_size):
       t = torch.rand(x.shape[0]).type_as(x) * (sde.T - eps) + eps
       z = torch.randn_like(x)
       mean, std = sde.marginal_prob(x, t)
@@ -78,12 +78,12 @@ def get_new_scoreVAE_loss_fn(sde, train, variational=False, likelihood_weighting
 
       t_losses+=losses
 
-    loss = torch.mean(losses)
+    loss = torch.mean(t_losses)
     return loss
   
   return loss_fn
 
-def get_scoreVAE_loss_fn(sde, train, variational=False, likelihood_weighting=True, eps=1e-5):
+def get_old_scoreVAE_loss_fn(sde, train, variational=False, likelihood_weighting=True, eps=1e-5):
   reduce_op = torch.mean #if reduce_mean else lambda *args, **kwargs: 0.5 * torch.sum(*args, **kwargs)
   def loss_fn(encoder, score_model, batch):
     x = batch
