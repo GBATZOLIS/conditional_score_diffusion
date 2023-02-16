@@ -48,7 +48,7 @@ class ScoreVAEmodel(BaseSdeGenerativeModel.BaseSdeGenerativeModel):
         loss = self.eval_loss_fn(self.encoder, self.score_model, batch)
         self.log('eval_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
 
-        if batch_idx == 0 and self.epoch % 10 == 1:
+        if batch_idx == 0 and self.current_epoch % 10 == 1:
             reconstruction = self.sample(batch)
 
             reconstruction =  reconstruction.cpu()
