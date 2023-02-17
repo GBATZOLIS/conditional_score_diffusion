@@ -10,7 +10,7 @@ from plot_utils import plot_spectrum
 #path = 'logs/ksphere/n_1/dim_50/random_isometry/uniform_random/svd/svd_14000.pkl'
 #path = 'logs/line/sine_line/svd/svd_26500.pkl'
 #path = 'logs/mammoth/ve_random/svd/svd_16500.pkl'
-path = 'logs/ksphere/sample_complexity/n=500/svd/svd.pkl'
+path = 'logs/daniel/test/svd/svd.pkl'
 
 with open(path, 'rb') as f:
     svd = pickle.load(f)
