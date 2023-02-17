@@ -11,6 +11,7 @@ from sde_lib import cVPSDE, csubVPSDE, cVESDE
 from sampling.conditional import get_conditional_sampling_fn
 import torchvision
 import numpy as np
+import losses
 
 @utils.register_lightning_module(name='score_vae')
 class ScoreVAEmodel(BaseSdeGenerativeModel.BaseSdeGenerativeModel):
@@ -77,3 +78,26 @@ class ScoreVAEmodel(BaseSdeGenerativeModel.BaseSdeGenerativeModel):
                                                               denoise=denoise, use_path=False)
 
         return conditional_sampling_fn(self.score_model, y, show_evolution)
+    
+    def configure_optimizers(self):
+        class scheduler_lambda_function:
+            def __init__(self, warm_up):
+                self.use_warm_up = True if warm_up > 0 else False
+                self.warm_up = warm_up
+
+            def __call__(self, s):
+                if self.use_warm_up:
+                    if s < self.warm_up:
+                        return s / self.warm_up
+                    else:
+                        return 1
+                else:
+                    return 1
+        
+
+        optimizer = losses.get_optimizer(self.config, self.parameters())
+        
+        scheduler = {'scheduler': optim.lr_scheduler.LambdaLR(optimizer,scheduler_lambda_function(self.config.optim.warmup)),
+                    'interval': 'step'}  # called after each training step
+                    
+        return [optimizer], [scheduler]
