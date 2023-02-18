@@ -1,11 +1,15 @@
 import pytorch_lightning as pl
 from torch.utils.data import Dataset, DataLoader, random_split
 from torchvision  import transforms, datasets
-
+import torch
 import PIL.Image as Image
 from . import utils
 import os
 import glob
+import pickle
+from tqdm import tqdm
+
+
 
 class MNISTDataset(datasets.MNIST):
     def __init__(self, config):
@@ -26,6 +30,53 @@ class MNISTDataset(datasets.MNIST):
 def load_file_paths(dataset_base_dir):
     listOfFiles = [os.path.join(dataset_base_dir, f) for f in os.listdir(dataset_base_dir)]
     return listOfFiles
+
+
+
+class MNISTLatentDataset(MNISTDataset):
+
+    def __init__(self, config) -> None:
+        super().__init__(config)
+        dataset_path = os.path.join(config.data.base_dir, 'MNIST_latents')
+        from janutils.models.autoencoder import AutoEncoder
+        self.autoencoder = AutoEncoder.load_from_checkpoint(config.data.encoder_path)
+        # if not os.path.exists(dataset_path):
+        #     from janutils.models.autoencoder import AutoEncoder
+        #     autoencoder = AutoEncoder.load_from_checkpoint(config.data.encoder_path)
+        #     latents = []
+        #     print('Generating latents')
+        #     for index in tqdm(range(super().__len__())):
+        #         if self.return_labels:
+        #             x, _ = super().__getitem__(index)
+        #         else:
+        #             x = super().__getitem__(index)
+        #         z = autoencoder.encode(x.unsqueeze(0)).squeeze()
+        #         latents.append(z)
+        #     self.latents = torch.stack(latents)
+        #     os.makedirs(dataset_path)
+        #     with open(os.path.join(dataset_path, 'latents'), 'wb') as f:
+        #         pickle.dump(self.latents, f)
+        # else:
+        #     print('Loading latents')
+        #     with open(os.path.join(dataset_path, 'latents'), 'rb') as f:
+        #         self.latents = pickle.load(f)
+
+
+    def __getitem__(self, index):
+        
+        #z = self.latents(index)
+        if self.return_labels:
+            x, y = super().__getitem__(index)
+        else:
+            x = super().__getitem__(index)
+        
+        z = self.autoencoder.encode(x.unsqueeze(0)).squeeze()
+        return x, z
+
+
+
+
+
 
 #the code should become more general for the ImageDataset class.
 class ImageDataset(Dataset):
@@ -80,6 +131,8 @@ class ImageDataModule(pl.LightningDataModule):
     def setup(self, stage=None):
         if self.config.data.dataset == 'mnist':
             data = MNISTDataset(self.config)
+        elif self.config.data.dataset == 'mnist_latent':
+            data = MNISTLatentDataset(self.config)
         else:
             data = ImageDataset(self.config)
         
