@@ -8,7 +8,6 @@ import os
 import glob
 import pickle
 from tqdm import tqdm
-from janutils.utils import get_gpu_info
 
 class CIFAR10Dataset(datasets.CIFAR10):
     def __init__(self, config, train):
