@@ -10,6 +10,51 @@ import pickle
 from tqdm import tqdm
 
 
+class CIFAR10Dataset(datasets.CIFAR10):
+    def __init__(self, config, train):
+        super().__init__(root=config.data.base_dir, train=train, download=True)
+        transforms_list=[transforms.ToTensor()]
+        self.transform_my = transforms.Compose(transforms_list)
+        self.return_labels = config.data.return_labels
+    
+    def __getitem__(self, index):
+        x, y = super().__getitem__(index)
+        x = self.transform_my(x)
+        if self.return_labels:
+            return x, y
+        else:
+            return x
+
+@utils.register_lightning_datamodule(name='cifar10')
+class Cifar10DataModule(pl.LightningDataModule):
+    def __init__(self, config):
+        super().__init__()
+        self.config = config
+
+        #DataLoader arguments
+        self.train_workers = config.training.workers
+        self.val_workers = config.validation.workers
+        self.test_workers = config.eval.workers
+
+        self.train_batch = config.training.batch_size
+        self.val_batch = config.validation.batch_size
+        self.test_batch = config.eval.batch_size
+
+    def setup(self, stage=None):
+        train_dataset = CIFAR10Dataset(self.config, train=True)
+        self.train_data, self.valid_data = torch.utils.data.random_split(train_dataset, [45000, 5000])
+        self.test_data = CIFAR10Dataset(self.config, train=False)
+
+    def train_dataloader(self):
+        return DataLoader(self.train_data, batch_size = self.train_batch, num_workers=self.train_workers, shuffle=True) 
+  
+    def val_dataloader(self):
+        return DataLoader(self.valid_data, batch_size = self.val_batch, num_workers=self.val_workers, shuffle=False) 
+  
+    def test_dataloader(self): 
+        return DataLoader(self.test_data, batch_size = self.test_batch, num_workers=self.test_workers, shuffle=False) 
+
+
 
 class MNISTDataset(datasets.MNIST):
     def __init__(self, config):
