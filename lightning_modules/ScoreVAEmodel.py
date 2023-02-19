@@ -1,5 +1,5 @@
 from . import BaseSdeGenerativeModel
-from losses import get_scoreVAE_loss_fn
+from losses import get_scoreVAE_loss_fn, get_old_scoreVAE_loss_fn
 import pytorch_lightning as pl
 import sde_lib
 from models import utils as mutils
@@ -33,11 +33,17 @@ class ScoreVAEmodel(BaseSdeGenerativeModel.BaseSdeGenerativeModel):
             raise NotImplementedError(f"SDE {config.training.sde} unknown.")
     
     def configure_loss_fn(self, config, train):
+        '''
         loss_fn = get_scoreVAE_loss_fn(self.sde, train, 
                                         variational=config.training.variational, 
                                         likelihood_weighting=config.training.likelihood_weighting,
                                         eps=self.sampling_eps,
                                         t_batch_size=config.training.t_batch_size)
+        '''
+        loss_fn = get_old_scoreVAE_loss_fn(self.sde, train, 
+                                        variational=config.training.variational, 
+                                        likelihood_weighting=config.training.likelihood_weighting,
+                                        eps=self.sampling_eps)
         return loss_fn
     
     def training_step(self, batch, batch_idx):
