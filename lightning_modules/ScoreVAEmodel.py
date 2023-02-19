@@ -33,17 +33,19 @@ class ScoreVAEmodel(BaseSdeGenerativeModel.BaseSdeGenerativeModel):
             raise NotImplementedError(f"SDE {config.training.sde} unknown.")
     
     def configure_loss_fn(self, config, train):
-        '''
         loss_fn = get_scoreVAE_loss_fn(self.sde, train, 
                                         variational=config.training.variational, 
                                         likelihood_weighting=config.training.likelihood_weighting,
                                         eps=self.sampling_eps,
                                         t_batch_size=config.training.t_batch_size)
+
         '''
         loss_fn = get_old_scoreVAE_loss_fn(self.sde, train, 
                                         variational=config.training.variational, 
                                         likelihood_weighting=config.training.likelihood_weighting,
                                         eps=self.sampling_eps)
+        '''
+
         return loss_fn
     
     def training_step(self, batch, batch_idx):
@@ -55,7 +57,7 @@ class ScoreVAEmodel(BaseSdeGenerativeModel.BaseSdeGenerativeModel):
         loss = self.eval_loss_fn(self.encoder, self.score_model, batch)
         self.log('eval_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
 
-        if batch_idx == 0 and self.current_epoch % 10 == 1:
+        if batch_idx == 0 and self.current_epoch % 50 == 1:
             reconstruction = self.sample(batch)
 
             reconstruction =  reconstruction.cpu()
