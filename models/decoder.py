@@ -138,13 +138,11 @@ class DDPMdecoder(pl.LightningModule):
     if self.conditional:
       # timestep/scale embedding
       timesteps = labels
-      timesteps = layers.get_timestep_embedding(timesteps, self.nf)
-
+      temb = layers.get_timestep_embedding(timesteps, self.nf)
       temb = modules[m_idx](temb)
       m_idx += 1
       temb = modules[m_idx](self.act(temb))
-      m_idx += 1     
-      
+      m_idx += 1
     else:
       temb = None
 
