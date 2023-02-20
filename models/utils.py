@@ -200,14 +200,14 @@ def get_score_fn(sde, model, conditional=False, train=False, continuous=False):
             # continuously-trained models.
             labels = t * (sde.N - 1)
             score = model_fn(x, labels)
-            #std = sde.marginal_prob(torch.zeros_like(score), t)[1]
+            std = sde.marginal_prob(torch.zeros_like(score), t)[1]
           else:
             # For VP-trained models, t=0 corresponds to the lowest noise level
             labels = t * (sde.N - 1)
             score = model_fn(x, labels)
-            #std = sde.sqrt_1m_alphas_cumprod.type_as(labels)[labels.long()]
+            std = sde.sqrt_1m_alphas_cumprod.type_as(labels)[labels.long()]
 
-          #score = score / std[(...,)+(None,)*len(score.shape[1:])] #-> why do they scale the output of the network by std ??
+          score = - score / std[(...,)+(None,)*len(score.shape[1:])] #-> why do they scale the output of the network by std ??
           return score
 
       elif isinstance(sde, sde_lib.VESDE) or isinstance(sde, sde_lib.cVESDE):

@@ -44,7 +44,9 @@ class BaseSdeGenerativeModel(pl.LightningModule):
             self.sampling_eps = 1e-3
         else:
             raise NotImplementedError(f"SDE {config.training.sde} unknown.")
-
+        
+        self.sde.sampling_eps = self.sampling_eps
+        
     def configure_loss_fn(self, config, train):
         if config.training.continuous:
             loss_fn = get_general_sde_loss_fn(self.sde, train, reduce_mean=config.training.reduce_mean,

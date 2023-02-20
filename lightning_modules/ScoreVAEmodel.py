@@ -31,21 +31,28 @@ class ScoreVAEmodel(BaseSdeGenerativeModel.BaseSdeGenerativeModel):
             self.sampling_eps = 1e-5           
         else:
             raise NotImplementedError(f"SDE {config.training.sde} unknown.")
+
+        self.sde.sampling_eps = self.sampling_eps
     
     def configure_loss_fn(self, config, train):
-        loss_fn = get_scoreVAE_loss_fn(self.sde, train, 
+        if hasattr(config.training, 'cde_loss'):
+            if config.training.cde_loss:
+                loss_fn = get_old_scoreVAE_loss_fn(self.sde, train, 
+                                        variational=config.training.variational, 
+                                        likelihood_weighting=config.training.likelihood_weighting,
+                                        eps=self.sampling_eps)
+            else:
+                loss_fn = get_scoreVAE_loss_fn(self.sde, train, 
+                                            variational=config.training.variational, 
+                                            likelihood_weighting=config.training.likelihood_weighting,
+                                            eps=self.sampling_eps,
+                                            t_batch_size=config.training.t_batch_size)
+        else:
+            loss_fn = get_scoreVAE_loss_fn(self.sde, train, 
                                         variational=config.training.variational, 
                                         likelihood_weighting=config.training.likelihood_weighting,
                                         eps=self.sampling_eps,
                                         t_batch_size=config.training.t_batch_size)
-
-        '''
-        loss_fn = get_old_scoreVAE_loss_fn(self.sde, train, 
-                                        variational=config.training.variational, 
-                                        likelihood_weighting=config.training.likelihood_weighting,
-                                        eps=self.sampling_eps)
-        '''
-
         return loss_fn
     
     def training_step(self, batch, batch_idx):
