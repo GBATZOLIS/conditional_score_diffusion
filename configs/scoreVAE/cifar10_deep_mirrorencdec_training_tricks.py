@@ -10,7 +10,7 @@ def get_config():
   #logging
   config.logging = logging = ml_collections.ConfigDict()
   logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/cifar10/'
-  logging.log_name = '384_simple_encoder_mirror_decoder'
+  logging.log_name = 'deep_mirror_encdec_train_sample_improvements'
   logging.top_k = 5
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
