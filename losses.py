@@ -51,35 +51,69 @@ def optimization_manager(config):
 
   return optimize_fn
 
-def get_scoreVAE_loss_fn(sde, train, variational=False, likelihood_weighting=True, eps=1e-5, t_batch_size=1):
-  def loss_fn(encoder, score_model, batch):
-    x = batch
-    y = encoder(x)
+def get_scoreVAE_loss_fn(sde, train, variational=False, likelihood_weighting=True, eps=1e-5, t_batch_size=1, kl_weight=1):
+  if not variational:
+    def loss_fn(encoder, score_model, batch):
+      x = batch
+      y = encoder(x)
 
-    score_fn = mutils.get_score_fn(sde, score_model, conditional=True, train=train, continuous=True)
+      score_fn = mutils.get_score_fn(sde, score_model, conditional=True, train=train, continuous=True)
+      
+      t_losses = torch.zeros(size=(x.size(0),)).type_as(x)
+      for _ in range(t_batch_size):
+        t = torch.rand(x.shape[0]).type_as(x) * (sde.T - eps) + eps
+        z = torch.randn_like(x)
+        mean, std = sde.marginal_prob(x, t)
+        perturbed_x = mean + std[(...,) + (None,) * len(x.shape[1:])] * z
+        perturbed_data = {'x':perturbed_x, 'y':y}
+
+        score = score_fn(perturbed_data, t)
+
+        f, g = sde.sde(torch.zeros_like(x), t, True)
+        g2 = g ** 2
+        grad_log_pert_kernel = -1 * z / std[(...,) + (None,) * len(x.shape[1:])]
+        losses = torch.square(score - grad_log_pert_kernel)-torch.square(grad_log_pert_kernel)
+        losses = torch.sum(losses.reshape(losses.shape[0], -1), dim=-1) * g2
+        losses -= 2*torch.sum(f.reshape(f.shape[0], -1), dim=-1)
+        losses *= 1/2
+
+        t_losses+=losses
+      
+      loss = torch.mean(t_losses)/t_batch_size
+      return loss
     
-    t_losses = torch.zeros(size=(x.size(0),)).type_as(x)
-    for _ in range(t_batch_size):
-      t = torch.rand(x.shape[0]).type_as(x) * (sde.T - eps) + eps
-      z = torch.randn_like(x)
-      mean, std = sde.marginal_prob(x, t)
-      perturbed_x = mean + std[(...,) + (None,) * len(x.shape[1:])] * z
-      perturbed_data = {'x':perturbed_x, 'y':y}
+  else:
+    def loss_fn(encoder, score_model, batch):
+      x = batch
+      mean_z, log_var_z = encoder(x)
 
-      score = score_fn(perturbed_data, t)
+      kl_loss = -0.5 * torch.sum(1 + log_var_z - mean_z ** 2 - log_var_z.exp())/x.size(0)
+      #reparametrisation trick
+      y = mean_z + torch.sqrt(log_var_z.exp()) * torch.randn_like(mean_z)
 
-      f, g = sde.sde(torch.zeros_like(x), t, True)
-      g2 = g ** 2
-      grad_log_pert_kernel = -1 * z / std[(...,) + (None,) * len(x.shape[1:])]
-      losses = torch.square(score - grad_log_pert_kernel)-torch.square(grad_log_pert_kernel)
-      losses = torch.sum(losses.reshape(losses.shape[0], -1), dim=-1) * g2
-      losses -= 2*torch.sum(f.reshape(f.shape[0], -1), dim=-1)
-      losses *= 1/2
+      t_losses = torch.zeros(size=(x.size(0),)).type_as(x)
+      for _ in range(t_batch_size):
+        t = torch.rand(x.shape[0]).type_as(x) * (sde.T - eps) + eps
+        z = torch.randn_like(x)
+        mean, std = sde.marginal_prob(x, t)
+        perturbed_x = mean + std[(...,) + (None,) * len(x.shape[1:])] * z
+        perturbed_data = {'x':perturbed_x, 'y':y}
 
-      t_losses+=losses
+        score = score_fn(perturbed_data, t)
 
-    loss = torch.mean(t_losses/t_batch_size)
-    return loss
+        f, g = sde.sde(torch.zeros_like(x), t, True)
+        g2 = g ** 2
+        grad_log_pert_kernel = -1 * z / std[(...,) + (None,) * len(x.shape[1:])]
+        losses = torch.square(score - grad_log_pert_kernel)-torch.square(grad_log_pert_kernel)
+        losses = torch.sum(losses.reshape(losses.shape[0], -1), dim=-1) * g2
+        losses -= 2*torch.sum(f.reshape(f.shape[0], -1), dim=-1)
+        losses *= 1/2
+
+        t_losses+=losses
+
+      rec_loss = torch.mean(t_losses)/t_batch_size
+      loss = rec_loss + kl_weight * kl_loss
+      return loss
   
   return loss_fn
 

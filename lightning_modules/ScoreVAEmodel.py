@@ -17,6 +17,7 @@ import losses
 class ScoreVAEmodel(BaseSdeGenerativeModel.BaseSdeGenerativeModel):
     def __init__(self, config, *args, **kwargs):
         super().__init__(config)
+        self.variational = config.training.variational
         self.encoder = mutils.create_encoder(config)
 
     def configure_sde(self, config):
@@ -46,13 +47,15 @@ class ScoreVAEmodel(BaseSdeGenerativeModel.BaseSdeGenerativeModel):
                                             variational=config.training.variational, 
                                             likelihood_weighting=config.training.likelihood_weighting,
                                             eps=self.sampling_eps,
-                                            t_batch_size=config.training.t_batch_size)
+                                            t_batch_size=config.training.t_batch_size,
+                                            kl_weight=config.training.kl_weight)
         else:
             loss_fn = get_scoreVAE_loss_fn(self.sde, train, 
                                         variational=config.training.variational, 
                                         likelihood_weighting=config.training.likelihood_weighting,
                                         eps=self.sampling_eps,
-                                        t_batch_size=config.training.t_batch_size)
+                                        t_batch_size=config.training.t_batch_size,
+                                        kl_weight=config.training.kl_weight)
         return loss_fn
     
     def training_step(self, batch, batch_idx):
@@ -84,8 +87,13 @@ class ScoreVAEmodel(BaseSdeGenerativeModel.BaseSdeGenerativeModel):
         return loss
 
     def sample(self, x, show_evolution=False, predictor='default', corrector='default', p_steps='default', c_steps='default', snr='default', denoise='default'):
-        y = self.encoder(x)
-        sampling_shape = [y.size(0)]+self.config.data.shape
+        if self.variational:
+            mean_y, log_var_y = self.encoder(x)
+            y = mean_y + torch.sqrt(log_var_y.exp()) * torch.randn_like(mean_y)
+        else:
+            y = self.encoder(x)
+
+        sampling_shape = [x.size(0)]+self.config.data.shape
         conditional_sampling_fn = get_conditional_sampling_fn(config=self.config, sde=self.sde, 
                                                               shape=sampling_shape, eps=self.sampling_eps, 
                                                               predictor=predictor, corrector=corrector, 

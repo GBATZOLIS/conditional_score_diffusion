@@ -153,8 +153,14 @@ class Encoder(pl.LightningModule):
         super().__init__()
         num_input_channels = config.model.encoder_input_channels
         base_channel_size = config.model.encoder_base_channel_size
-        latent_dim = config.model.encoder_latent_dim
+        self.latent_dim = latent_dim = config.model.encoder_latent_dim
         act_fn = nn.GELU
+        self.variational = config.training.variational
+
+        if self.variational:
+          out_dim = 2*latent_dim
+        else:
+          out_dim = latent_dim
 
         c_hid = base_channel_size
         self.net = nn.Sequential(
@@ -169,8 +175,12 @@ class Encoder(pl.LightningModule):
             nn.Conv2d(2*c_hid, 2*c_hid, kernel_size=3, padding=1, stride=2), # 8x8 => 4x4
             act_fn(),
             nn.Flatten(), # Image grid to single feature vector
-            nn.Linear(2*16*c_hid, latent_dim)
+            nn.Linear(2*16*c_hid, out_dim)
         )
 
     def forward(self, x):
-        return self.net(x)
+        out = self.net(x)
+        if self.variational:
+          return out[:,:self.latent_dim], out[:,self.latent_dim:]
+        else:
+          return out
