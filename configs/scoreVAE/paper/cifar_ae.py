@@ -10,7 +10,7 @@ def get_config():
   #logging
   config.logging = logging = ml_collections.ConfigDict()
   logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/cifar10/'
-  logging.log_name = 'vae_1'
+  logging.log_name = 'ae'
   logging.top_k = 5
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
@@ -44,8 +44,8 @@ def get_config():
   training.sde = 'vpsde'
 
   ##new related to the training of Score VAE
-  training.variational = True
-  training.cde_loss = False
+  training.variational = False
+  training.cde_loss = True
   training.kl_weight = 1
 
   # validation
@@ -97,7 +97,7 @@ def get_config():
 
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = None
+  model.checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/cifar10/deep_mirror_encdec_train_sample_improvements/checkpoints/best/last.ckpt'
   model.sigma_min = 0.01
   model.sigma_max = 50
   model.num_scales = 1000

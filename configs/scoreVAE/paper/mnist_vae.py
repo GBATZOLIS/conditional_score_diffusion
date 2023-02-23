@@ -9,7 +9,7 @@ def get_config():
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/cifar10/'
+  logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/mnist/'
   logging.log_name = 'vae_1'
   logging.top_k = 5
   logging.every_n_epochs = 1000
@@ -78,17 +78,17 @@ def get_config():
 
   # data
   config.data = data = ml_collections.ConfigDict()
-  data.base_dir = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/datasets'
-  data.dataset = 'cifar10'
-  data.datamodule = data.dataset
+  data.base_dir = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/datasets' #'/Users/gbatz97/Desktop/score-based-modelling/projects/scoreVAE/debug/datasets' 
+  data.dataset = 'mnist'
+  data.datamodule = 'image'
   data.return_labels = False
   data.use_data_mean = False
   data.create_dataset = False
   data.split = [0.8, 0.1, 0.1]
   data.image_size = 32
   data.effective_image_size = data.image_size
-  data.shape = [3, data.image_size, data.image_size]
-  data.latent_dim = 384
+  data.shape = [1, data.image_size, data.image_size]
+  data.latent_dim = 150
   data.centered = False
   data.use_flip = False
   data.crop = False

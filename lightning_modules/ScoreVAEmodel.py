@@ -12,12 +12,12 @@ from sampling.conditional import get_conditional_sampling_fn
 import torchvision
 import numpy as np
 import losses
+import torch
 
 @utils.register_lightning_module(name='score_vae')
 class ScoreVAEmodel(BaseSdeGenerativeModel.BaseSdeGenerativeModel):
     def __init__(self, config, *args, **kwargs):
         super().__init__(config)
-        self.variational = config.training.variational
         self.encoder = mutils.create_encoder(config)
 
     def configure_sde(self, config):
@@ -87,7 +87,7 @@ class ScoreVAEmodel(BaseSdeGenerativeModel.BaseSdeGenerativeModel):
         return loss
 
     def sample(self, x, show_evolution=False, predictor='default', corrector='default', p_steps='default', c_steps='default', snr='default', denoise='default'):
-        if self.variational:
+        if self.config.training.variational:
             mean_y, log_var_y = self.encoder(x)
             y = mean_y + torch.sqrt(log_var_y.exp()) * torch.randn_like(mean_y)
         else:
