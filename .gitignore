@@ -39,6 +39,3 @@ machine.file*
 slurm*
 machine.file*
 JOB*
-
-#jobmaster jobs
-jobmaster/job_*
