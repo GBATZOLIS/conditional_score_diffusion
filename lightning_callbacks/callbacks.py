@@ -1,6 +1,7 @@
 import os 
 import torch
 from pytorch_lightning.callbacks import Callback
+from sampling.unconditional import get_sampling_fn
 from utils import scatter, plot, compute_grad, create_video, hist
 from models.ema import ExponentialMovingAverage
 import torchvision
@@ -13,7 +14,7 @@ import datetime
 import pickle
 from dim_reduction import get_manifold_dimension
 import logging
-
+import copy
 @utils.register_callback(name='configuration')
 class ConfigurationSetterCallback(Callback):
     def on_fit_start(self, trainer, pl_module):
@@ -216,26 +217,36 @@ class TwoDimVizualizer(Callback):
     # SHOW EVOLUTION DOES NOT WORK AT THE MOMENT !
     def __init__(self, show_evolution=False):
         super().__init__()
-        self.evolution = False #show_evolution
+        self.evolution = False #show_evolution\
+
+    def on_sanity_check_start(self, trainer, pl_module):
+        sampling_config = copy.deepcopy(pl_module.config)
+        sampling_config.sampling.method = 'pc'
+        self.sde_sampling_fn = get_sampling_fn(sampling_config, pl_module.sde, pl_module.default_sampling_shape, pl_module.sampling_eps)
+        sampling_config.sampling.method = 'ode'
+        self.ode_sampling_fn = get_sampling_fn(sampling_config, pl_module.sde, pl_module.default_sampling_shape, pl_module.sampling_eps)
 
     def on_train_start(self, trainer, pl_module):
-        samples, _ = pl_module.sample()
-        self.visualise_samples(samples, pl_module)
-        if self.evolution:
-             self.visualise_evolution(pl_module)
-
+        self.visualise_samples(pl_module, ode=False)
+        self.visualise_samples(pl_module, ode=True)
+        
     def on_validation_epoch_end(self,trainer, pl_module):
         if pl_module.current_epoch % 500 == 0:
-            samples, _ = pl_module.sample()
-            self.visualise_samples(samples, pl_module)
-        if self.evolution and pl_module.current_epoch % 2500 == 0 and pl_module.current_epoch != 0:
-            self.visualise_evolution(pl_module)
+            self.visualise_samples(pl_module, ode=False)
+            self.visualise_samples(pl_module, ode=True)
+        
 
-    def visualise_samples(self, samples, pl_module):
+    def visualise_samples(self,pl_module, ode=False):
+        if ode:
+            samples, _ = self.ode_sampling_fn(pl_module.score_model)
+        else:
+            samples, _ = self.sde_sampling_fn(pl_module.score_model)
+
+        samples_type = 'sde' if not ode else 'ode'
         samples_np =  samples.cpu().numpy()
         image = scatter(samples_np[:,0],samples_np[:,1], 
-                        title='samples epoch: ' + str(pl_module.current_epoch))
-        pl_module.logger.experiment.add_image('samples', image, pl_module.current_epoch)
+                        title=f'{samples_type} samples epoch: ' + str(pl_module.current_epoch))
+        pl_module.logger.experiment.add_image(f'{samples_type}_samples', image, pl_module.current_epoch)
         return image
 
     def visualise_evolution(self, pl_module):
