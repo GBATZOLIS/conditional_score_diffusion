@@ -1,0 +1,6 @@
+[submodule "job_master"]
+	path = job_master
+	url = git@github.com:jstanczuk/job_master.git
+[submodule "janutils"]
+	path = janutils
+	url = git@github.com:jstanczuk/janutils.git
