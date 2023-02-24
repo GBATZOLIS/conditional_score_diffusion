@@ -91,7 +91,7 @@ def get_scoreVAE_loss_fn(sde, train, variational=False, likelihood_weighting=Tru
       mean_z, log_var_z = encoder(x)
       y = mean_z + torch.sqrt(log_var_z.exp()) * torch.randn_like(mean_z)
 
-      kl_loss = -0.5 * torch.sum(1 + log_var_z - mean_z ** 2 - log_var_z.exp())/x.size(0)
+      kl_loss = -0.5 * torch.sum(1 + log_var_z - mean_z ** 2 - log_var_z.exp(), dim=1).mean()
 
       t_losses = torch.zeros(size=(x.size(0),)).type_as(x)
       for _ in range(t_batch_size):
@@ -120,7 +120,6 @@ def get_scoreVAE_loss_fn(sde, train, variational=False, likelihood_weighting=Tru
   return loss_fn
 
 def get_old_scoreVAE_loss_fn(sde, train, variational=False, likelihood_weighting=True, eps=1e-5):
-  reduce_op = torch.mean #if reduce_mean else lambda *args, **kwargs: 0.5 * torch.sum(*args, **kwargs)
   def loss_fn(encoder, score_model, batch):
     x = batch
     y = encoder(x)
@@ -137,11 +136,11 @@ def get_old_scoreVAE_loss_fn(sde, train, variational=False, likelihood_weighting
 
     if not likelihood_weighting:
       losses = torch.square(score * std[(...,) + (None,) * len(x.shape[1:])] + z)
-      losses = reduce_op(losses.reshape(losses.shape[0], -1), dim=-1)
+      losses = torch.mean(losses.reshape(losses.shape[0], -1), dim=-1)
     else:
       g2 = sde.sde(torch.zeros_like(x), t)[1] ** 2
       losses = torch.square(score + z / std[(...,) + (None,) * len(x.shape[1:])])
-      losses = reduce_op(losses.reshape(losses.shape[0], -1), dim=-1) * g2
+      losses = torch.mean(losses.reshape(losses.shape[0], -1), dim=-1) * g2
 
     loss = torch.mean(losses)
     return loss
