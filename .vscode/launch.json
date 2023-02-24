@@ -18,7 +18,7 @@
             "program": "${file}",
             "args": [
                 "--config",
-                "configs/celebA/ddpm.py",
+                "configs/jan/gaussian/fokker_planck/1e3.py",
                 "--log_path",
                 "./test_logs",
                 "--debug",
