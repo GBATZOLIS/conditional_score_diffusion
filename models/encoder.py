@@ -163,19 +163,51 @@ class Encoder(pl.LightningModule):
           out_dim = latent_dim
 
         c_hid = base_channel_size
-        self.net = nn.Sequential(
-            nn.Conv2d(num_input_channels, c_hid, kernel_size=3, padding=1, stride=2), # 32x32 => 16x16
+
+        if config.data.image_size == 32:
+          self.net = nn.Sequential(
+              nn.Conv2d(num_input_channels, c_hid, kernel_size=3, padding=1, stride=2), # 32x32 => 16x16
+              act_fn(),
+              nn.Conv2d(c_hid, c_hid, kernel_size=3, padding=1),
+              act_fn(),
+              nn.Conv2d(c_hid, 2*c_hid, kernel_size=3, padding=1, stride=2), # 16x16 => 8x8
+              act_fn(),
+              nn.Conv2d(2*c_hid, 2*c_hid, kernel_size=3, padding=1),
+              act_fn(),
+              nn.Conv2d(2*c_hid, 2*c_hid, kernel_size=3, padding=1, stride=2), # 8x8 => 4x4
+              act_fn(),
+              nn.Flatten(), # Image grid to single feature vector
+              nn.Linear(2*16*c_hid, out_dim)
+          )
+        
+        elif config.data.image_size == 128:
+          self.net = nn.Sequential(
+            nn.Conv2d(num_input_channels, c_hid, kernel_size=3, padding=1, stride=2), # 128x128 => 64x64
             act_fn(),
             nn.Conv2d(c_hid, c_hid, kernel_size=3, padding=1),
             act_fn(),
-            nn.Conv2d(c_hid, 2*c_hid, kernel_size=3, padding=1, stride=2), # 16x16 => 8x8
+
+            nn.Conv2d(c_hid, 2*c_hid, kernel_size=3, padding=1, stride=2), # 64x64 => 32x32
             act_fn(),
             nn.Conv2d(2*c_hid, 2*c_hid, kernel_size=3, padding=1),
             act_fn(),
-            nn.Conv2d(2*c_hid, 2*c_hid, kernel_size=3, padding=1, stride=2), # 8x8 => 4x4
+
+            nn.Conv2d(2*c_hid, 4*c_hid, kernel_size=3, padding=1, stride=2), # 32x32 => 16x16
             act_fn(),
+            nn.Conv2d(4*c_hid, 4*c_hid, kernel_size=3, padding=1),
+            act_fn(),
+
+            nn.Conv2d(4*c_hid, 8*c_hid, kernel_size=3, padding=1, stride=2), # 16x16 => 8x8
+            act_fn(),
+            nn.Conv2d(8*c_hid, 8*c_hid, kernel_size=3, padding=1),
+            act_fn(),
+
+            nn.Conv2d(8*c_hid, 8*c_hid, kernel_size=3, padding=1, stride=2), # 8x8 => 4x4
+            act_fn(),
+
             nn.Flatten(), # Image grid to single feature vector
-            nn.Linear(2*16*c_hid, out_dim)
+            nn.Linear(8*16*c_hid, out_dim),
+            nn.Tanh()
         )
 
     def forward(self, x):
