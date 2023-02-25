@@ -73,6 +73,8 @@ class PKLDataset(data.Dataset):
         img = torch.Tensor(img)
         resize = Resize(self.image_size, interpolation=InterpolationMode.BICUBIC)
         img = resize(img)
+        img -= img.min()
+        img /= img.max()
         return img
 
 
