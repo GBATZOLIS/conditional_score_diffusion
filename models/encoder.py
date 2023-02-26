@@ -24,9 +24,9 @@ class DDPMencoder(pl.LightningModule):
     super().__init__()
     self.act = act = get_act(config)
     self.latent_dim = config.data.latent_dim #new
-    self.nf = nf = config.model.nf
+    self.nf = nf = config.model.encoder_nf
     ch_mult = config.model.ch_mult
-    self.num_res_blocks = num_res_blocks = config.model.num_res_blocks
+    self.num_res_blocks = num_res_blocks = config.model.encoder_num_res_blocks
     self.attn_resolutions = attn_resolutions = config.model.attn_resolutions
     dropout = config.model.dropout
     resamp_with_conv = config.model.resamp_with_conv
@@ -79,6 +79,8 @@ class DDPMencoder(pl.LightningModule):
     modules.append(conv3x3(in_ch, output_channels, init_scale=0.))
 
     modules.append(nn.Linear(np.prod(config.data.shape), self.latent_dim)) #new
+    modules.append(nn.Tanh()) #new
+
     self.all_modules = nn.ModuleList(modules)
 
   def forward(self, x):
@@ -207,7 +209,7 @@ class Encoder(pl.LightningModule):
 
             nn.Flatten(), # Image grid to single feature vector
             nn.Linear(8*16*c_hid, out_dim),
-            #nn.Tanh()
+            nn.Tanh()
         )
 
     def forward(self, x):

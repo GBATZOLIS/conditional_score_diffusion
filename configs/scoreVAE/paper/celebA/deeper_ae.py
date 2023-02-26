@@ -10,7 +10,7 @@ def get_config():
   #logging
   config.logging = logging = ml_collections.ConfigDict()
   logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/celebA-HQ/'
-  logging.log_name = 'ae'
+  logging.log_name = 'deeper_ae'
   logging.top_k = 5
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
@@ -98,7 +98,7 @@ def get_config():
 
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/celebA-HQ/ae/checkpoints/best/last.ckpt'
+  model.checkpoint_path = None #'/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/celebA-HQ/ae/checkpoints/best/last.ckpt'
   model.sigma_min = 0.01
   model.sigma_max = 50
   model.num_scales = 1000
@@ -115,9 +115,9 @@ def get_config():
   model.normalization = 'GroupNorm'
   model.nonlinearity = 'swish'
   model.nf = 128
-  model.ch_mult = (1, 2, 2, 4, 4)
-  model.num_res_blocks = 2
-  model.attn_resolutions = (16,)
+  model.ch_mult = (1, 1, 2, 2, 3, 3)
+  model.num_res_blocks = 3
+  model.attn_resolutions = (16, 8, 4)
   model.resamp_with_conv = True
   model.conditional = True
   model.fir = True
@@ -132,7 +132,9 @@ def get_config():
   model.fourier_scale = 16
   model.conv_size = 3
 
-  model.encoder_name = 'simple_encoder'
+  model.encoder_name = 'ddpm_encoder'
+  model.encoder_nf = 64
+  model.encoder_num_res_blocks = 2
   model.encoder_input_channels = data.num_channels
   model.encoder_latent_dim = data.latent_dim
   model.encoder_base_channel_size = 32
