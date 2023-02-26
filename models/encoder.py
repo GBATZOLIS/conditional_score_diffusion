@@ -138,6 +138,8 @@ class DDPMencoder(pl.LightningModule):
     m_idx += 1
     h = modules[m_idx](h.view(h.shape[0], -1))
     m_idx += 1
+    h = modules[m_idx](h)
+    m_idx += 1
     assert m_idx == len(modules)
 
     return h

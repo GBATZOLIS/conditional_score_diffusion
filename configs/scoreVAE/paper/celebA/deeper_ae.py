@@ -139,7 +139,7 @@ def get_config():
   model.encoder_num_res_blocks = 2
   model.encoder_input_channels = data.num_channels
   model.encoder_latent_dim = data.latent_dim
-  model.encoder_base_channel_size = 32
+  model.encoder_base_channel_size = 64
 
 
   # optimization
