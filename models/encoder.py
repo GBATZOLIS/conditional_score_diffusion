@@ -207,7 +207,7 @@ class Encoder(pl.LightningModule):
 
             nn.Flatten(), # Image grid to single feature vector
             nn.Linear(8*16*c_hid, out_dim),
-            nn.Tanh()
+            #nn.Tanh()
         )
 
     def forward(self, x):
