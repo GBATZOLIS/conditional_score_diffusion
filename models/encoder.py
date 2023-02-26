@@ -37,8 +37,8 @@ class DDPMencoder(pl.LightningModule):
     ResnetBlock = functools.partial(ResnetBlockDDPM, act=act, temb_dim=4 * nf, dropout=dropout)
 
     self.centered = config.data.centered
-    input_channels = config.model.input_channels
-    output_channels = config.model.output_channels
+    input_channels = config.model.encoder_input_channels
+    output_channels = config.model.encoder_output_channels
 
     modules = []
     # ddpm_conv3x3

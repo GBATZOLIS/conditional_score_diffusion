@@ -133,6 +133,8 @@ def get_config():
   model.conv_size = 3
 
   model.encoder_name = 'ddpm_encoder'
+  model.encoder_input_channels = data.num_channels
+  model.encoder_output_channels = data.num_channels
   model.encoder_nf = 64
   model.encoder_num_res_blocks = 2
   model.encoder_input_channels = data.num_channels
