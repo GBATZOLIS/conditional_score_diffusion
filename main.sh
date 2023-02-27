@@ -31,4 +31,4 @@ nvidia-smi
 source /home/td491/.bashrc
 conda activate scoresde_env
 cd /home/td491/rds/hpc-work/conditional_score_diffusion
-python main.py --config configs/jan/circles/fokker_planck/1e3_small.py --mode train
+python main.py --config configs/jan/circles/fokker_planck/0_small.py --mode train
