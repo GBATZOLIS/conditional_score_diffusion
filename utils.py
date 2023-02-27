@@ -186,3 +186,12 @@ def fisher_divergence(pl_module, data_module, t=0.01, grid=True):
 
       diff = diffusion**2 * torch.linalg.norm(s_gt - s_model, dim=1) ** 2
   return diff.mean().item()
+
+
+def calculate_wasserstein(batch1, batch2):
+    import ot
+    n_batch = batch1.shape[0]
+    cost_matrix = torch.cdist(batch1, batch2)**2
+    weights = torch.ones(n_batch)/n_batch
+    wasserstein = float(ot.emd2(weights, weights, cost_matrix, numItermax=int(1e6)))**(0.5)
+    return wasserstein
