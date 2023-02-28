@@ -69,7 +69,7 @@ def scatter(x, y, **kwargs):
   if 'ylim' in kwargs.keys():  
     ylim = kwargs['ylim']
     plt.ylim(ylim)
-  plt.scatter(x, y)
+  plt.scatter(x, y,alpha=0.15,s=150)
   plt.gca().set_aspect('equal')
   buf = io.BytesIO()
   plt.savefig(buf, format='jpeg')
@@ -190,8 +190,10 @@ def fisher_divergence(pl_module, data_module, t=0.01, grid=True):
 
 def calculate_wasserstein(batch1, batch2):
     import ot
-    n_batch = batch1.shape[0]
-    cost_matrix = torch.cdist(batch1, batch2)**2
-    weights = torch.ones(n_batch)/n_batch
-    wasserstein = float(ot.emd2(weights, weights, cost_matrix, numItermax=int(1e6)))**(0.5)
+    n_batch1 = batch1.shape[0]
+    n_batch2 = batch2.shape[0]
+    cost_matrix = torch.cdist(torch.tensor(batch1), torch.tensor(batch2))**2
+    weights1 = torch.ones(n_batch1)/n_batch1
+    weights2 = torch.ones(n_batch2)/n_batch2
+    wasserstein = float(ot.emd2(weights1, weights2, cost_matrix, numItermax=int(1e6)))**(0.5)
     return wasserstein

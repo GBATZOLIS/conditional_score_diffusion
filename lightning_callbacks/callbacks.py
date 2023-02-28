@@ -253,6 +253,7 @@ class TwoDimVizualizer(Callback):
     def visualise_samples(self, samples, pl_module, ode=False):
         samples_type = 'sde' if not ode else 'ode'
         samples_np =  samples.cpu().numpy()
+        samples_np = samples_np[np.linalg.norm(samples_np,axis=1)<1.3]        
         image = scatter(samples_np[:,0],samples_np[:,1], 
                         title=f'{samples_type} samples epoch: ' + str(pl_module.current_epoch))
         pl_module.logger.experiment.add_image(f'{samples_type}_samples', image, pl_module.current_epoch)
