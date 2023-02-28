@@ -51,7 +51,7 @@ def get_config():
 
   # validation
   validation = config.validation
-  validation.batch_size = 500
+  validation.batch_size = 5000
 
   # sampling
   sampling = config.sampling

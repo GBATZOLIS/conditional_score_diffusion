@@ -51,7 +51,7 @@ def get_config():
 
   # validation
   validation = config.validation
-  validation.batch_size = 500
+  validation.batch_size = 5000
 
   # sampling
   sampling = config.sampling
@@ -113,7 +113,7 @@ def get_config():
   #logging
   config.logging = logging = ml_collections.ConfigDict()
   logging.log_path = 'logs/circles/fokker_planck/'
-  logging.log_name = f'fp_{training.alpha}'
+  logging.log_name = f'fp_3-256_{training.alpha}'
   logging.top_k = 5
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)

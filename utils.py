@@ -69,7 +69,7 @@ def scatter(x, y, **kwargs):
   if 'ylim' in kwargs.keys():  
     ylim = kwargs['ylim']
     plt.ylim(ylim)
-  plt.scatter(x, y,alpha=0.15,s=150)
+  plt.scatter(x, y,alpha=0.15,s=100)
   plt.gca().set_aspect('equal')
   buf = io.BytesIO()
   plt.savefig(buf, format='jpeg')

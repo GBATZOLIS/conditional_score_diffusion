@@ -223,15 +223,15 @@ class TwoDimVizualizer(Callback):
     def on_sanity_check_start(self, trainer, pl_module):
         sampling_config = copy.deepcopy(pl_module.config)
         sampling_config.sampling.method = 'pc'
-        self.sde_sampling_fn = get_sampling_fn(sampling_config, pl_module.sde, pl_module.default_sampling_shape, pl_module.sampling_eps)
+        self.sde_sampling_fn = get_sampling_fn(sampling_config, pl_module.sde, pl_module.plotting_sampling_shape, pl_module.sampling_eps)
         sampling_config.sampling.method = 'ode'
-        self.ode_sampling_fn = get_sampling_fn(sampling_config, pl_module.sde, pl_module.default_sampling_shape, pl_module.sampling_eps)
+        self.ode_sampling_fn = get_sampling_fn(sampling_config, pl_module.sde, pl_module.plotting_sampling_shape, pl_module.sampling_eps)
 
     def on_train_start(self, trainer, pl_module):
-        sde_samples, _ = self.ode_sampling_fn(pl_module.score_model)
+        sde_samples, _ = self.sde_sampling_fn(pl_module.score_model)
         self.visualise_samples(sde_samples, pl_module, ode=False)
 
-        ode_samples, _ = self.sde_sampling_fn(pl_module.score_model)
+        ode_samples, _ = self.ode_sampling_fn(pl_module.score_model)
         self.visualise_samples(ode_samples, pl_module, ode=True)
 
         wasserstein = calculate_wasserstein(sde_samples, ode_samples)
@@ -240,10 +240,10 @@ class TwoDimVizualizer(Callback):
         
     def on_validation_epoch_end(self,trainer, pl_module):
         if pl_module.current_epoch % 500 == 0:
-            sde_samples, _ = self.ode_sampling_fn(pl_module.score_model)
+            sde_samples, _ = self.sde_sampling_fn(pl_module.score_model)
             self.visualise_samples(sde_samples, pl_module, ode=False)
 
-            ode_samples, _ = self.sde_sampling_fn(pl_module.score_model)
+            ode_samples, _ = self.ode_sampling_fn(pl_module.score_model)
             self.visualise_samples(ode_samples, pl_module, ode=True)
 
             wasserstein = calculate_wasserstein(sde_samples, ode_samples)

@@ -57,6 +57,7 @@ class FokkerPlanckModel(pl.LightningModule):
         #Sampling settings
         self.data_shape = config.data.shape
         self.default_sampling_shape = [config.training.batch_size] +  self.data_shape
+        self.plotting_sampling_shape = [config.validation.batch_size] +  self.data_shape
 
 
     def compute_fp_loss(self, batch):

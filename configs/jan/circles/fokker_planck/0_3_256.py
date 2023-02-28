@@ -39,7 +39,7 @@ def get_config():
   training.continuous = True
   training.sde = 'vesde'
   training.schedule = 'constant'
-  training.alpha=1e-3
+  training.alpha=0
   training.alpha_min=1e-4
   training.alpha_max=1e-2
   training.hutchinson = False
@@ -90,7 +90,7 @@ def get_config():
   model.name = 'fcn_potential'
   model.state_size = data.dim
   model.hidden_layers = 3
-  model.hidden_nodes = 64
+  model.hidden_nodes = 256
   model.dropout = 0.0
   model.scale_by_sigma = False
   model.num_scales = 1000
@@ -113,7 +113,7 @@ def get_config():
   #logging
   config.logging = logging = ml_collections.ConfigDict()
   logging.log_path = 'logs/circles/fokker_planck/'
-  logging.log_name = f'fp_small3_{training.alpha}'
+  logging.log_name = f'fp_3-256_{training.alpha}'
   logging.top_k = 5
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
