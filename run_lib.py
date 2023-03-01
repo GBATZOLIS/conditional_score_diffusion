@@ -47,7 +47,7 @@ def train(config, log_path, checkpoint_path, log_name=None):
     if config.logging.log_name is not None:
       log_name = config.logging.log_name
 
-    logger = pl.loggers.TensorBoardLogger(os.path.join(log_path, 'logs'), name='', version=log_name)
+    logger = pl.loggers.TensorBoardLogger(log_path, name='', version=log_name)
 
     if checkpoint_path is not None or config.model.checkpoint_path is not None:
       if config.model.checkpoint_path is not None and checkpoint_path is None:
