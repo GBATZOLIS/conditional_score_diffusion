@@ -89,15 +89,14 @@ class PretrainedScoreVAEmodel(pl.LightningModule):
 
         return loss
     
-    def validation_step(self, batch, batch_idx, optimizer_idx):
-        if optimizer_idx == 0:
-            loss = self.eval_loss_fn[0](self.unconditional_score_model, batch)
-            self.logger.experiment.add_scalars('val_loss', {'unconditional': loss}, self.global_step)
-        elif optimizer_idx == 1:
-            loss = self.eval_loss_fn[1](self.encoder, self.latent_correction_model, self.unconditional_score_model, batch)
-            self.logger.experiment.add_scalars('val_loss', {'conditional': loss}, self.global_step)
+    def validation_step(self, batch, batch_idx):
+        loss = self.eval_loss_fn[0](self.unconditional_score_model, batch)
+        self.logger.experiment.add_scalars('val_loss', {'unconditional': loss}, self.global_step)
+        
+        loss = self.eval_loss_fn[1](self.encoder, self.latent_correction_model, self.unconditional_score_model, batch)
+        self.logger.experiment.add_scalars('val_loss', {'conditional': loss}, self.global_step)
 
-        if batch_idx == 0 and optimizer_idx == 0 and (self.current_epoch+1) % self.config.training.visualisation_freq == 5:
+        if batch_idx == 0 and (self.current_epoch+1) % self.config.training.visualisation_freq == 5:
             reconstruction = self.encoder_n_decode(batch)
 
             reconstruction =  reconstruction.cpu()
