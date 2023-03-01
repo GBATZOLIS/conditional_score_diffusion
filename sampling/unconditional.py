@@ -31,8 +31,16 @@ def get_sampling_fn(config, sde, shape, eps):
                                   eps=eps)
   # Predictor-Corrector sampling. Predictor-only and Corrector-only samplers are special cases.
   elif sampler_name.lower() == 'pc':
-    predictor = get_predictor(config.sampling.predictor.lower())
-    corrector = get_corrector(config.sampling.corrector.lower())
+    predictor_name = config.sampling.predictor.lower()
+    corrector_name = config.sampling.corrector.lower()
+
+    if predictor_name.startswith('conditional'):
+      predictor_name = 'euler_maruyama'
+      corrector_name = 'none'
+
+    predictor = get_predictor(predictor_name)
+    corrector = get_corrector(corrector_name)
+    
     sampling_fn = get_pc_sampler(sde=sde,
                                  shape=shape,
                                  predictor=predictor,

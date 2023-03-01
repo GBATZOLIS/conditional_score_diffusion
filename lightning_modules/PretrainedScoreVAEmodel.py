@@ -30,6 +30,7 @@ class PretrainedScoreVAEmodel(pl.LightningModule):
         
         #unconditional score model
         config.model.input_channels = config.model.output_channels
+        config.model.name = config.model.unconditional_score_model_name
         self.unconditional_score_model = mutils.create_model(config)
 
         #encoder
@@ -38,17 +39,21 @@ class PretrainedScoreVAEmodel(pl.LightningModule):
     def configure_sde(self, config):
         if config.training.sde.lower() == 'vpsde':
             self.sde = sde_lib.cVPSDE(beta_min=config.model.beta_min, beta_max=config.model.beta_max, N=config.model.num_scales)
+            self.usde = sde_lib.VPSDE(beta_min=config.model.beta_min, beta_max=config.model.beta_max, N=config.model.num_scales)
             self.sampling_eps = 1e-3
         elif config.training.sde.lower() == 'subvpsde':
             self.sde = sde_lib.csubVPSDE(beta_min=config.model.beta_min, beta_max=config.model.beta_max, N=config.model.num_scales)
+            self.usde = sde_lib.subVPSDE(beta_min=config.model.beta_min, beta_max=config.model.beta_max, N=config.model.num_scales)
             self.sampling_eps = 1e-3
         elif config.training.sde.lower() == 'vesde':            
-            self.sde = sde_lib.cVESDE(sigma_min=config.model.sigma_min_x, sigma_max=config.model.sigma_max_x, N=config.model.num_scales, data_mean=data_mean)
+            self.sde = sde_lib.cVESDE(sigma_min=config.model.sigma_min_x, sigma_max=config.model.sigma_max_x, N=config.model.num_scales)
+            self.usde = sde_lib.VESDE(sigma_min=config.model.sigma_min_x, sigma_max=config.model.sigma_max_x, N=config.model.num_scales)
             self.sampling_eps = 1e-5           
         else:
             raise NotImplementedError(f"SDE {config.training.sde} unknown.")
 
         self.sde.sampling_eps = self.sampling_eps
+        self.usde.sampling_eps = self.sampling_eps
     
     def configure_loss_fn(self, config, train):
         if hasattr(config.training, 'cde_loss'):
@@ -73,7 +78,7 @@ class PretrainedScoreVAEmodel(pl.LightningModule):
                                         t_batch_size=config.training.t_batch_size,
                                         kl_weight=config.training.kl_weight)
         
-        unconditional_loss_fn = get_general_sde_loss_fn(self.sde, train, conditional=False, reduce_mean=True,
+        unconditional_loss_fn = get_general_sde_loss_fn(self.usde, train, conditional=False, reduce_mean=True,
                                     continuous=True, likelihood_weighting=config.training.likelihood_weighting)
 
         return {0:unconditional_loss_fn, 1:loss_fn}
@@ -125,7 +130,7 @@ class PretrainedScoreVAEmodel(pl.LightningModule):
             sampling_shape = [self.config.training.batch_size] +  self.config.data.shape
         else:
             sampling_shape = [num_samples] +  self.config.data.shape
-        sampling_fn = get_sampling_fn(self.config, self.sde, sampling_shape, self.sampling_eps)
+        sampling_fn = get_sampling_fn(self.config, self.usde, sampling_shape, self.sampling_eps)
         return sampling_fn(self.unconditional_score_model)
 
     def encoder_n_decode(self, x, show_evolution=False, predictor='default', corrector='default', p_steps='default', \
