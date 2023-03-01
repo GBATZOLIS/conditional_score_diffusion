@@ -17,7 +17,7 @@ def get_config():
 
   # training
   config.training = training = ml_collections.ConfigDict()
-  config.training.lightning_module = 'score_vae'
+  config.training.lightning_module = 'pretrained_score_vae'
   training.conditioning_approach = 'sr3'
   training.batch_size = 256 
   training.t_batch_size = 1

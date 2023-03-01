@@ -110,10 +110,10 @@ def get_pc_conditional_sampler(sde, shape, predictor, corrector, snr, p_steps,
             x, x_mean = update_fn(x=x, y=y_perturbed, t=vec_t, model=model)
             return x, x_mean, y_perturbed, y_mean
     else:
-      def conditional_update_fn(x, y, t, model):
+      def conditional_update_fn(x, y, t, score_fn):
         with torch.no_grad():
-          vec_t = torch.ones(x.shape[0]).to(model.device) * t
-          x, x_mean = update_fn(x=x, y=y, t=vec_t, model=model)
+          vec_t = torch.ones(x.shape[0]).to(t.device) * t
+          x, x_mean = update_fn(x=x, y=y, t=vec_t, score_fn=score_fn)
         return x, x_mean, y, y
 
     return conditional_update_fn
