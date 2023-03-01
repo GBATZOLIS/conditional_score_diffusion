@@ -50,6 +50,17 @@ class FCN_Potential(pl.LightningModule):
             gradients = gradients.view(gradients.size(0), -1)
         return gradients
 
+    def grad_density(self, x, t):
+        with torch.enable_grad():
+            x = x.requires_grad_(True)
+            out = self.energy(x, t)
+            gradients = torch.autograd.grad(outputs=out, inputs=x,
+                                    grad_outputs=torch.ones(out.size()).to(self.device),
+                                    create_graph=True, retain_graph=True, only_inputs=True)[0]
+            gradients = gradients.view(gradients.size(0), -1)
+        return gradients
+
+
     def trace_hessian_log_energy(self, x, t, full=False, exact=False):
         if not exact:
             with torch.enable_grad():

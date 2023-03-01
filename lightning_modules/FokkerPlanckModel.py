@@ -79,21 +79,41 @@ class FokkerPlanckModel(pl.LightningModule):
         # oneish = (1.0- eps) * torch.ones_like(t).to(self.device)
         perturbed_data = self.sde.perturb(batch, t) # WARNING P_1 or P_t
 
-        def fp_loss(x,t):
-            B = x.shape[0] # batch size
-            grad_norm_2 = torch.linalg.norm(self.score_model.score(x, t).view(B,-1), dim=1)**2
 
-            score_x = lambda y: self.score_model.score(y,t)
-            divergence = compute_divergence(score_x, x, hutchinson=self.config.training.hutchinson)    
-            #self.score_model.trace_hessian_log_energy(x, t) 
-            
-            log_energy_t = lambda s: self.score_model.log_energy(x, s) 
-            time_derivative = compute_grad(log_energy_t, t).squeeze(1)
-            #self.score_model.time_derivative_log_energy(x,t)
+        def fp_loss(x,t, density=True):
 
-            difference = (time_derivative - (diffusion**2 / 2) * (grad_norm_2 + divergence))
-            difference = diffusion**2 * difference # apply weighting
-            return difference
+            if density:
+                B = x.shape[0] # batch size
+
+                p_x = lambda y: self.score_model.grad_density(y,t)
+
+                p_xx = compute_divergence(p_x, x, hutchinson=self.config.training.hutchinson)    
+                #self.score_model.trace_hessian_log_energy(x, t) 
+                
+                energy_t = lambda s: self.score_model.energy(x, s)
+                p_t = compute_grad(energy_t, t).squeeze(1)
+                #self.score_model.time_derivative_log_energy(x,t)
+
+                difference = (p_t - (diffusion**2 / 2) * p_xx)
+                difference = diffusion**2 * difference # apply weighting
+                return difference
+
+            else:
+                B = x.shape[0] # batch size
+                grad_norm_2 = torch.linalg.norm(self.score_model.score(x, t).view(B,-1), dim=1)**2
+
+                score_x = lambda y: self.score_model.score(y,t)
+                divergence = compute_divergence(score_x, x, hutchinson=self.config.training.hutchinson)    
+                #self.score_model.trace_hessian_log_energy(x, t) 
+                
+                log_energy_t = lambda s: self.score_model.log_energy(x, s) 
+                time_derivative = compute_grad(log_energy_t, t).squeeze(1)
+                #self.score_model.time_derivative_log_energy(x,t)
+
+                difference = (time_derivative - (diffusion**2 / 2) * (grad_norm_2 + divergence))
+                difference = diffusion**2 * difference # apply weighting
+                return difference
+
 
         #difference = fp_loss(perturbed_data, t)
         
