@@ -110,7 +110,7 @@ class EMA(Callback):
         finally:
             for optimizer in trainer.optimizers:
                 optimizer.save_original_optimizer_state = False
-    '''
+    
     def on_load_checkpoint(
         self, trainer: "pl.Trainer", pl_module: "pl.LightningModule", checkpoint: Dict[str, Any]
     ) -> None:
@@ -123,11 +123,7 @@ class EMA(Callback):
         if ckpt_path and checkpoint_callback is not None and 'NeMo' in type(checkpoint_callback).__name__:
             ext = checkpoint_callback.FILE_EXTENSION
             if ckpt_path.endswith(f'-EMA{ext}'):
-                rank_zero_info(
-                    "loading EMA based weights. "
-                    "The callback will treat the loaded EMA weights as the main weights"
-                    " and create a new EMA copy when training."
-                )
+                print('loading EMA based weights. The callback will treat the loaded EMA weights as the main weights and create a new EMA copy when training.')
                 return
             ema_path = ckpt_path.replace(ext, f'-EMA{ext}')
             if os.path.exists(ema_path):
@@ -135,13 +131,13 @@ class EMA(Callback):
 
                 checkpoint['optimizer_states'] = ema_state_dict['optimizer_states']
                 del ema_state_dict
-                rank_zero_info("EMA state has been restored.")
+                print("EMA state has been restored.")
             else:
                 raise MisconfigurationException(
                     "Unable to find the associated EMA weights when re-loading, "
                     f"training will start with new EMA weights. Expected them to be at: {ema_path}",
                 )
-        '''
+
 
 @torch.no_grad()
 def ema_update(ema_model_tuple, current_model_tuple, decay):
