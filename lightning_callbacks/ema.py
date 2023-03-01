@@ -21,7 +21,7 @@ import pytorch_lightning as pl
 import torch
 from pytorch_lightning import Callback
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
-from pytorch_lightning.utilities.rank_zero import rank_zero_info
+#from pytorch_lightning.utilities.rank_zero import rank_zero_info
 from . import utils
 
 @utils.register_callback(name='ema')
@@ -110,7 +110,7 @@ class EMA(Callback):
         finally:
             for optimizer in trainer.optimizers:
                 optimizer.save_original_optimizer_state = False
-
+    '''
     def on_load_checkpoint(
         self, trainer: "pl.Trainer", pl_module: "pl.LightningModule", checkpoint: Dict[str, Any]
     ) -> None:
@@ -141,7 +141,7 @@ class EMA(Callback):
                     "Unable to find the associated EMA weights when re-loading, "
                     f"training will start with new EMA weights. Expected them to be at: {ema_path}",
                 )
-
+        '''
 
 @torch.no_grad()
 def ema_update(ema_model_tuple, current_model_tuple, decay):
