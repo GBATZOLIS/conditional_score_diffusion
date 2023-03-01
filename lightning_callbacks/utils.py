@@ -22,7 +22,8 @@ def get_callback_by_name(name):
     return _CALLBACKS[name]
 
 def get_callbacks(config):
-    callbacks=[get_callback_by_name('ema')()] #check if this works for testing as well.
+    #callbacks=[get_callback_by_name('ema')()] #check if this works for testing as well.
+    callbacks=[]
 
     if config.logging.top_k is not None:
       callbacks.append(get_callback_by_name('CheckpointTopK')(config))

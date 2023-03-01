@@ -147,7 +147,7 @@ class EMACallback(Callback):
     def on_fit_start(self, trainer, pl_module):
         ema_rate = pl_module.config.model.ema_rate
         pl_module.ema = ExponentialMovingAverage(pl_module.parameters(), decay=ema_rate)
-
+    
     def on_before_zero_grad(self, trainer, pl_module, optimizer):
         pl_module.ema.update(pl_module.parameters())
 
