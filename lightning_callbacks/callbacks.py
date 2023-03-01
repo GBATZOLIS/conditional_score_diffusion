@@ -142,6 +142,7 @@ def get_deprecated_sigma_max_y_fn(reduction, reach_target_in_epochs, starting_tr
     return sigma_max_y
                 
 
+'''
 @utils.register_callback(name='ema')
 class EMACallback(Callback):
     def on_fit_start(self, trainer, pl_module):
@@ -157,6 +158,7 @@ class EMACallback(Callback):
 
     def on_train_epoch_start(self, trainer, pl_module):
         pl_module.ema.restore(pl_module.parameters())
+'''
 
 @utils.register_callback(name='base')
 class ImageVisualizationCallback(Callback):

@@ -6,7 +6,7 @@ import numpy as np
 
 from torchvision.utils import make_grid
 
-from lightning_callbacks import callbacks, HaarMultiScaleCallback, PairedCallback #needed for callback registration
+from lightning_callbacks import callbacks, ema, HaarMultiScaleCallback, PairedCallback #needed for callback registration
 from lightning_callbacks.HaarMultiScaleCallback import normalise_per_image, permute_channels, normalise, normalise_per_band, create_supergrid
 from lightning_callbacks.utils import get_callbacks
 

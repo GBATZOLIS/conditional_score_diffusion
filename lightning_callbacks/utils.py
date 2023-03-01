@@ -23,7 +23,7 @@ def get_callback_by_name(name):
 
 def get_callbacks(config):
     #callbacks=[get_callback_by_name('ema')()] #check if this works for testing as well.
-    callbacks=[]
+    callbacks=[get_callback_by_name('ema')(decay=config.model.ema_rate)]
 
     if config.logging.top_k is not None:
       callbacks.append(get_callback_by_name('CheckpointTopK')(config))
