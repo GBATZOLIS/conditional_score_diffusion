@@ -7,7 +7,7 @@ from models import utils as mutils
 
 def get_conditional_sampling_fn(config, sde, shape, eps, 
                           predictor='default', corrector='default', p_steps='default', 
-                          c_steps='default', snr='default', denoise='default', use_path='default'):
+                          c_steps='default', snr='default', denoise='default', use_path='default', use_pretrained=False):
 
     if predictor == 'default':
       predictor = get_predictor(config.sampling.predictor.lower())
@@ -41,12 +41,13 @@ def get_conditional_sampling_fn(config, sde, shape, eps,
                                             continuous=config.training.continuous,
                                             denoise = denoise,
                                             use_path = use_path,
-                                            eps=eps)
+                                            eps=eps, 
+                                            use_pretrained=use_pretrained)
     return sampling_fn
 
 def get_pc_conditional_sampler(sde, shape, predictor, corrector, snr, p_steps,
                    c_steps=1, probability_flow=False, continuous=False, 
-                   denoise=True, use_path=False, eps=1e-5):
+                   denoise=True, use_path=False, eps=1e-5, use_pretrained=False):
 
   """Create a Predictor-Corrector (PC) sampler.
   Args:
@@ -185,6 +186,20 @@ def get_pc_conditional_sampler(sde, shape, predictor, corrector, snr, p_steps,
         Samples, number of function evaluations.
       """
 
+      #SETUP THE SCORE FUNCTION
+      if not use_pretrained:
+        score_fn = mutils.get_score_fn(sde, model, conditional=True, train=False, continuous=continuous)
+        score_fn = mutils.get_conditional_score_fn(score_fn, target_domain='x')
+        device = model.device
+      else:
+        unconditional_score_model = model['unconditional_score_model']
+        latent_correction_model = model['latent_correction_model']
+        unconditional_score_fn = mutils.get_score_fn(sde, unconditional_score_model, conditional=False, train=False, continuous=continuous)
+        conditional_correction_fn = mutils.get_score_fn(sde, latent_correction_model, conditional=True, train=False, continuous=continuous)
+        
+        score_fn = mutils.get_conditional_score_fn_with_prior_diffusion_model(unconditional_score_fn, conditional_correction_fn)
+        device = unconditional_score_model.device
+
       #this function can be used for the exploration of variable correction schemes
       #i.e. the num of correction steps is a function of the diffusion time. 
       #This can possibly increase sampling speed or sampling quality. To be explored.
@@ -195,29 +210,25 @@ def get_pc_conditional_sampler(sde, shape, predictor, corrector, snr, p_steps,
 
       with torch.no_grad():
         # Initial sample
-        x = c_sde.prior_sampling(shape).to(model.device)
+        x = c_sde.prior_sampling(shape).to(device)
         if show_evolution:
           evolution = {'x':[], 'y':[]}
 
-        timesteps = torch.linspace(c_sde.T, eps, p_steps, device=model.device)
+        timesteps = torch.linspace(c_sde.T, eps, p_steps, device=device)
 
         for i in tqdm(range(p_steps)):
           t = timesteps[i]
-          #vec_t = torch.ones(shape[0], device=model.device) * t
-          x, x_mean, y_perturbed, y_mean = predictor_conditional_update_fn(x, y, t, model)
+          #vec_t = torch.ones(shape[0], device=device) * t
+          x, x_mean, y_perturbed, y_mean = predictor_conditional_update_fn(x, y, t, score_fn)
 
           for _ in range(corrections_steps(i)):
-            x, x_mean, y_perturbed, y_mean = corrector_conditional_update_fn(x, y, t, model)
+            x, x_mean, y_perturbed, y_mean = corrector_conditional_update_fn(x, y, t, score_fn)
           
           if show_evolution:
             evolution['x'].append(x.cpu())
             evolution['y'].append(y_perturbed.cpu())
 
         if show_evolution:
-          #check the effect of denoising
-          #evolution['x'].append(x_mean.cpu())
-          #evolution['y'].append(y_mean.cpu())
-
           evolution['x'], evolution['y'] = torch.stack(evolution['x']), torch.stack(evolution['y'])
           sampling_info = {'evolution': evolution}
           return x_mean if denoise else x
@@ -226,10 +237,8 @@ def get_pc_conditional_sampler(sde, shape, predictor, corrector, snr, p_steps,
           
     return pc_conditional_sampler
 
-def conditional_shared_predictor_update_fn(x, y, t, sde, model, predictor, probability_flow, continuous):
+def conditional_shared_predictor_update_fn(x, y, t, sde, score_fn, predictor, probability_flow, continuous):
   """A wrapper that configures and returns the update function of predictors."""
-  score_fn = mutils.get_score_fn(sde, model, conditional=True, train=False, continuous=continuous)
-  score_fn = mutils.get_conditional_score_fn(score_fn, target_domain='x')
 
   c_sde = sde['x'] if isinstance(sde, dict) else sde
   if predictor is None:
@@ -240,10 +249,8 @@ def conditional_shared_predictor_update_fn(x, y, t, sde, model, predictor, proba
 
   return predictor_obj.update_fn(x, y, t)
 
-def conditional_shared_corrector_update_fn(x, y, t, sde, model, corrector, continuous, snr, n_steps):
+def conditional_shared_corrector_update_fn(x, y, t, sde, score_fn, corrector, continuous, snr, n_steps):
   """A wrapper that configures and returns the update function of correctors."""
-  score_fn = mutils.get_score_fn(sde, model, conditional=True, train=False, continuous=continuous)
-  score_fn = mutils.get_conditional_score_fn(score_fn, target_domain='x')
 
   c_sde = sde['x'] if isinstance(sde, dict) else sde
   if corrector is None:

@@ -119,31 +119,59 @@ def get_scoreVAE_loss_fn(sde, train, variational=False, likelihood_weighting=Tru
   
   return loss_fn
 
-def get_old_scoreVAE_loss_fn(sde, train, variational=False, likelihood_weighting=True, eps=1e-5):
-  def loss_fn(encoder, score_model, batch):
-    x = batch
-    y = encoder(x)
+def get_old_scoreVAE_loss_fn(sde, train, variational=False, likelihood_weighting=True, eps=1e-5, use_pretrained=False):
+  if not use_pretrained:
+    def loss_fn(encoder, score_model, batch):
+      score_fn = mutils.get_score_fn(sde, score_model, conditional=True, train=train, continuous=True)
+      
+      x = batch
+      y = encoder(x)
+      t = torch.rand(x.shape[0]).type_as(x) * (sde.T - eps) + eps
+      z = torch.randn_like(x)
+      mean, std = sde.marginal_prob(x, t)
+      perturbed_x = mean + std[(...,) + (None,) * len(x.shape[1:])] * z
+      perturbed_data = {'x':perturbed_x, 'y':y}
 
-    score_fn = mutils.get_score_fn(sde, score_model, conditional=True, train=train, continuous=True)
-        
-    t = torch.rand(x.shape[0]).type_as(x) * (sde.T - eps) + eps
-    z = torch.randn_like(x)
-    mean, std = sde.marginal_prob(x, t)
-    perturbed_x = mean + std[(...,) + (None,) * len(x.shape[1:])] * z
-    perturbed_data = {'x':perturbed_x, 'y':y}
+      score = score_fn(perturbed_data, t)
 
-    score = score_fn(perturbed_data, t)
+      if not likelihood_weighting:
+        losses = torch.square(score * std[(...,) + (None,) * len(x.shape[1:])] + z)
+        losses = torch.mean(losses.reshape(losses.shape[0], -1), dim=-1)
+      else:
+        g2 = sde.sde(torch.zeros_like(x), t)[1] ** 2
+        losses = torch.square(score + z / std[(...,) + (None,) * len(x.shape[1:])])
+        losses = torch.mean(losses.reshape(losses.shape[0], -1), dim=-1) * g2
 
-    if not likelihood_weighting:
-      losses = torch.square(score * std[(...,) + (None,) * len(x.shape[1:])] + z)
-      losses = torch.mean(losses.reshape(losses.shape[0], -1), dim=-1)
-    else:
-      g2 = sde.sde(torch.zeros_like(x), t)[1] ** 2
-      losses = torch.square(score + z / std[(...,) + (None,) * len(x.shape[1:])])
-      losses = torch.mean(losses.reshape(losses.shape[0], -1), dim=-1) * g2
+      loss = torch.mean(losses)
+      return loss
+  else:
+    def loss_fn(encoder, latent_correction_model, unconditional_score_model, batch):
+      unconditional_score_fn = mutils.get_score_fn(sde, unconditional_score_model, conditional=False, train=train, continuous=True)
+      conditional_correction_fn = mutils.get_score_fn(sde, latent_correction_model, conditional=True, train=train, continuous=True)
+      
+      x = batch
+      y = encoder(x)
+      t = torch.rand(x.shape[0]).type_as(x) * (sde.T - eps) + eps
+      z = torch.randn_like(x)
+      mean, std = sde.marginal_prob(x, t)
+      perturbed_x = mean + std[(...,) + (None,) * len(x.shape[1:])] * z
+      perturbed_data = {'x':perturbed_x, 'y':y}
 
-    loss = torch.mean(losses)
-    return loss
+      unconditional_score = unconditional_score_fn(perturbed_x, t)
+      conditional_correction = conditional_correction_fn(perturbed_data, t)
+      
+      score = conditional_correction + unconditional_score
+
+      if not likelihood_weighting:
+        losses = torch.square(score * std[(...,) + (None,) * len(x.shape[1:])] + z)
+        losses = torch.mean(losses.reshape(losses.shape[0], -1), dim=-1)
+      else:
+        g2 = sde.sde(torch.zeros_like(x), t)[1] ** 2
+        losses = torch.square(score + z / std[(...,) + (None,) * len(x.shape[1:])])
+        losses = torch.mean(losses.reshape(losses.shape[0], -1), dim=-1) * g2
+
+      loss = torch.mean(losses)
+      return loss
   
   return loss_fn
 

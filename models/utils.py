@@ -236,14 +236,14 @@ def get_score_fn(sde, model, conditional=False, train=False, continuous=False):
           # continuously-trained models.
           labels = t * (sde.N - 1)
           score = model_fn(x, labels)
-          #std = sde.marginal_prob(torch.zeros_like(x), t)[1]
+          std = sde.marginal_prob(torch.zeros_like(x), t)[1]
         else:
           # For VP-trained models, t=0 corresponds to the lowest noise level
           labels = t * (sde.N - 1)
           score = model_fn(x, labels)
-          #std = sde.sqrt_1m_alphas_cumprod.type_as(labels)[labels.long()]
+          std = sde.sqrt_1m_alphas_cumprod.type_as(labels)[labels.long()]
 
-        #score = score / std[(...,)+(None,)*len(x.shape[1:])] #-> why do they scale the output of the network by std ??
+        score = - score / std[(...,)+(None,)*len(x.shape[1:])] #-> why do they scale the output of the network by std ??
         return score
 
     elif isinstance(sde, sde_lib.VESDE) or isinstance(sde, sde_lib.cVESDE):
@@ -259,6 +259,7 @@ def get_score_fn(sde, model, conditional=False, train=False, continuous=False):
         #score = score / std[(...,)+(None,)*len(x.shape[1:])]
         #score = divide_by_sigmas(score, t, sde, continuous)
         return score
+
     elif isinstance(sde, sde_lib.SNRSDE):
         assert continuous
         def score_fn(x, t):
@@ -272,6 +273,12 @@ def get_score_fn(sde, model, conditional=False, train=False, continuous=False):
       raise NotImplementedError(f"SDE class {sde.__class__.__name__} not yet supported.")
 
   return score_fn
+
+def get_conditional_score_fn_with_prior_diffusion_model(unconditional_score_fn, conditional_correction_fn):
+  def conditional_score_fn(x, y, t):
+    conditional_score = conditional_correction_fn({'x':x, 'y':y}, t) + unconditional_score_fn(x, t)
+    return conditional_score
+  return conditional_score_fn
 
 #needs shape generalisation
 def get_conditional_score_fn(score_fn, target_domain): #for standard inverse problems. It should be modified for general inverse problems (different resolutions etc.).

@@ -9,8 +9,8 @@ def get_config():
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/celebA-HQ/'
-  logging.log_name = 'deeper_ae'
+  logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/cifar10/'
+  logging.log_name = 'ae'
   logging.top_k = 5
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
@@ -19,14 +19,13 @@ def get_config():
   config.training = training = ml_collections.ConfigDict()
   config.training.lightning_module = 'score_vae'
   training.conditioning_approach = 'sr3'
-  training.batch_size = 64 
+  training.batch_size = 256 
   training.t_batch_size = 1
   training.num_nodes = 1
   training.gpus = 1
   training.accelerator = None if training.gpus == 1 else 'ddp'
   training.accumulate_grad_batches = 1
   training.workers = 4*training.gpus
-
   #----- to be removed -----
   training.num_epochs = 10000
   training.n_iters = 2500000
@@ -35,7 +34,7 @@ def get_config():
   training.eval_freq = 2500
   #------              --------
   
-  training.visualisation_freq = 3
+  training.visualisation_freq = 20
   training.visualization_callback = None
   training.show_evolution = False
 
@@ -80,16 +79,16 @@ def get_config():
   # data
   config.data = data = ml_collections.ConfigDict()
   data.base_dir = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/datasets'
-  data.dataset = 'celebA-HQ-160'
-  data.datamodule = 'unpaired_PKLDataset'
+  data.dataset = 'cifar10'
+  data.datamodule = data.dataset
   data.return_labels = False
   data.use_data_mean = False
   data.create_dataset = False
   data.split = [0.8, 0.1, 0.1]
-  data.image_size = 128
+  data.image_size = 32
   data.effective_image_size = data.image_size
   data.shape = [3, data.image_size, data.image_size]
-  data.latent_dim = 512
+  data.latent_dim = 384
   data.centered = False
   data.use_flip = False
   data.crop = False
@@ -98,12 +97,14 @@ def get_config():
 
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = None #'/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/celebA-HQ/ae/checkpoints/best/last.ckpt'
+  model.checkpoint_path = None #'/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/cifar10/deep_mirror_encdec_train_sample_improvements/checkpoints/best/last.ckpt'
   model.sigma_min = 0.01
   model.sigma_max = 50
   model.num_scales = 1000
   model.beta_min = 0.1
   model.beta_max = 20.
+  model.dropout = 0.1
+  model.embedding_type = 'fourier'
 
   model.name = 'ddpm_mirror_decoder'
   model.input_channels = 2*data.num_channels
@@ -112,12 +113,10 @@ def get_config():
   model.ema_rate = 0.9999
   model.normalization = 'GroupNorm'
   model.nonlinearity = 'swish'
-  model.dropout = 0
-  model.embedding_type = 'fourier'
   model.nf = 128
-  model.ch_mult = (1, 1, 2, 2, 3, 3)
-  model.num_res_blocks = 2
-  model.attn_resolutions = (32, 16, 8)
+  model.ch_mult = (1, 2, 2, 2)
+  model.num_res_blocks = 4
+  model.attn_resolutions = (16,)
   model.resamp_with_conv = True
   model.conditional = True
   model.fir = True
@@ -132,11 +131,7 @@ def get_config():
   model.fourier_scale = 16
   model.conv_size = 3
 
-  model.encoder_name = 'ddpm_encoder'
-  model.encoder_input_channels = data.num_channels
-  model.encoder_output_channels = data.num_channels
-  model.encoder_nf = 64
-  model.encoder_num_res_blocks = 2
+  model.encoder_name = 'simple_encoder'
   model.encoder_input_channels = data.num_channels
   model.encoder_latent_dim = data.latent_dim
   model.encoder_base_channel_size = 64
@@ -146,10 +141,11 @@ def get_config():
   config.optim = optim = ml_collections.ConfigDict()
   optim.weight_decay = 0
   optim.optimizer = 'Adam'
-  optim.lr = 1e-4
+  optim.lr = 2e-4
   optim.beta1 = 0.9
   optim.eps = 1e-8
-  optim.warmup = 5000
+  optim.warmup = 2500
+  optim.slowing_factor = 10
   optim.grad_clip = 1.
 
   config.seed = 42
