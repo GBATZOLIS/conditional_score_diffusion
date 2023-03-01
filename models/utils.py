@@ -227,7 +227,7 @@ def get_score_fn(sde, model, conditional=False, train=False, continuous=False):
 
   else:
     """COVERS THE BASIC UNCONDITIONAL CASE"""
-    if isinstance(sde, sde_lib.VPSDE) or isinstance(sde, sde_lib.subVPSDE):
+    if isinstance(sde, (sde_lib.VPSDE, sde_lib.cVPSDE, sde_lib.subVPSDE, sde_lib.csubVPSDE)):
       def score_fn(x, t):
         # Scale neural network output by standard deviation and flip sign
         if continuous or isinstance(sde, sde_lib.subVPSDE):
