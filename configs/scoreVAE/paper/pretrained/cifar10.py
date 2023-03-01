@@ -10,7 +10,7 @@ def get_config():
   #logging
   config.logging = logging = ml_collections.ConfigDict()
   logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/cifar10/'
-  logging.log_name = 'ae_ema'
+  logging.log_name = 'ae'
   logging.top_k = 5
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
@@ -19,7 +19,7 @@ def get_config():
   config.training = training = ml_collections.ConfigDict()
   config.training.lightning_module = 'pretrained_score_vae'
   training.conditioning_approach = 'sr3'
-  training.batch_size = 32
+  training.batch_size = 256
   training.t_batch_size = 1
   training.num_nodes = 1
   training.gpus = 1
