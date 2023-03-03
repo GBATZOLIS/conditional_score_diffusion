@@ -34,7 +34,7 @@ def get_config():
   training.eval_freq = 2500
   #------              --------
   
-  training.visualisation_freq = 20
+  training.visualisation_freq = 100
   training.visualization_callback = None
   training.show_evolution = False
 
@@ -97,7 +97,7 @@ def get_config():
 
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = None #'/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/cifar10/deep_mirror_encdec_train_sample_improvements/checkpoints/best/last.ckpt'
+  model.checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/cifar10/ae_ema/checkpoints/best/last.ckpt'
   model.sigma_min = 0.01
   model.sigma_max = 50
   model.num_scales = 1000
