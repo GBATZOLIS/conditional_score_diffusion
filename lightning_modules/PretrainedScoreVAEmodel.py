@@ -102,7 +102,7 @@ class PretrainedScoreVAEmodel(pl.LightningModule):
         self.logger.experiment.add_scalars('val_loss', {'conditional': loss}, self.global_step)
         self.log('eval_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         
-        if batch_idx == 0 and (self.current_epoch+1) % self.config.training.visualisation_freq == 5:
+        if batch_idx == 0 and (self.current_epoch+1) % self.config.training.visualisation_freq == 0:
             reconstruction = self.encoder_n_decode(batch)
 
             reconstruction =  reconstruction.cpu()
