@@ -113,7 +113,7 @@ def get_config():
   #logging
   config.logging = logging = ml_collections.ConfigDict()
   logging.log_path = 'logs/circles/fokker_planck/'
-  logging.log_name = f'fp_small3_{training.alpha}'
+  logging.log_name = f'fp_small_{training.alpha}'
   logging.top_k = 5
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)

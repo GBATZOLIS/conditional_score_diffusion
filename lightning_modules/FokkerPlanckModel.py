@@ -95,7 +95,7 @@ class FokkerPlanckModel(pl.LightningModule):
                 #self.score_model.time_derivative_log_energy(x,t)
 
                 difference = (p_t - (diffusion**2 / 2) * p_xx)
-                difference = diffusion**2 * difference # apply weighting
+                difference = diffusion**2 * torch.exp(-5*t) * difference  # apply weighting
                 return difference
 
             else:
