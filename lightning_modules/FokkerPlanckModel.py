@@ -96,7 +96,7 @@ class FokkerPlanckModel(pl.LightningModule):
 
                 difference = (p_t - (diffusion**2 / 2) * p_xx)
                 difference = diffusion**2 * torch.exp(-5*t) * difference  # apply weighting
-                return difference
+                return torch.mean(difference**2)
 
             else:
                 B = x.shape[0] # batch size
@@ -112,7 +112,7 @@ class FokkerPlanckModel(pl.LightningModule):
 
                 difference = (time_derivative - (diffusion**2 / 2) * (grad_norm_2 + divergence))
                 difference = diffusion**2 * difference # apply weighting
-                return difference
+                return torch.mean(difference**2)
 
 
         #difference = fp_loss(perturbed_data, t)
@@ -120,7 +120,7 @@ class FokkerPlanckModel(pl.LightningModule):
         #x_grad_fp_loss = compute_grad(lambda x: fp_loss(x,t), perturbed_data)
         #loss_fp = (torch.linalg.norm(x_grad_fp_loss, dim=1)).mean()
         
-        loss_fp = fp_loss(perturbed_data, t).abs().mean()
+        loss_fp = fp_loss(perturbed_data, t)
         
         #diff_chunked = torch.chunk(difference, n_chunks, dim=0)
         # for chunk in diff_chunked:

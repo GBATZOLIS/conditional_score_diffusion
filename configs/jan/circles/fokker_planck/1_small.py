@@ -37,7 +37,7 @@ def get_config():
   training.n_iters = int(1e20)
   training.likelihood_weighting = True
   training.continuous = True
-  training.sde = 'vesde'
+  training.sde = 'subvpsde'
   training.schedule = 'constant'
   training.alpha=1
   training.alpha_min=1e-4

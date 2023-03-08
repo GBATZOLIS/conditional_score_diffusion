@@ -71,7 +71,7 @@ def get_default_configs():
   config.optim = optim = ml_collections.ConfigDict()
   optim.weight_decay = 0
   optim.optimizer = 'Adam'
-  optim.lr = 2e-4
+  optim.lr = 4e-4
   optim.beta1 = 0.9
   optim.eps = 1e-8
   optim.warmup = 5000
