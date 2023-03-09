@@ -87,7 +87,7 @@ class FokkerPlanckModel(pl.LightningModule):
 
                 p_x = lambda y: self.score_model.grad_density(y,t)
 
-                p_xx = compute_divergence(p_x, x, hutchinson=self.config.training.hutchinson)    
+                p_xx = compute_divergence(p_x, x)#, hutchinson=self.config.training.hutchinson)    
                 #self.score_model.trace_hessian_log_energy(x, t) 
                 
                 energy_t = lambda s: self.score_model.energy(x, s)
@@ -95,7 +95,7 @@ class FokkerPlanckModel(pl.LightningModule):
                 #self.score_model.time_derivative_log_energy(x,t)
 
                 difference = (p_t - (diffusion**2 / 2) * p_xx)
-                difference = diffusion**2 * torch.exp(-5*t) * difference  # apply weighting
+                #difference = diffusion**2 * torch.exp(-5*t) * difference  # apply weighting
                 return torch.mean(difference**2)
 
             else:
