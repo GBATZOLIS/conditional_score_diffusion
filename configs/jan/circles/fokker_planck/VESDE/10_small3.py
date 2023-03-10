@@ -39,7 +39,7 @@ def get_config():
   training.continuous = True
   training.sde = 'vesde'
   training.schedule = 'constant'
-  training.alpha=1
+  training.alpha=10
   training.alpha_min=1e-4
   training.alpha_max=1e-2
   training.hutchinson = False

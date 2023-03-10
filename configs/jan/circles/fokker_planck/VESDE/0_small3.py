@@ -90,7 +90,7 @@ def get_config():
   model.name = 'fcn_potential'
   model.state_size = data.dim
   model.hidden_layers = 3
-  model.hidden_nodes = 256
+  model.hidden_nodes = 64
   model.dropout = 0.0
   model.scale_by_sigma = False
   model.num_scales = 1000
@@ -100,7 +100,7 @@ def get_config():
   optim = config.optim
   optim.weight_decay = 0
   optim.optimizer = 'Adam'
-  optim.lr = 2e-5
+  optim.lr = 2e-4
   optim.beta1 = 0.9
   optim.eps = 1e-8
   optim.warmup = 5000
@@ -113,7 +113,7 @@ def get_config():
   #logging
   config.logging = logging = ml_collections.ConfigDict()
   logging.log_path = 'logs/circles/fokker_planck/'
-  logging.log_name = f'fp_small3_{training.alpha}'
+  logging.log_name = f'VEfp_small3_{training.alpha}'
   logging.top_k = 5
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)

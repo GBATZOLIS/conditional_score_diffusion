@@ -242,17 +242,17 @@ class TwoDimVizualizer(Callback):
         ode_samples = ode_samples[:min(n,m)]
 
         wasserstein = calculate_wasserstein(sde_samples, ode_samples)
-        pl_module.log('sde_ode_W2', wasserstein, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        #pl_module.log('sde_ode_W2', wasserstein, on_step=False, on_epoch=True, prog_bar=True, logger=True)
 
         
     def on_validation_epoch_end(self,trainer, pl_module):
-        if pl_module.current_epoch % 500 == 0:
+        if pl_module.current_epoch % 100 == 0:
             sde_samples, _ = self.sde_sampling_fn(pl_module.score_model)
             sde_samples = remove_outliers(sde_samples,1.3)
             self.visualise_samples(sde_samples, pl_module, ode=False)
 
             ode_samples, _ = self.ode_sampling_fn(pl_module.score_model)
-            ode_samples = remove_outliers(ode_samples)
+            ode_samples = remove_outliers(ode_samples,1.3)
             self.visualise_samples(ode_samples, pl_module, ode=True)
 
             n = sde_samples.shape[0]
