@@ -197,3 +197,8 @@ def calculate_wasserstein(batch1, batch2):
     weights2 = torch.ones(n_batch2)/n_batch2
     wasserstein = float(ot.emd2(weights1, weights2, cost_matrix, numItermax=int(1e6)))**(0.5)
     return wasserstein
+
+
+def remove_outliers(batch, t=1.1):
+  batch = batch[torch.linalg.norm(batch,dim=1) <= t]
+  return batch

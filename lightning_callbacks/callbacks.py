@@ -1,7 +1,7 @@
 import os 
 import torch
 from pytorch_lightning.callbacks import Callback
-from utils import scatter, plot, compute_grad, create_video, hist, calculate_wasserstein
+from utils import scatter, plot, compute_grad, create_video, hist, calculate_wasserstein, remove_outliers 
 from models.ema import ExponentialMovingAverage
 import torchvision
 from . import utils
@@ -229,23 +229,37 @@ class TwoDimVizualizer(Callback):
 
     def on_train_start(self, trainer, pl_module):
         sde_samples, _ = self.sde_sampling_fn(pl_module.score_model)
+        sde_samples = remove_outliers(sde_samples,1.3)
         self.visualise_samples(sde_samples, pl_module, ode=False)
 
         ode_samples, _ = self.ode_sampling_fn(pl_module.score_model)
+        ode_samples = remove_outliers(ode_samples)
         self.visualise_samples(ode_samples, pl_module, ode=True)
 
+        n = sde_samples.shape[0]
+        m = ode_samples.shape[0]
+        sde_samples = sde_samples[:min(n,m)]
+        ode_samples = ode_samples[:min(n,m)]
+
         wasserstein = calculate_wasserstein(sde_samples, ode_samples)
-        pl_module.log('sde_ode_W1', wasserstein, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+        pl_module.log('sde_ode_W2', wasserstein, on_step=False, on_epoch=True, prog_bar=True, logger=True)
 
         
     def on_validation_epoch_end(self,trainer, pl_module):
         if pl_module.current_epoch % 500 == 0:
             sde_samples, _ = self.sde_sampling_fn(pl_module.score_model)
+            sde_samples = remove_outliers(sde_samples,1.3)
             self.visualise_samples(sde_samples, pl_module, ode=False)
 
             ode_samples, _ = self.ode_sampling_fn(pl_module.score_model)
+            ode_samples = remove_outliers(ode_samples)
             self.visualise_samples(ode_samples, pl_module, ode=True)
 
+            n = sde_samples.shape[0]
+            m = ode_samples.shape[0]
+            sde_samples = sde_samples[:min(n,m)]
+            ode_samples = ode_samples[:min(n,m)]
+            
             wasserstein = calculate_wasserstein(sde_samples, ode_samples)
             pl_module.log('sde_ode_W2', wasserstein, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         
@@ -253,7 +267,7 @@ class TwoDimVizualizer(Callback):
     def visualise_samples(self, samples, pl_module, ode=False):
         samples_type = 'sde' if not ode else 'ode'
         samples_np =  samples.cpu().numpy()
-        samples_np = samples_np[np.linalg.norm(samples_np,axis=1)<1.3]        
+        samples_np = samples_np[np.linalg.norm(samples_np,axis=1)<=1.3]        
         image = scatter(samples_np[:,0],samples_np[:,1], 
                         title=f'{samples_type} samples epoch: ' + str(pl_module.current_epoch))
         pl_module.logger.experiment.add_image(f'{samples_type}_samples', image, pl_module.current_epoch)
