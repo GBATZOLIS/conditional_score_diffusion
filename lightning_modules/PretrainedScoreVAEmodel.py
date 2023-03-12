@@ -29,9 +29,13 @@ class PretrainedScoreVAEmodel(pl.LightningModule):
         self.latent_correction_model = mutils.create_model(config)
         
         #unconditional score model
-        config.model.input_channels = config.model.output_channels
-        config.model.name = config.model.unconditional_score_model_name
-        self.unconditional_score_model = mutils.create_model(config)
+        if config.training.use_pretrained:
+            self.unconditional_score_model = mutils.load_prior_model(config)
+            self.unconditional_score_model.freeze()
+        else:
+            config.model.input_channels = config.model.output_channels
+            config.model.name = config.model.unconditional_score_model_name
+            self.unconditional_score_model = mutils.create_model(config)
 
         #encoder
         self.encoder = mutils.create_encoder(config)
@@ -78,32 +82,41 @@ class PretrainedScoreVAEmodel(pl.LightningModule):
                                         t_batch_size=config.training.t_batch_size,
                                         kl_weight=config.training.kl_weight)
         
-        unconditional_loss_fn = get_general_sde_loss_fn(self.usde, train, conditional=False, reduce_mean=True,
+        if config.use_pretrained:
+            return {0:loss_fn}
+        else:
+            unconditional_loss_fn = get_general_sde_loss_fn(self.usde, train, conditional=False, reduce_mean=True,
                                     continuous=True, likelihood_weighting=config.training.likelihood_weighting)
-
-        return {0:unconditional_loss_fn, 1:loss_fn}
+            return {0:loss_fn, 1:unconditional_loss_fn}
     
     def training_step(self, batch, batch_idx, optimizer_idx):
         if optimizer_idx == 0:
-            loss = self.train_loss_fn[0](self.unconditional_score_model, batch)
-            self.logger.experiment.add_scalars('train_loss', {'unconditional': loss}, self.global_step)
+            loss = self.train_loss_fn[0](self.encoder, self.latent_correction_model, self.unconditional_score_model, batch)
+            if self.config.use_pretrained:
+                self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+            else:
+                self.logger.experiment.add_scalars('train_loss', {'conditional': loss}, self.global_step)
 
         elif optimizer_idx == 1:
-            loss = self.train_loss_fn[1](self.encoder, self.latent_correction_model, self.unconditional_score_model, batch)
-            self.logger.experiment.add_scalars('train_loss', {'conditional': loss}, self.global_step)
+            loss = self.train_loss_fn[1](self.unconditional_score_model, batch)
+            self.logger.experiment.add_scalars('train_loss', {'unconditional': loss}, self.global_step)
 
         return loss
     
     def validation_step(self, batch, batch_idx):
-        loss = self.eval_loss_fn[0](self.unconditional_score_model, batch)
-        self.logger.experiment.add_scalars('val_loss', {'unconditional': loss}, self.global_step)
-        
-        loss = self.eval_loss_fn[1](self.encoder, self.latent_correction_model, self.unconditional_score_model, batch)
-        self.logger.experiment.add_scalars('val_loss', {'conditional': loss}, self.global_step)
-        self.log('eval_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
-        
+        if self.config.use_pretrained:
+            loss = self.eval_loss_fn[0](self.encoder, self.latent_correction_model, self.unconditional_score_model, batch)
+            self.log('eval_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        else:
+            loss = self.eval_loss_fn[0](self.encoder, self.latent_correction_model, self.unconditional_score_model, batch)
+            self.logger.experiment.add_scalars('val_loss', {'conditional': loss}, self.global_step)
+            self.log('eval_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+            
+            loss = self.eval_loss_fn[1](self.unconditional_score_model, batch)
+            self.logger.experiment.add_scalars('val_loss', {'unconditional': loss}, self.global_step)
+
         if batch_idx == 0 and (self.current_epoch+1) % self.config.training.visualisation_freq == 0:
-            reconstruction = self.encoder_n_decode(batch)
+            reconstruction = self.encode_n_decode(batch)
 
             reconstruction =  reconstruction.cpu()
             grid_reconstruction = torchvision.utils.make_grid(reconstruction, nrow=int(np.sqrt(batch.size(0))), normalize=True, scale_each=True)
@@ -123,7 +136,6 @@ class PretrainedScoreVAEmodel(pl.LightningModule):
             grid_batch = torchvision.utils.make_grid(sample, nrow=int(np.sqrt(sample.size(0))), normalize=True, scale_each=True)
             self.logger.experiment.add_image('unconditional_sample', grid_batch, self.current_epoch)
             
-
         return loss
 
     def unconditional_sample(self, num_samples=None):
@@ -134,7 +146,7 @@ class PretrainedScoreVAEmodel(pl.LightningModule):
         sampling_fn = get_sampling_fn(self.config, self.usde, sampling_shape, self.sampling_eps)
         return sampling_fn(self.unconditional_score_model)
 
-    def encoder_n_decode(self, x, show_evolution=False, predictor='default', corrector='default', p_steps='default', \
+    def encode_n_decode(self, x, show_evolution=False, predictor='default', corrector='default', p_steps='default', \
                      c_steps='default', snr='default', denoise='default', use_pretrained=True):
 
         if self.config.training.variational:
@@ -170,20 +182,24 @@ class PretrainedScoreVAEmodel(pl.LightningModule):
                 else:
                     return 1
         
-
-        unconditional_score_optimizer = optim.Adam(self.unconditional_score_model.parameters(), 
-                                        lr=self.config.optim.lr, betas=(self.config.optim.beta1, 0.999), eps=self.config.optim.eps,
-                                        weight_decay=self.config.optim.weight_decay)
-        
-        unconditional_score_scheduler = {'scheduler': optim.lr_scheduler.LambdaLR(unconditional_score_optimizer, scheduler_lambda_function(self.config.optim.warmup)),
-                                         'interval': 'step'}  # called after each training step
-
-        ae_params = list(self.encoder.parameters())+list(self.latent_correction_model.parameters())
-        ae_optimizer = optim.Adam(ae_params, lr=self.config.optim.lr, betas=(self.config.optim.beta1, 0.999), eps=self.config.optim.eps,
-                           weight_decay=self.config.optim.weight_decay)
-        ae_scheduler = {'scheduler': optim.lr_scheduler.LambdaLR(ae_optimizer, scheduler_lambda_function(self.config.optim.slowing_factor*self.config.optim.warmup)),
-                        'interval': 'step'}  # called after each training step
-
-        
-                    
-        return [unconditional_score_optimizer, ae_optimizer], [unconditional_score_scheduler, ae_scheduler]
+        if self.config.use_pretrained:
+            ae_params = list(self.encoder.parameters())+list(self.latent_correction_model.parameters())
+            ae_optimizer = optim.Adam(ae_params, lr=self.config.optim.lr, betas=(self.config.optim.beta1, 0.999), eps=self.config.optim.eps,
+                            weight_decay=self.config.optim.weight_decay)
+            ae_scheduler = {'scheduler': optim.lr_scheduler.LambdaLR(ae_optimizer, scheduler_lambda_function(self.config.optim.slowing_factor*self.config.optim.warmup)),
+                            'interval': 'step'}  # called after each training step
+            return [ae_optimizer, ae_scheduler]
+        else:
+            ae_params = list(self.encoder.parameters())+list(self.latent_correction_model.parameters())
+            ae_optimizer = optim.Adam(ae_params, lr=self.config.optim.lr, betas=(self.config.optim.beta1, 0.999), eps=self.config.optim.eps,
+                            weight_decay=self.config.optim.weight_decay)
+            ae_scheduler = {'scheduler': optim.lr_scheduler.LambdaLR(ae_optimizer, scheduler_lambda_function(self.config.optim.slowing_factor*self.config.optim.warmup)),
+                            'interval': 'step'}  # called after each training step
+                            
+            unconditional_score_optimizer = optim.Adam(self.unconditional_score_model.parameters(), 
+                                            lr=self.config.optim.lr, betas=(self.config.optim.beta1, 0.999), eps=self.config.optim.eps,
+                                            weight_decay=self.config.optim.weight_decay)
+            unconditional_score_scheduler = {'scheduler': optim.lr_scheduler.LambdaLR(unconditional_score_optimizer, scheduler_lambda_function(self.config.optim.warmup)),
+                                            'interval': 'step'}  # called after each training step
+            
+            return [ae_optimizer, unconditional_score_optimizer], [ae_scheduler, unconditional_score_scheduler]

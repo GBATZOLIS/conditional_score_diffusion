@@ -19,7 +19,8 @@
 import torch
 import sde_lib
 import numpy as np
-
+import pickle
+import os
 
 _MODELS = {}
 
@@ -120,6 +121,23 @@ def create_model(config):
   """Create the score model."""
   model_name = config.model.name
   score_model = get_model(model_name)(config)
+  return score_model
+
+def load_prior_model(base_config):
+  #load a prior score model
+  
+  prior_config_path = os.path.join(base_config.logging.log_path, 'prior', 'config.pkl')
+  if os.path.exists(prior_config_path):
+    with open(prior_config_path, 'rb') as file:
+      prior_config = pickle.load(file)
+  
+  model_name = prior_config.model.name
+
+  checkpoint_path = base_config.training.prior_checkpoint_path
+  if checkpoint_path is None:
+    checkpoint_path = os.path.join(base_config.logging.log_path, 'prior', 'checkpoints', 'best', 'last.ckpt')
+
+  score_model = get_model(model_name).load_from_checkpoint(checkpoint_path)
   return score_model
 
 
