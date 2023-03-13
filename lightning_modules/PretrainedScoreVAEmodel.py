@@ -82,7 +82,7 @@ class PretrainedScoreVAEmodel(pl.LightningModule):
                                         t_batch_size=config.training.t_batch_size,
                                         kl_weight=config.training.kl_weight)
         
-        if config.use_pretrained:
+        if config.training.use_pretrained:
             return {0:loss_fn}
         else:
             unconditional_loss_fn = get_general_sde_loss_fn(self.usde, train, conditional=False, reduce_mean=True,
@@ -92,7 +92,7 @@ class PretrainedScoreVAEmodel(pl.LightningModule):
     def training_step(self, batch, batch_idx, optimizer_idx):
         if optimizer_idx == 0:
             loss = self.train_loss_fn[0](self.encoder, self.latent_correction_model, self.unconditional_score_model, batch)
-            if self.config.use_pretrained:
+            if self.config.training.use_pretrained:
                 self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
             else:
                 self.logger.experiment.add_scalars('train_loss', {'conditional': loss}, self.global_step)
@@ -104,7 +104,7 @@ class PretrainedScoreVAEmodel(pl.LightningModule):
         return loss
     
     def validation_step(self, batch, batch_idx):
-        if self.config.use_pretrained:
+        if self.config.training.use_pretrained:
             loss = self.eval_loss_fn[0](self.encoder, self.latent_correction_model, self.unconditional_score_model, batch)
             self.log('eval_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         else:
@@ -182,7 +182,7 @@ class PretrainedScoreVAEmodel(pl.LightningModule):
                 else:
                     return 1
         
-        if self.config.use_pretrained:
+        if self.config.training.use_pretrained:
             ae_params = list(self.encoder.parameters())+list(self.latent_correction_model.parameters())
             ae_optimizer = optim.Adam(ae_params, lr=self.config.optim.lr, betas=(self.config.optim.beta1, 0.999), eps=self.config.optim.eps,
                             weight_decay=self.config.optim.weight_decay)
