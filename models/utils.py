@@ -137,7 +137,9 @@ def load_prior_model(base_config):
   if checkpoint_path is None:
     checkpoint_path = os.path.join(base_config.logging.log_path, 'prior', 'checkpoints', 'best', 'last.ckpt')
 
-  score_model = get_model(model_name).load_from_checkpoint(checkpoint_path)
+  checkpoint = torch.load(checkpoint_path)
+  score_model = get_model(model_name)
+  score_model.load_state_dict(checkpoint['score_model'])
   return score_model
 
 

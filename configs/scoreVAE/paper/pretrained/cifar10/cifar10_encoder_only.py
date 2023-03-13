@@ -19,7 +19,7 @@ def get_config():
   config.training = training = ml_collections.ConfigDict()
   config.training.lightning_module = 'pretrained_score_vae'
   training.use_pretrained = True
-  training.training.prior_checkpoint_path = None
+  training.prior_checkpoint_path = None
   training.conditioning_approach = 'sr3'
   training.batch_size = 256
   training.t_batch_size = 1
