@@ -140,7 +140,7 @@ def load_prior_model(base_config):
   checkpoint = torch.load(checkpoint_path)
   print(checkpoint.keys())
   score_model = get_model(model_name)
-  score_model.load_state_dict(checkpoint['score_model'])
+  score_model.load_state_dict(checkpoint['state_dict'])
   return score_model
 
 
