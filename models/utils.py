@@ -21,6 +21,7 @@ import sde_lib
 import numpy as np
 import pickle
 import os
+from lightning_modules.utils import create_lightning_module
 
 _MODELS = {}
 
@@ -131,18 +132,13 @@ def load_prior_model(base_config):
     with open(prior_config_path, 'rb') as file:
       prior_config = pickle.load(file)
   
-  model_name = prior_config.model.name
-
   checkpoint_path = base_config.training.prior_checkpoint_path
   if checkpoint_path is None:
     checkpoint_path = os.path.join(base_config.logging.log_path, 'prior', 'checkpoints', 'best', 'last.ckpt')
 
-  checkpoint = torch.load(checkpoint_path, map_location=torch.device('cpu'))
-  print(checkpoint.keys())
-  print(checkpoint['state_dict'].keys())
-  score_model = get_model(model_name)(prior_config)
-  score_model.load_state_dict(checkpoint['state_dict']['score_model'])
-  return score_model
+  priorLightningModule = create_lightning_module(prior_config)
+  priorLightningModule.load_from_checkpoint(checkpoint_path)
+  return priorLightningModule.score_model
 
 
 def get_model_fn(model, train=False):
