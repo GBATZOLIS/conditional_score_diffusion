@@ -188,7 +188,7 @@ class PretrainedScoreVAEmodel(pl.LightningModule):
                             weight_decay=self.config.optim.weight_decay)
             ae_scheduler = {'scheduler': optim.lr_scheduler.LambdaLR(ae_optimizer, scheduler_lambda_function(self.config.optim.warmup)),
                             'interval': 'step'}  # called after each training step
-            return [ae_optimizer, ae_scheduler]
+            return [ae_optimizer], [ae_scheduler]
         else:
             ae_params = list(self.encoder.parameters())+list(self.latent_correction_model.parameters())
             ae_optimizer = optim.Adam(ae_params, lr=self.config.optim.lr, betas=(self.config.optim.beta1, 0.999), eps=self.config.optim.eps,
