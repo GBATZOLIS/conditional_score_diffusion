@@ -43,6 +43,25 @@ class SyntheticDataset(Dataset):
 
     def __len__(self):
         return len(self.data)
+    
+class CheckerBoardDataset(SyntheticDataset):
+    def __init__(self, config):
+        super().__init__(config)
+
+    def create_dataset(self, config):
+        n = config.data.n_squares
+        N = config.data.n_samples // n
+        data = []
+        ticks = np.linspace(0,1,n+1)
+        for i in range(0,len(ticks)-1):
+            for j in range(0,len(ticks)-1):
+                if (i + j) % 2 == 0:
+                    x = np.random.uniform(ticks[i], ticks[i+1], (N,))
+                    y = np.random.uniform(ticks[j], ticks[j+1], (N,))
+                    point= np.stack((x,y), axis=-1)
+                    data.append(point)
+        data = np.concatenate(data, axis=0)
+        return torch.from_numpy(data), []
 
 class SquaresManifold(SyntheticDataset):
     def __init__(self, config):
@@ -251,12 +270,14 @@ class Circles(SyntheticDataset):
         noise = config.data.noise
         #factor = config.data.factor
         labels =[]
+        N = config.data.n_circles
 
         # radious distribution
-        self.mus = torch.tensor([0.5, 1])
+        self.mus = torch.linspace(0,1,N+1)[1:]
+        #self.mus = torch.tensor([0.5, 1])
         self.std = noise
-        mix = D.Categorical(torch.ones(2,))
-        comp = D.Normal(self.mus, self.std* torch.ones(2,))
+        mix = D.Categorical(torch.ones(N,))
+        comp = D.Normal(self.mus, self.std* torch.ones(N,))
         radious_distro = D.MixtureSameFamily(mix, comp)
 
         # angle distribution
@@ -351,6 +372,8 @@ class SyntheticDataModule(pl.LightningDataModule):
             self.dataset = SquaresManifold(self.config)
         elif self.dataset_type == 'FixedSquaresManifold':
             self.dataset = FixedSquaresManifold(self.config)
+        elif self.dataset_type == 'CheckerBoard':
+            self.dataset = CheckerBoardDataset(self.config)
         else:
             raise NotImplemented
 
