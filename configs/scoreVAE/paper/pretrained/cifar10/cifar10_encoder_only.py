@@ -10,7 +10,7 @@ def get_config():
   #logging
   config.logging = logging = ml_collections.ConfigDict()
   logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/cifar10/'
-  logging.log_name = 'encoder_with_correction_model'
+  logging.log_name = 'only_encoder'
   logging.top_k = 5
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
@@ -36,7 +36,7 @@ def get_config():
   training.eval_freq = 2500
   #------              --------
   
-  training.visualisation_freq = 50
+  training.visualisation_freq = 100
   training.visualization_callback = None
   training.show_evolution = False
 
@@ -99,7 +99,7 @@ def get_config():
 
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = None
+  model.checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/cifar10/ae_ema/checkpoints/best/last.ckpt'
   model.sigma_min = 0.01
   model.sigma_max = 50
   model.num_scales = 1000
@@ -148,7 +148,7 @@ def get_config():
   optim.beta1 = 0.9
   optim.eps = 1e-8
   optim.warmup = 2500
-  optim.slowing_factor = 1
+  optim.slowing_factor = 10
   optim.grad_clip = 1.
 
   config.seed = 42
