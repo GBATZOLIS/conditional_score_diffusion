@@ -89,17 +89,24 @@ class PretrainedScoreVAEmodel(pl.LightningModule):
                                     continuous=True, likelihood_weighting=config.training.likelihood_weighting)
             return {0:loss_fn, 1:unconditional_loss_fn}
     
-    def training_step(self, batch, batch_idx, optimizer_idx):
-        if optimizer_idx == 0:
-            loss = self.train_loss_fn[0](self.encoder, self.latent_correction_model, self.unconditional_score_model, batch)
-            if self.config.training.use_pretrained:
-                self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
-            else:
-                self.logger.experiment.add_scalars('train_loss', {'conditional': loss}, self.global_step)
+    def training_step(self, *args, **kwargs):
+        batch, batch_idx = args[0], args[1]
 
-        elif optimizer_idx == 1:
-            loss = self.train_loss_fn[1](self.unconditional_score_model, batch)
-            self.logger.experiment.add_scalars('train_loss', {'unconditional': loss}, self.global_step)
+        if self.config.training.use_pretrained:
+            loss = self.train_loss_fn[0](self.encoder, self.latent_correction_model, self.unconditional_score_model, batch)
+            self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        else:
+            optimizer_idx = args[2]
+            if optimizer_idx == 0:
+                loss = self.train_loss_fn[0](self.encoder, self.latent_correction_model, self.unconditional_score_model, batch)
+                if self.config.training.use_pretrained:
+                    self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+                else:
+                    self.logger.experiment.add_scalars('train_loss', {'conditional': loss}, self.global_step)
+
+            elif optimizer_idx == 1:
+                loss = self.train_loss_fn[1](self.unconditional_score_model, batch)
+                self.logger.experiment.add_scalars('train_loss', {'unconditional': loss}, self.global_step)
 
         return loss
     
