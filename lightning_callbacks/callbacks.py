@@ -168,7 +168,8 @@ class ImageVisualizationCallback(Callback):
 
     def on_validation_epoch_end(self, trainer, pl_module):
         current_epoch = pl_module.current_epoch
-        if current_epoch % 5 == 0:
+        freq = pl_module.config.training.visualisation_freq
+        if (current_epoch+1) % freq == 0:
             if self.show_evolution:
                 samples, sampling_info = pl_module.sample(show_evolution=True)
                 evolution = sampling_info['evolution']

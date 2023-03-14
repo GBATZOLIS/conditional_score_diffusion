@@ -16,7 +16,7 @@ import losses
 import torch
 
 @utils.register_lightning_module(name='pretrained_score_vae')
-class PretrainedScoreVAEmodel(pl.LightningModule):
+class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
     def __init__(self, config, *args, **kwargs):
         super().__init__()
         self.save_hyperparameters()

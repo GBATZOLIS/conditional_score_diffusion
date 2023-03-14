@@ -17,9 +17,10 @@ def get_config():
 
   # training
   config.training = training = ml_collections.ConfigDict()
-  config.training.lightning_module = 'pretrained_score_vae'
+  config.training.lightning_module = 'encoder_only_pretrained_score_vae'
   training.use_pretrained = True
   training.prior_checkpoint_path = None
+  training.encoder_only = True
   training.conditioning_approach = 'sr3'
   training.batch_size = 256
   training.t_batch_size = 1
@@ -46,7 +47,7 @@ def get_config():
   training.sde = 'vpsde'
 
   ##new related to the training of Score VAE
-  training.variational = False
+  training.variational = True
   training.cde_loss = True
   training.kl_weight = 1
 
@@ -138,6 +139,7 @@ def get_config():
   model.encoder_input_channels = data.num_channels
   model.encoder_latent_dim = data.latent_dim
   model.encoder_base_channel_size = 64
+  model.encoder_split_output=False
 
 
   # optimization

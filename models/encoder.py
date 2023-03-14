@@ -161,6 +161,11 @@ class Encoder(pl.LightningModule):
         act_fn = nn.GELU
         self.variational = config.training.variational
 
+        if hasattr(config.model, 'encoder_split_output'):
+          self.split_output = config.model.encoder_split_output
+        else:
+          self.split_output = True
+
         if self.variational:
           out_dim = 2*latent_dim
         else:
@@ -216,7 +221,7 @@ class Encoder(pl.LightningModule):
 
     def forward(self, x):
         out = self.net(x)
-        if self.variational:
+        if self.variational and self.split_output:
           return out[:,:self.latent_dim], out[:,self.latent_dim:]
         else:
           return out

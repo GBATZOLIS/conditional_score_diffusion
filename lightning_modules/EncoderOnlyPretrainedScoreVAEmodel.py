@@ -15,8 +15,8 @@ import numpy as np
 import losses
 import torch
 
-@utils.register_lightning_module(name='pretrained_score_vae')
-class PretrainedScoreVAEmodel(pl.LightningModule):
+@utils.register_lightning_module(name='encoder_only_pretrained_score_vae')
+class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
     def __init__(self, config, *args, **kwargs):
         super().__init__()
         self.save_hyperparameters()
@@ -24,9 +24,10 @@ class PretrainedScoreVAEmodel(pl.LightningModule):
         # Initialize the score model
         self.config = config
         
-        #latent correction model
-        config.model.input_channels = 2*config.model.output_channels
-        self.latent_correction_model = mutils.create_model(config)
+        if not config.training.encoder_only:
+            #latent correction model
+            config.model.input_channels = 2*config.model.output_channels
+            self.latent_correction_model = mutils.create_model(config)
         
         #unconditional score model
         if config.training.use_pretrained:
