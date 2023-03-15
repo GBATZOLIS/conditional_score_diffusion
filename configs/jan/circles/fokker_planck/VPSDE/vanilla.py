@@ -111,7 +111,7 @@ def get_config():
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = 'logs/circles/fokker_planck/'
+  logging.log_path = 'logs/n_circles/fokker_planck/'
   logging.log_name = 'vanilla'
   logging.top_k = 5
   logging.every_n_epochs = 1000

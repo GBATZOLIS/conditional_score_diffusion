@@ -56,9 +56,9 @@ class CheckerBoardDataset(SyntheticDataset):
         for i in range(0,len(ticks)-1):
             for j in range(0,len(ticks)-1):
                 if (i + j) % 2 == 0:
-                    x = np.random.uniform(ticks[i], ticks[i+1], (N,))
-                    y = np.random.uniform(ticks[j], ticks[j+1], (N,))
-                    point= np.stack((x,y), axis=-1)
+                    x = np.random.uniform(ticks[i], ticks[i+1], (N,))-0.5
+                    y = np.random.uniform(ticks[j], ticks[j+1], (N,))-0.5
+                    point= np.stack((x,y), axis=-1).astype(np.float32)
                     data.append(point)
         data = np.concatenate(data, axis=0)
         return torch.from_numpy(data), []

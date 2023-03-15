@@ -60,7 +60,8 @@ def get_config():
   data.create_dataset = False
   data.split = [0.8, 0.1, 0.1]
   data.data_samples = 50000
-  data.noise = 0.06
+  data.n_circles = 4
+  data.noise = 0.02
   data.factor = 0.5
   data.return_labels = False #whether to return the mixture class of each point in the mixture.
   data.shape = [2]

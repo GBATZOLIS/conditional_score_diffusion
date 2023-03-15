@@ -241,7 +241,7 @@ class TwoDimVizualizer(Callback):
         sde_samples = sde_samples[:min(n,m)]
         ode_samples = ode_samples[:min(n,m)]
 
-        wasserstein = calculate_wasserstein(sde_samples, ode_samples)
+        #wasserstein = calculate_wasserstein(sde_samples, ode_samples)
         #pl_module.log('sde_ode_W2', wasserstein, on_step=False, on_epoch=True, prog_bar=True, logger=True)
 
         

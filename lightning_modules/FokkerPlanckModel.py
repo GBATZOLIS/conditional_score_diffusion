@@ -85,16 +85,23 @@ class FokkerPlanckModel(pl.LightningModule):
             if density:
                 B = x.shape[0] # batch size
 
-                p_x = lambda y: self.score_model.grad_density(y,t)
 
-                p_xx = compute_divergence(p_x, x)#, hutchinson=self.config.training.hutchinson)    
+                grad_p = lambda y: self.score_model.grad_density(y,t)
+                f_x = torch.sum(self.sde.drift_and_grad(x,t)[1],dim=1)
+                f = self.sde.drift_and_grad(x,t)[0]
+
+
+                p_x = grad_p(x)
+                p_xx = compute_divergence(grad_p, x)#, hutchinson=self.config.training.hutchinson)    
                 #self.score_model.trace_hessian_log_energy(x, t) 
                 
                 energy_t = lambda s: self.score_model.energy(x, s)
+                p   = energy_t(t).squeeze(1)
                 p_t = compute_grad(energy_t, t).squeeze(1)
                 #self.score_model.time_derivative_log_energy(x,t)
 
-                difference = (p_t - (diffusion**2 / 2) * p_xx)
+                difference = (p_t +p*f_x + torch.sum(f*p_x,axis=1) - (diffusion**2 / 2) * p_xx)
+                #difference = (p_t - (diffusion**2 / 2) * p_xx)
                 #difference = diffusion**2 * torch.exp(-5*t) * difference  # apply weighting
                 return torch.mean(difference**2)
 

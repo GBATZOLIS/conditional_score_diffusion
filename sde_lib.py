@@ -178,6 +178,12 @@ class SNRSDE(SDE):
     diffusion = torch.sqrt(diffusion_squared)
     return drift, diffusion
 
+  def drift_and_grad(self, x, t):
+    drift = 0.5 * std[(...,)+(None,)*len(x.shape[1:])]**2 * d_log_SNR(t)[(...,)+(None,)*len(x.shape[1:])] * x
+    grad_drift = 0.5 * std[(...,)+(None,)*len(x.shape[1:])]**2 * d_log_SNR(t)[(...,)+(None,)*len(x.shape[1:])]
+    return drift, grad_drift*torch.ones_like(x)
+
+
   def marginal_prob(self, x, t): 
     SNR = lambda t: torch.exp(self.log_SNR(t))
     alpha = torch.sqrt(SNR(t) / (1 + SNR(t)))[(...,)+(None,)*len(x.shape[1:])]
@@ -247,6 +253,13 @@ class VPSDE(SDE):
     diffusion = torch.sqrt(beta_t)
     return drift, diffusion
 
+  def drift_and_grad(self, x, t):
+    drift = -0.5 * beta_t[(...,)+(None,)*len(x.shape[1:])] * x
+    grad_drift = -0.5 * beta_t[(...,)+(None,)*len(x.shape[1:])]
+    return drift, grad_drift*torch.ones_like(x)
+
+
+
   def marginal_prob(self, x, t): #perturbation kernel
     log_mean_coeff = -0.25 * t ** 2 * (self.beta_1 - self.beta_0) - 0.5 * t * self.beta_0
     mean = torch.exp(log_mean_coeff[(...,)+(None,)*len(x.shape[1:])]) * x
@@ -297,6 +310,12 @@ class subVPSDE(SDE):
     diffusion = torch.sqrt(beta_t * discount)
     return drift, diffusion
 
+  def drift_and_grad(self, x, t):
+    drift = -0.5 * beta_t[(...,)+(None,)*len(x.shape[1:])] * x
+    grad_drift = -0.5 * beta_t[(...,)+(None,)*len(x.shape[1:])]
+    return drift, grad_drift*torch.ones_like(x)
+
+
   def marginal_prob(self, x, t):
     log_mean_coeff = -0.25 * t ** 2 * (self.beta_1 - self.beta_0) - 0.5 * t * self.beta_0
     mean = torch.exp(log_mean_coeff)[(...,)+(None,)*len(x.shape[1:])] * x
@@ -338,6 +357,12 @@ class VESDE(SDE):
     drift = torch.zeros_like(x)
     diffusion = sigma * torch.sqrt(torch.tensor(2 * (np.log(self.sigma_max) - np.log(self.sigma_min))).type_as(t))
     return drift, diffusion
+
+  def drift_and_grad(self, x, t):
+    drift = torch.zeros_like(x)
+    grad_drift = 0.
+    return drift, grad_drift*torch.ones_like(x)
+
 
   def marginal_prob(self, x, t): #perturbation kernel P(X(t)|X(0)) parameters
     sigma_min = torch.tensor(self.sigma_min).type_as(t)
