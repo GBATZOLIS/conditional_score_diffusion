@@ -19,7 +19,7 @@ def get_config():
   config.training = training = ml_collections.ConfigDict()
   config.training.lightning_module = 'encoder_only_pretrained_score_vae'
   training.use_pretrained = True
-  training.prior_checkpoint_path = None
+  training.prior_checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/cifar10/prior/checkpoints/best/epoch=1603--eval_loss_epoch=0.014.ckpt'
   training.encoder_only = True
   training.conditioning_approach = 'sr3'
   training.batch_size = 256

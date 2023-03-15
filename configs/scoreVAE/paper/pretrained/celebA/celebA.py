@@ -9,8 +9,8 @@ def get_config():
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/celebA-HQ/'
-  logging.log_name = 'ae_ema'
+  logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/celebA_64/'
+  logging.log_name = 'encoder_with_correction_model'
   logging.top_k = 5
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
@@ -18,8 +18,11 @@ def get_config():
   # training
   config.training = training = ml_collections.ConfigDict()
   config.training.lightning_module = 'pretrained_score_vae'
+  training.use_pretrained = True
+  training.prior_checkpoint_path = None
+  training.encoder_only = False
   training.conditioning_approach = 'sr3'
-  training.batch_size = 64
+  training.batch_size = 256
   training.t_batch_size = 1
   training.num_nodes = 1
   training.gpus = 1
@@ -34,7 +37,7 @@ def get_config():
   training.eval_freq = 2500
   #------              --------
   
-  training.visualisation_freq = 3
+  training.visualisation_freq = 25
   training.visualization_callback = None
   training.show_evolution = False
 
@@ -85,7 +88,7 @@ def get_config():
   data.use_data_mean = False
   data.create_dataset = False
   data.split = [0.8, 0.1, 0.1]
-  data.image_size = 128
+  data.image_size = 64
   data.effective_image_size = data.image_size
   data.shape = [3, data.image_size, data.image_size]
   data.latent_dim = 512
@@ -97,13 +100,13 @@ def get_config():
 
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/celebA-HQ/ae_ema/checkpoints/best/last.ckpt'
+  model.checkpoint_path = None
   model.sigma_min = 0.01
   model.sigma_max = 50
   model.num_scales = 1000
   model.beta_min = 0.1
   model.beta_max = 20.
-  model.dropout = 0.1
+  model.dropout = 0.
   model.embedding_type = 'fourier'
 
   model.unconditional_score_model_name = 'ddpm'
@@ -115,9 +118,9 @@ def get_config():
   model.normalization = 'GroupNorm'
   model.nonlinearity = 'swish'
   model.nf = 128
-  model.ch_mult = (1, 1, 2, 2, 3, 3)
+  model.ch_mult = (1, 1, 2, 2, 3)
   model.num_res_blocks = 2
-  model.attn_resolutions = (32, 16, 8)
+  model.attn_resolutions = (16,)
   model.resamp_with_conv = True
   model.conditional = True
   model.fir = True
@@ -137,7 +140,6 @@ def get_config():
   model.encoder_latent_dim = data.latent_dim
   model.encoder_base_channel_size = 64
 
-
   # optimization
   config.optim = optim = ml_collections.ConfigDict()
   optim.weight_decay = 0
@@ -145,8 +147,8 @@ def get_config():
   optim.lr = 1e-4
   optim.beta1 = 0.9
   optim.eps = 1e-8
-  optim.warmup = 2500
-  optim.slowing_factor = 4
+  optim.warmup = 5000
+  optim.slowing_factor = 1
   optim.grad_clip = 1.
 
   config.seed = 42
