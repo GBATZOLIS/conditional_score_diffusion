@@ -215,6 +215,7 @@ def get_pc_conditional_sampler(sde, shape, predictor, corrector, snr, p_steps,
               return log_density_fn
 
             def latent_correction_fn(x, z, t):
+                torch.set_grad_enabled(True)
                 log_density_fn = get_log_density_fn(encoder)
                 device = x.device
                 x.requires_grad=True
@@ -223,6 +224,7 @@ def get_pc_conditional_sampler(sde, shape, predictor, corrector, snr, p_steps,
                                     grad_outputs=torch.ones(ftx.size()).to(device),
                                     create_graph=True, retain_graph=True, only_inputs=True)[0]
                 assert grad_log_density.size() == x.size()
+                torch.set_grad_enabled(False)
                 return grad_log_density
 
             return latent_correction_fn

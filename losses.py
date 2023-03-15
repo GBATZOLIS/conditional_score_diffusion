@@ -161,14 +161,23 @@ def get_old_scoreVAE_loss_fn(sde, train, variational=False, likelihood_weighting
             return log_density_fn
 
           def latent_correction_fn(x, t):
+              if not train: 
+                torch.set_grad_enabled(True)
+                
               log_density_fn = get_log_density_fn(encoder)
               device = x.device
               x.requires_grad=True
+              #z.requires_grad=True
+              #t.requires_grad=True
               ftx = log_density_fn(z, x, t)
               grad_log_density = torch.autograd.grad(outputs=ftx, inputs=x,
                                   grad_outputs=torch.ones(ftx.size()).to(device),
                                   create_graph=True, retain_graph=True, only_inputs=True)[0]
               assert grad_log_density.size() == x.size()
+
+              if not train:
+                torch.set_grad_enabled(False)
+
               return grad_log_density
 
           return latent_correction_fn

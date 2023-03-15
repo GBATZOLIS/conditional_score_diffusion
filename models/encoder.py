@@ -275,7 +275,7 @@ class Encoder(pl.LightningModule):
 
     def forward(self, x, t):
         flattened_img = self.net(x)
-        concat = torch.cat((flattened_img, t[:, None]))
+        concat = torch.cat((flattened_img, t[:, None]), dim=1)
         out = self.linear(concat)
         if self.variational and self.split_output:
           return out[:,:self.latent_dim], out[:,self.latent_dim:]

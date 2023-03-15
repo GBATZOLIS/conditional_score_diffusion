@@ -9,7 +9,7 @@ def get_config():
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/cifar10/'
+  logging.log_path = '/Users/gbatz97/Desktop/score-based-modelling/projects/scoreVAE/debug/experiments/cifar10'
   logging.log_name = 'only_encoder'
   logging.top_k = 5
   logging.every_n_epochs = 1000
@@ -22,10 +22,10 @@ def get_config():
   training.prior_checkpoint_path = None
   training.encoder_only = True
   training.conditioning_approach = 'sr3'
-  training.batch_size = 256
+  training.batch_size = 2
   training.t_batch_size = 1
   training.num_nodes = 1
-  training.gpus = 1
+  training.gpus = 0
   training.accelerator = None if training.gpus == 1 else 'ddp'
   training.accumulate_grad_batches = 1
   training.workers = 4*training.gpus
@@ -81,7 +81,7 @@ def get_config():
 
   # data
   config.data = data = ml_collections.ConfigDict()
-  data.base_dir = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/datasets'
+  data.base_dir = '/Users/gbatz97/Desktop/score-based-modelling/projects/scoreVAE/debug/datasets'
   data.dataset = 'cifar10'
   data.datamodule = data.dataset
   data.return_labels = False
