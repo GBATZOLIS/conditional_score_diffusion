@@ -50,6 +50,30 @@ class MirrorDecoder(pl.LightningModule):
               nn.ConvTranspose2d(c_hid, num_input_channels, kernel_size=3, output_padding=1, padding=1, stride=2), # 16x16 => 32x32
           )
         
+        elif config.data.image_size == 64:
+          self.linear = nn.Sequential(
+              nn.Linear(latent_dim, 4*16*c_hid),
+              act_fn()
+          )
+          self.net = nn.Sequential(
+              nn.ConvTranspose2d(4*c_hid, 4*c_hid, kernel_size=3, output_padding=1, padding=1, stride=2), # 4x4 => 8x8 
+              act_fn(),
+              nn.Conv2d(4*c_hid, 4*c_hid, kernel_size=3, padding=1),
+              act_fn(),
+
+              nn.ConvTranspose2d(4*c_hid, 2*c_hid, kernel_size=3, output_padding=1, padding=1, stride=2), # 8x8 => 16x16
+              act_fn(),
+              nn.Conv2d(2*c_hid, 2*c_hid, kernel_size=3, padding=1),
+              act_fn(),
+              
+              nn.ConvTranspose2d(2*c_hid, c_hid, kernel_size=3, output_padding=1, padding=1, stride=2), # 16x16 => 32x32 
+              act_fn(),
+              nn.Conv2d(c_hid, c_hid, kernel_size=3, padding=1),
+              act_fn(),
+
+              nn.ConvTranspose2d(c_hid, num_input_channels, kernel_size=3, output_padding=1, padding=1, stride=2), # 32x32 => 64x64
+          )
+
         elif config.data.image_size == 128:
           self.linear = nn.Sequential(
               nn.Linear(latent_dim, 8*16*c_hid),
@@ -77,8 +101,6 @@ class MirrorDecoder(pl.LightningModule):
 
               nn.ConvTranspose2d(c_hid, num_input_channels, kernel_size=3, output_padding=1, padding=1, stride=2), # 64x64 => 128x128
           )
-
-        #nn.Tanh() # The input images is scaled between -1 and 1, hence the output has to be bounded as well
 
     def forward(self, x):
         x = self.linear(x)
