@@ -22,7 +22,7 @@ def get_config():
   training.prior_checkpoint_path = None
   training.encoder_only = True
   training.conditioning_approach = 'sr3'
-  training.batch_size = 256
+  training.batch_size = 64
   training.t_batch_size = 1
   training.num_nodes = 1
   training.gpus = 1
@@ -37,7 +37,7 @@ def get_config():
   training.eval_freq = 2500
   #------              --------
   
-  training.visualisation_freq = 100
+  training.visualisation_freq = 50
   training.visualization_callback = None
   training.show_evolution = False
 
@@ -100,7 +100,7 @@ def get_config():
 
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/cifar10/ae_ema/checkpoints/best/last.ckpt'
+  model.checkpoint_path = None
   model.sigma_min = 0.01
   model.sigma_max = 50
   model.num_scales = 1000
@@ -135,7 +135,7 @@ def get_config():
   model.fourier_scale = 16
   model.conv_size = 3
 
-  model.encoder_name = 'simple_encoder'
+  model.encoder_name = 'time_dependent_simple_encoder'
   model.encoder_input_channels = data.num_channels
   model.encoder_latent_dim = data.latent_dim
   model.encoder_base_channel_size = 64

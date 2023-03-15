@@ -148,29 +148,42 @@ def get_old_scoreVAE_loss_fn(sde, train, variational=False, likelihood_weighting
   else:
     if encoder_only:
       def loss_fn(encoder, unconditional_score_model, batch):
-        def get_latent_correction_fn(encoder, n):
-          def latent_correction_fn(x):
-            latent_distribution_parameters = encoder(x)
-            latent_dim = latent_distribution_parameters.size(1)//2
-            mean_z = latent_distribution_parameters[:, :latent_dim]
-            log_var_z = latent_distribution_parameters[:, latent_dim:]
+        def get_latent_correction_fn(encoder, z):
+          def get_log_density_fn(encoder):
+            def log_density_fn(z, x, t):
+              latent_distribution_parameters = encoder(x, t)
+              latent_dim = latent_distribution_parameters.size(1)//2
+              mean_z = latent_distribution_parameters[:, :latent_dim]
+              log_var_z = latent_distribution_parameters[:, latent_dim:]
+              logdensity = -1/2*torch.sum(torch.square(z - mean_z)/log_var_z.exp(), dim=1)
+              return logdensity
+            
+            return log_density_fn
 
-            first_part = n / torch.sqrt(log_var_z.exp())
-            second_part = 1/2*n**2
-            concat_vec = torch.cat((first_part, second_part), dim=1)
+          def latent_correction_fn(x, t):
+              log_density_fn = get_log_density_fn(encoder)
+              device = x.device
+              x.requires_grad=True
+              ftx = log_density_fn(z, x, t)
+              grad_log_density = torch.autograd.grad(outputs=ftx, inputs=x,
+                                  grad_outputs=torch.ones(ftx.size()).to(device),
+                                  create_graph=True, retain_graph=True, only_inputs=True)[0]
+              assert grad_log_density.size() == x.size()
+              return grad_log_density
 
-            grad_lop_p_of_z_given_x = vjp(encoder, x, concat_vec)
-            return grad_lop_p_of_z_given_x
-          
           return latent_correction_fn
 
         x = batch
-
         unconditional_score_fn = mutils.get_score_fn(sde, unconditional_score_model, conditional=False, train=train, continuous=True)
 
-        latent_dim = encoder.latent_dim
-        n = torch.randn(size=(x.size(0), latent_dim))
-        conditional_correction_fn = get_latent_correction_fn(encoder, n)
+        t0 = torch.zeros(x.shape[0]).type_as(x)
+        latent_distribution_parameters = encoder(x, t0)
+        latent_dim = latent_distribution_parameters.size(1)//2
+        mean_z = latent_distribution_parameters[:, :latent_dim]
+        log_var_z = latent_distribution_parameters[:, latent_dim:]
+        latent = mean_z + torch.sqrt(log_var_z.exp())*torch.randn_like(mean_z)
+
+        conditional_correction_fn = get_latent_correction_fn(encoder, latent)
 
         t = torch.rand(x.shape[0]).type_as(x) * (sde.T - eps) + eps
         z = torch.randn_like(x)
@@ -178,7 +191,7 @@ def get_old_scoreVAE_loss_fn(sde, train, variational=False, likelihood_weighting
         perturbed_x = mean + std[(...,) + (None,) * len(x.shape[1:])] * z
         
         unconditional_score = unconditional_score_fn(perturbed_x, t)
-        conditional_correction = conditional_correction_fn(perturbed_x) #I must add a time dependency
+        conditional_correction = conditional_correction_fn(perturbed_x, t)
 
         score = conditional_correction + unconditional_score
 

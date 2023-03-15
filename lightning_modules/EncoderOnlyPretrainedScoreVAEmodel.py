@@ -67,7 +67,8 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
                                         variational=config.training.variational, 
                                         likelihood_weighting=config.training.likelihood_weighting,
                                         eps=self.sampling_eps,
-                                        use_pretrained=True)
+                                        use_pretrained=True,
+                                        encoder_only = config.training.encoder_only)
             else:
                 loss_fn = get_scoreVAE_loss_fn(self.sde, train, 
                                             variational=config.training.variational, 
@@ -94,7 +95,10 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
         batch, batch_idx = args[0], args[1]
 
         if self.config.training.use_pretrained:
-            loss = self.train_loss_fn[0](self.encoder, self.latent_correction_model, self.unconditional_score_model, batch)
+            if self.config.training.encoder_only:
+                loss = self.train_loss_fn[0](self.encoder, self.unconditional_score_model, batch)
+            else:
+                loss = self.train_loss_fn[0](self.encoder, self.latent_correction_model, self.unconditional_score_model, batch)
             self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         else:
             optimizer_idx = args[2]
@@ -113,7 +117,10 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
     
     def validation_step(self, batch, batch_idx):
         if self.config.training.use_pretrained:
-            loss = self.eval_loss_fn[0](self.encoder, self.latent_correction_model, self.unconditional_score_model, batch)
+            if self.config.training.encoder_only:
+                loss = self.eval_loss_fn[0](self.encoder, self.unconditional_score_model, batch)
+            else:
+                loss = self.eval_loss_fn[0](self.encoder, self.latent_correction_model, self.unconditional_score_model, batch)
             self.log('eval_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         else:
             loss = self.eval_loss_fn[0](self.encoder, self.latent_correction_model, self.unconditional_score_model, batch)
@@ -123,8 +130,9 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
             loss = self.eval_loss_fn[1](self.unconditional_score_model, batch)
             self.logger.experiment.add_scalars('val_loss', {'unconditional': loss}, self.global_step)
 
-        if batch_idx == 0 and (self.current_epoch+1) % self.config.training.visualisation_freq == 0:
-            reconstruction = self.encode_n_decode(batch)
+        if batch_idx == 2 and (self.current_epoch) % self.config.training.visualisation_freq == 0:
+            reconstruction = self.encode_n_decode(batch, use_pretrained=self.config.training.use_pretrained,
+                                                          encoder_only=self.config.training.encoder_only)
 
             reconstruction =  reconstruction.cpu()
             grid_reconstruction = torchvision.utils.make_grid(reconstruction, nrow=int(np.sqrt(batch.size(0))), normalize=True, scale_each=True)
@@ -155,7 +163,7 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
         return sampling_fn(self.unconditional_score_model)
 
     def encode_n_decode(self, x, show_evolution=False, predictor='default', corrector='default', p_steps='default', \
-                     c_steps='default', snr='default', denoise='default', use_pretrained=True):
+                     c_steps='default', snr='default', denoise='default', use_pretrained=True, encoder_only=False):
 
         if self.config.training.variational:
             mean_y, log_var_y = self.encoder(x)
@@ -168,10 +176,14 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
                                                               shape=sampling_shape, eps=self.sampling_eps, 
                                                               predictor=predictor, corrector=corrector, 
                                                               p_steps=p_steps, c_steps=c_steps, snr=snr, 
-                                                              denoise=denoise, use_path=False, use_pretrained=use_pretrained)
-        
-        model = {'unconditional_score_model':self.unconditional_score_model,
-                'latent_correction_model': self.latent_correction_model}
+                                                              denoise=denoise, use_path=False, 
+                                                              use_pretrained=use_pretrained, encoder_only=encoder_only)
+        if encoder_only:
+            model = {'unconditional_score_model':self.unconditional_score_model,
+                     'encoder': self.encoder}
+        else:
+            model = {'unconditional_score_model':self.unconditional_score_model,
+                     'latent_correction_model': self.latent_correction_model}
 
         return conditional_sampling_fn(model, y, show_evolution)
     
@@ -191,7 +203,11 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
                     return 1
         
         if self.config.training.use_pretrained:
-            ae_params = list(self.encoder.parameters())+list(self.latent_correction_model.parameters())
+            if self.config.training.encoder_only:
+                ae_params = self.encoder.parameters()
+            else:
+                ae_params = list(self.encoder.parameters())+list(self.latent_correction_model.parameters())
+            
             ae_optimizer = optim.Adam(ae_params, lr=self.config.optim.lr, betas=(self.config.optim.beta1, 0.999), eps=self.config.optim.eps,
                             weight_decay=self.config.optim.weight_decay)
             ae_scheduler = {'scheduler': optim.lr_scheduler.LambdaLR(ae_optimizer, scheduler_lambda_function(self.config.optim.warmup)),

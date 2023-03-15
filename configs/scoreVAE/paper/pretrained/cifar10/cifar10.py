@@ -20,6 +20,7 @@ def get_config():
   config.training.lightning_module = 'pretrained_score_vae'
   training.use_pretrained = True
   training.prior_checkpoint_path = None
+  training.encoder_only = False
   training.conditioning_approach = 'sr3'
   training.batch_size = 256
   training.t_batch_size = 1
