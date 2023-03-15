@@ -10,14 +10,17 @@ def get_config():
   #logging
   config.logging = logging = ml_collections.ConfigDict()
   logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/celebA_64/'
-  logging.log_name = 'prior'
+  logging.log_name = 'encoder_with_correction_model'
   logging.top_k = 5
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
 
   # training
   config.training = training = ml_collections.ConfigDict()
-  config.training.lightning_module = 'base'
+  config.training.lightning_module = 'pretrained_score_vae'
+  training.use_pretrained = True
+  training.prior_checkpoint_path = None
+  training.encoder_only = False
   training.conditioning_approach = 'sr3'
   training.batch_size = 256
   training.t_batch_size = 1
@@ -34,7 +37,7 @@ def get_config():
   training.eval_freq = 2500
   #------              --------
   
-  training.visualisation_freq = 10
+  training.visualisation_freq = 25
   training.visualization_callback = None
   training.show_evolution = False
 
@@ -56,8 +59,8 @@ def get_config():
   # sampling
   config.sampling = sampling = ml_collections.ConfigDict()
   sampling.method = 'pc'
-  sampling.predictor = 'euler_maruyama'
-  sampling.corrector = 'none'
+  sampling.predictor = 'conditional_euler_maruyama'
+  sampling.corrector = 'conditional_none'
   sampling.n_steps_each = 1
   sampling.noise_removal = True
   sampling.probability_flow = False
@@ -106,8 +109,9 @@ def get_config():
   model.dropout = 0.
   model.embedding_type = 'fourier'
 
-  model.name = 'ddpm'
-  model.input_channels = data.num_channels
+  model.unconditional_score_model_name = 'ddpm'
+  model.name = 'ddpm_mirror_decoder'
+  model.input_channels = 2*data.num_channels
   model.output_channels = data.num_channels
   model.scale_by_sigma = True
   model.ema_rate = 0.9999
@@ -130,6 +134,11 @@ def get_config():
   model.init_scale = 0.
   model.fourier_scale = 16
   model.conv_size = 3
+
+  model.encoder_name = 'simple_encoder'
+  model.encoder_input_channels = data.num_channels
+  model.encoder_latent_dim = data.latent_dim
+  model.encoder_base_channel_size = 64
 
   # optimization
   config.optim = optim = ml_collections.ConfigDict()
