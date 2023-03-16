@@ -35,6 +35,7 @@ def get_config():
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
   logging.svd_frequency = 1000
+  logging.save_svd = True
 
   # training
   training = config.training
@@ -48,7 +49,7 @@ def get_config():
   training.continuous = True
   training.sde = 'vesde'
   # callbacks
-  training.visualization_callback = ['ScoreSpecturmVisualization', 'KSphereEvaluation']
+  training.visualization_callback = ['ScoreSpectrumVisualization', 'KSphereEvaluation']
   training.show_evolution = False 
 
   # validation

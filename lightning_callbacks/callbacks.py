@@ -419,7 +419,7 @@ class ScoreSpectrumVisualization(Callback):
 
     def on_validation_epoch_end(self, trainer, pl_module):
         config = pl_module.config
-        if pl_module.current_epoch %  config.logging.svd_frequency == 0:
+        if pl_module.current_epoch %  config.logging.svd_frequency == 0 or pl_module.current_epoch == 1:
             config.model.checkpoint_path = os.path.join(config.logging.log_path, config.logging.log_name, "checkpoints/best/last.ckpt")
             name=f'svd_{pl_module.current_epoch}'
             try:
@@ -430,7 +430,7 @@ class ScoreSpectrumVisualization(Callback):
                         svd = pickle.load(f)
                 else:
                     svd = get_manifold_dimension(config = config, name=name, return_svd=True)
-                image = plot_spectrum(svd, return_tensor=True)
+                image = plot_spectrum(svd, return_tensor=True, mode='all')
                 pl_module.logger.experiment.add_image('score specturm', image, pl_module.current_epoch)
             except Exception as e:
                 logging.warning('Could not create a score spectrum')

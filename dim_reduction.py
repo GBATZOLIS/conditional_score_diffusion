@@ -181,11 +181,11 @@ def get_manifold_dimension(config, name=None, return_svd=False):
 
   #if name is None:
   #  name = 'svd'
+  info = {'singular_values':singular_values}
   if return_svd:
     return info
   else:
-    with open(os.path.join(save_path, 'svd.pkl'), 'wb') as f:
-      info = {'singular_values':singular_values}
+    with open(os.path.join(save_path, f'{name}.pkl'), 'wb') as f:
       pickle.dump(info, f)
   
   #with open(os.path.join(save_path, 'normalized_scores.pkl'), 'wb') as f:
