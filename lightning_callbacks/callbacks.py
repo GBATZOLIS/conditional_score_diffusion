@@ -409,8 +409,8 @@ def sample_model_score(batch, pl_module):
     score_fn = mutils.get_score_fn(pl_module.sde, pl_module.score_model, train=False, continuous=True)
     return score_fn(perturbed_data, t)
 
-@utils.register_callback(name='ScoreSpecturmVisualization')
-class ScoreSpecturmVisualization(Callback):
+@utils.register_callback(name='ScoreSpectrumVisualization')
+class ScoreSpectrumVisualization(Callback):
     def __init__(self, show_evolution=False):
         super().__init__()
         self.evolution = False #show_evolution
@@ -423,12 +423,14 @@ class ScoreSpecturmVisualization(Callback):
             config.model.checkpoint_path = os.path.join(config.logging.log_path, config.logging.log_name, "checkpoints/best/last.ckpt")
             name=f'svd_{pl_module.current_epoch}'
             try:
-                get_manifold_dimension(config = config, name=name)
-                path = os.path.join(config.logging.log_path, config.logging.log_name, 'svd', f'{name}.pkl')
-                with open(path, 'rb') as f:
-                    svd = pickle.load(f)
-                singular_values = svd['singular_values']
-                image = plot_spectrum(singular_values=singular_values, return_tensor=True)
+                if config.logging.save_svd:
+                    get_manifold_dimension(config = config, name=name, return_svd=False)
+                    path = os.path.join(config.logging.log_path, config.logging.log_name, 'svd', f'{name}.pkl')
+                    with open(path, 'rb') as f:
+                        svd = pickle.load(f)
+                else:
+                    svd = get_manifold_dimension(config = config, name=name, return_svd=True)
+                image = plot_spectrum(svd, return_tensor=True)
                 pl_module.logger.experiment.add_image('score specturm', image, pl_module.current_epoch)
             except Exception as e:
                 logging.warning('Could not create a score spectrum')
