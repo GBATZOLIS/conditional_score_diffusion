@@ -96,7 +96,7 @@ def get_conditional_manifold_dimension(config, name=None):
     info = {'labels': labels}
     pickle.dump(info, f)
 
-def get_manifold_dimension(config, name=None):
+def get_manifold_dimension(config, name=None, return_svd=False):
   #---- create the setup ---
   log_path = config.logging.log_path
   log_name = config.logging.log_name
@@ -181,10 +181,12 @@ def get_manifold_dimension(config, name=None):
 
   #if name is None:
   #  name = 'svd'
-
-  with open(os.path.join(save_path, 'svd.pkl'), 'wb') as f:
-    info = {'singular_values':singular_values}
-    pickle.dump(info, f)
+  if return_svd:
+    return info
+  else:
+    with open(os.path.join(save_path, 'svd.pkl'), 'wb') as f:
+      info = {'singular_values':singular_values}
+      pickle.dump(info, f)
   
   #with open(os.path.join(save_path, 'normalized_scores.pkl'), 'wb') as f:
   #  info = {'normalized_scores': normalized_scores_list}
