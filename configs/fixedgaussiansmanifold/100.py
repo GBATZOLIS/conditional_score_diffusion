@@ -25,7 +25,7 @@ from datetime import timedelta
 def get_config():
   config = ml_collections.ConfigDict()
 
-  config.dim_estimation.num_datapoints = 100
+  #config.dim_estimation.num_datapoints = 100
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
