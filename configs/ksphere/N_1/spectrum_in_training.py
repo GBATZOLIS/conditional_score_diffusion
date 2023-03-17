@@ -48,7 +48,7 @@ def get_config():
   #logging
   logging = config.logging
   logging.log_path = f'logs/ksphere/n_{data.n_spheres}/dim_{data.manifold_dim}/{data.embedding_type}/'
-  logging.log_name = f'spectrum_in_training'
+  logging.log_name = f'spectrum_in_training_ampere'
   logging.svd_frequency = 5
   logging.save_svd = False
 
