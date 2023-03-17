@@ -146,7 +146,7 @@ def plot_norms(samples, return_tensor=False):
     else:
         plt.show()
 
-def plot_distribution(svd, mode='first'):
+def plot_distribution(svd, mode='first', return_tensor=False):
 
     def softmax(x):
         """Compute softmax values for each sets of scores in x."""
@@ -169,7 +169,21 @@ def plot_distribution(svd, mode='first'):
         plt.plot(list(range(1,1+len(soft)))[::-1],soft)
         #plt.xticks(np.arange(0, len(sing_vals)+1, 10))
         dim = len(soft)-soft.argmax()
-        dims.append(dim)       
+        dims.append(dim)
+
+ 
+
+    if return_tensor:
+        buf = io.BytesIO()
+        plt.savefig(buf, format='jpeg')
+        buf.seek(0)
+        image = PIL.Image.open(buf)
+        image = transforms.ToTensor()(image)
+        plt.close()
+        return image, dims
+    else:
+        plt.show()
+        return dims       
 
 def extract_sing_vals(svd, mode='first'):
     print(f'Aggregation mode: {mode}')

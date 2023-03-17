@@ -2,10 +2,9 @@ import os
 import torch
 from pytorch_lightning.callbacks import Callback
 from utils import scatter, plot, compute_grad, create_video, hist
-from models.ema import ExponentialMovingAverage
 import torchvision
 from . import utils
-from plot_utils import plot_curl, plot_vector_field, plot_spectrum, plot_norms
+from plot_utils import plot_curl, plot_vector_field, plot_spectrum, plot_norms, plot_distribution
 import numpy as np
 from models import utils as mutils
 from pytorch_lightning.callbacks import ModelCheckpoint
@@ -141,22 +140,6 @@ def get_deprecated_sigma_max_y_fn(reduction, reach_target_in_epochs, starting_tr
 
     return sigma_max_y
                 
-
-@utils.register_callback(name='ema')
-class EMACallback(Callback):
-    def on_fit_start(self, trainer, pl_module):
-        ema_rate = pl_module.config.model.ema_rate
-        pl_module.ema = ExponentialMovingAverage(pl_module.parameters(), decay=ema_rate)
-
-    def on_before_zero_grad(self, trainer, pl_module, optimizer):
-        pl_module.ema.update(pl_module.parameters())
-
-    def on_train_epoch_end(self, trainer, pl_module):
-        pl_module.ema.store(pl_module.parameters())
-        pl_module.ema.copy_to(pl_module.parameters())
-
-    def on_train_epoch_start(self, trainer, pl_module):
-        pl_module.ema.restore(pl_module.parameters())
 
 @utils.register_callback(name='base')
 class ImageVisualizationCallback(Callback):
@@ -431,7 +414,13 @@ class ScoreSpectrumVisualization(Callback):
                 else:
                     svd = get_manifold_dimension(config = config, name=name, return_svd=True)
                 image = plot_spectrum(svd, return_tensor=True, mode='all')
+                image_distro, dims = plot_distribution(svd, return_tensor=True, mode='all')
+                dim = np.mean(dims)
+
                 pl_module.logger.experiment.add_image('score specturm', image, pl_module.current_epoch)
+                pl_module.logger.experiment.add_image('dim_distribution', image_distro, pl_module.current_epoch)
+                pl_module.logger.log('dim', dim, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+                
             except Exception as e:
                 logging.warning('Could not create a score spectrum')
                 logging.error(e)
