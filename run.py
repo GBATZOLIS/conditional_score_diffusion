@@ -9,7 +9,7 @@ from job_master.run_configs import run_configs
 # ]
 
 configs = [
-     'configs/ksphere/N_1/spectrum_in_training.py',
+     'configs/fixedgaussiansmanifold/100.py',
 #     'configs/ksphere/sample_complexity/100.py',
 #     'configs/ksphere/sample_complexity/10000.py',
 #     'configs/ksphere/sample_complexity/100000.py',
