@@ -29,8 +29,8 @@ def get_config():
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = 'logs/fixed_gaussians_manifold/' 
-  logging.log_name = '100'
+  logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/dimension_detection/experiments/fixed_gaussians_manifold'
+  logging.log_name = '100_visualise_spectrum_during_training'
   logging.top_k = 5
   logging.every_n_epochs = 1000
   logging.svd_frequency = 5
@@ -44,7 +44,7 @@ def get_config():
   training.accelerator = None if training.gpus <= 1 else 'ddp'
   training.accumulate_grad_batches = 1
   training.lightning_module = 'base' 
-  config.training.batch_size = 256 # 32
+  config.training.batch_size = 256 #32
   training.workers = 4
   training.num_epochs = 10000
   training.n_iters = 2500000
@@ -96,7 +96,7 @@ def get_config():
   data.dataset_type = 'FixedGaussiansManifold'
   data.create_dataset = False
   data.split = [0.8, 0.1, 0.1]
-  data.data_samples = 50000 #500000
+  data.data_samples = 500000
   data.image_size = 32
   data.effective_image_size = data.image_size
   data.centered = False

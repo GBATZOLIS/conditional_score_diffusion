@@ -2,7 +2,6 @@ import os
 import torch
 from pytorch_lightning.callbacks import Callback
 from utils import scatter, plot, compute_grad, create_video, hist
-from models.ema import ExponentialMovingAverage
 import torchvision
 from . import utils
 from plot_utils import plot_curl, plot_vector_field, plot_spectrum, plot_norms
@@ -141,22 +140,6 @@ def get_deprecated_sigma_max_y_fn(reduction, reach_target_in_epochs, starting_tr
 
     return sigma_max_y
                 
-
-@utils.register_callback(name='ema')
-class EMACallback(Callback):
-    def on_fit_start(self, trainer, pl_module):
-        ema_rate = pl_module.config.model.ema_rate
-        pl_module.ema = ExponentialMovingAverage(pl_module.parameters(), decay=ema_rate)
-
-    def on_before_zero_grad(self, trainer, pl_module, optimizer):
-        pl_module.ema.update(pl_module.parameters())
-
-    def on_train_epoch_end(self, trainer, pl_module):
-        pl_module.ema.store(pl_module.parameters())
-        pl_module.ema.copy_to(pl_module.parameters())
-
-    def on_train_epoch_start(self, trainer, pl_module):
-        pl_module.ema.restore(pl_module.parameters())
 
 @utils.register_callback(name='base')
 class ImageVisualizationCallback(Callback):
