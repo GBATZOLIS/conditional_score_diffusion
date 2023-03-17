@@ -4,7 +4,7 @@ from pytorch_lightning.callbacks import Callback
 from utils import scatter, plot, compute_grad, create_video, hist
 import torchvision
 from . import utils
-from plot_utils import plot_curl, plot_vector_field, plot_spectrum, plot_norms
+from plot_utils import plot_curl, plot_vector_field, plot_spectrum, plot_norms, plot_distribution
 import numpy as np
 from models import utils as mutils
 from pytorch_lightning.callbacks import ModelCheckpoint
@@ -414,7 +414,13 @@ class ScoreSpectrumVisualization(Callback):
                 else:
                     svd = get_manifold_dimension(config = config, name=name, return_svd=True)
                 image = plot_spectrum(svd, return_tensor=True, mode='all')
+                image_distro, dims = plot_distribution(svd, return_tensor=True, mode='all')
+                dim = np.mean(dims)
+
                 pl_module.logger.experiment.add_image('score specturm', image, pl_module.current_epoch)
+                pl_module.logger.experiment.add_image('dim_distribution', image_distro, pl_module.current_epoch)
+                pl_module.logger.log('dim', dim, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+                
             except Exception as e:
                 logging.warning('Could not create a score spectrum')
                 logging.error(e)
