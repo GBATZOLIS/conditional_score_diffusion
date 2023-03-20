@@ -68,7 +68,8 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
                                         likelihood_weighting=config.training.likelihood_weighting,
                                         eps=self.sampling_eps,
                                         use_pretrained=True,
-                                        encoder_only = config.training.encoder_only)
+                                        encoder_only = config.training.encoder_only,
+                                        t_dependent = config.training.t_dependent)
             else:
                 loss_fn = get_scoreVAE_loss_fn(self.sde, train, 
                                             variational=config.training.variational, 
@@ -132,7 +133,8 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
 
         if batch_idx == 2 and (self.current_epoch+1) % self.config.training.visualisation_freq == 0:
             reconstruction = self.encode_n_decode(batch, use_pretrained=self.config.training.use_pretrained,
-                                                          encoder_only=self.config.training.encoder_only)
+                                                          encoder_only=self.config.training.encoder_only,
+                                                          t_dependent=self.config.training.t_dependent)
 
             reconstruction =  reconstruction.cpu()
             grid_reconstruction = torchvision.utils.make_grid(reconstruction, nrow=int(np.sqrt(batch.size(0))), normalize=True, scale_each=True)
@@ -163,7 +165,7 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
         return sampling_fn(self.unconditional_score_model)
 
     def encode_n_decode(self, x, show_evolution=False, predictor='default', corrector='default', p_steps='default', \
-                     c_steps='default', snr='default', denoise='default', use_pretrained=True, encoder_only=False):
+                     c_steps='default', snr='default', denoise='default', use_pretrained=True, encoder_only=False, t_dependent=True):
 
         if self.config.training.variational:
             if self.config.training.encoder_only:
@@ -185,7 +187,7 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
                                                               predictor=predictor, corrector=corrector, 
                                                               p_steps=p_steps, c_steps=c_steps, snr=snr, 
                                                               denoise=denoise, use_path=False, 
-                                                              use_pretrained=use_pretrained, encoder_only=encoder_only)
+                                                              use_pretrained=use_pretrained, encoder_only=encoder_only, t_dependent=t_dependent)
         if encoder_only:
             model = {'unconditional_score_model':self.unconditional_score_model,
                      'encoder': self.encoder}

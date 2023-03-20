@@ -10,7 +10,7 @@ def get_config():
   #logging
   config.logging = logging = ml_collections.ConfigDict()
   logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/celebA_64/'
-  logging.log_name = 'only_encoder'
+  logging.log_name = 'only_encoder_t_independent'
   logging.top_k = 5
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
@@ -19,9 +19,9 @@ def get_config():
   config.training = training = ml_collections.ConfigDict()
   config.training.lightning_module = 'encoder_only_pretrained_score_vae'
   training.use_pretrained = True
-  training.prior_checkpoint_path = None
+  training.prior_checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/celebA_64/prior/checkpoints/best/epoch=211--eval_loss_epoch=0.012.ckpt'
   training.encoder_only = True
-  training.t_dependent = True
+  training.t_dependent = False
   training.conditioning_approach = 'sr3'
   training.batch_size = 256
   training.t_batch_size = 1
@@ -136,7 +136,7 @@ def get_config():
   model.fourier_scale = 16
   model.conv_size = 3
 
-  model.encoder_name = 'time_dependent_simple_encoder'
+  model.encoder_name = 'simple_encoder'
   model.encoder_input_channels = data.num_channels
   model.encoder_latent_dim = data.latent_dim
   model.encoder_base_channel_size = 64
