@@ -131,7 +131,7 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
             loss = self.eval_loss_fn[1](self.unconditional_score_model, batch)
             self.logger.experiment.add_scalars('val_loss', {'unconditional': loss}, self.global_step)
 
-        if batch_idx == 2 and (self.current_epoch+1) % self.config.training.visualisation_freq == 0:
+        if batch_idx == 2 and (self.current_epoch+1) % self.config.training.visualisation_freq == 1:
             reconstruction = self.encode_n_decode(batch, use_pretrained=self.config.training.use_pretrained,
                                                           encoder_only=self.config.training.encoder_only,
                                                           t_dependent=self.config.training.t_dependent)
