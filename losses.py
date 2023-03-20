@@ -225,7 +225,7 @@ def get_old_scoreVAE_loss_fn(sde, train, variational=False, likelihood_weighting
               def denoiser_fn(x, t):
                 score = score_fn(x, t)
                 a_t, sigma_t = sde.kernel_coefficients(x, t)
-                denoised = ((sigma_t**2)[(...,)+(None,)*len(x.shape[1:])]*score + x) / a_t
+                denoised = ((sigma_t**2)[(...,)+(None,)*len(x.shape[1:])]*score + x) / a_t[(...,)+(None,)*len(x.shape[1:])]
                 return denoised
               return denoiser_fn
 
