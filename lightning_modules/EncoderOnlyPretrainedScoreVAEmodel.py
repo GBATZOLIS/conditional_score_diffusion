@@ -169,8 +169,12 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
 
         if self.config.training.variational:
             if self.config.training.encoder_only:
-                t0 = torch.zeros(x.shape[0]).type_as(x)
-                latent_distribution_parameters = self.encoder(x, t0)
+                if t_dependent:
+                    t0 = torch.zeros(x.shape[0]).type_as(x)
+                    latent_distribution_parameters = self.encoder(x, t0)
+                else:
+                    latent_distribution_parameters = self.encoder(x)
+                    
                 latent_dim = latent_distribution_parameters.size(1)//2
                 mean_y = latent_distribution_parameters[:, :latent_dim]
                 log_var_y = latent_distribution_parameters[:, latent_dim:]
