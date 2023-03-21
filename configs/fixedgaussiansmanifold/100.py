@@ -24,16 +24,17 @@ from datetime import timedelta
 
 def get_config():
   config = ml_collections.ConfigDict()
-  config.dim_estimation = ml_collections.ConfigDict()
-  config.dim_estimation.num_datapoints = 100
+
+  config.dim_estimation = dim_estimation = ml_collections.ConfigDict()
+  dim_estimation.num_datapoints = 100
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
   logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/dimension_detection/experiments/fixed_gaussians_manifold'
-  logging.log_name = '100_visualise_spectrum_during_training'
+  logging.log_name = '100_visualise_spectrum_during_training_ampere'
   logging.top_k = 5
   logging.every_n_epochs = 1000
-  logging.svd_frequency = 5
+  logging.svd_frequency = 1
   logging.save_svd = False
   logging.envery_timedelta = timedelta(minutes=1)
 
@@ -96,7 +97,7 @@ def get_config():
   data.dataset_type = 'FixedGaussiansManifold'
   data.create_dataset = False
   data.split = [0.8, 0.1, 0.1]
-  data.data_samples = 500000
+  data.data_samples = 50000
   data.image_size = 32
   data.effective_image_size = data.image_size
   data.centered = False
@@ -123,7 +124,7 @@ def get_config():
   model.name = 'ddpm' #'ncsnpp'
   model.input_channels = model.output_channels = data.num_channels
   model.scale_by_sigma = True
-  model.ema_rate = 0.999
+  model.ema_rate = 0.9999
   model.normalization = 'GroupNorm'
   model.nonlinearity = 'swish'
   model.nf = 128
