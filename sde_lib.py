@@ -179,6 +179,9 @@ class SNRSDE(SDE):
     return drift, diffusion
 
   def drift_and_grad(self, x, t):
+    SNR = lambda t: torch.exp(self.log_SNR(t))
+    d_log_SNR = self.d_log_SNR
+    std = torch.sqrt(1 / (1 + SNR(t)))
     drift = 0.5 * std[(...,)+(None,)*len(x.shape[1:])]**2 * d_log_SNR(t)[(...,)+(None,)*len(x.shape[1:])] * x
     grad_drift = 0.5 * std[(...,)+(None,)*len(x.shape[1:])]**2 * d_log_SNR(t)[(...,)+(None,)*len(x.shape[1:])]
     return drift, grad_drift*torch.ones_like(x)
@@ -254,6 +257,7 @@ class VPSDE(SDE):
     return drift, diffusion
 
   def drift_and_grad(self, x, t):
+    beta_t = self.beta_0 + t * (self.beta_1 - self.beta_0)
     drift = -0.5 * beta_t[(...,)+(None,)*len(x.shape[1:])] * x
     grad_drift = -0.5 * beta_t[(...,)+(None,)*len(x.shape[1:])]
     return drift, grad_drift*torch.ones_like(x)
@@ -311,6 +315,7 @@ class subVPSDE(SDE):
     return drift, diffusion
 
   def drift_and_grad(self, x, t):
+    beta_t = self.beta_0 + t * (self.beta_1 - self.beta_0)
     drift = -0.5 * beta_t[(...,)+(None,)*len(x.shape[1:])] * x
     grad_drift = -0.5 * beta_t[(...,)+(None,)*len(x.shape[1:])]
     return drift, grad_drift*torch.ones_like(x)
