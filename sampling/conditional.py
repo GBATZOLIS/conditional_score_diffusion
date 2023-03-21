@@ -250,7 +250,7 @@ def get_pc_conditional_sampler(sde, shape, predictor, corrector, snr, p_steps,
           else:
             #t-independent encoder implementation
             def get_denoiser_fn(unconditional_score_model):
-              score_fn = mutils.get_score_fn(sde, unconditional_score_model, conditional=False, train=train, continuous=True)
+              score_fn = mutils.get_score_fn(sde, unconditional_score_model, conditional=False, train=False, continuous=True)
               def denoiser_fn(x, t):
                 score = score_fn(x, t)
                 a_t, sigma_t = sde.kernel_coefficients(x, t)
