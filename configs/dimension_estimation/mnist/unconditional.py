@@ -33,7 +33,7 @@ def get_config():
   logging.every_n_epochs = 1000
   logging.svd_frequency = 50
   logging.save_svd = True
-  logging.svd_points = 25
+  logging.svd_points = 50
   logging.envery_timedelta = timedelta(minutes=1)
   
   # training
