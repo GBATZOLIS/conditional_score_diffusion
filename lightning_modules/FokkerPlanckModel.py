@@ -101,9 +101,14 @@ class FokkerPlanckModel(pl.LightningModule):
                 #self.score_model.time_derivative_log_energy(x,t)
 
                 difference = (p_t +p*f_x + torch.sum(f*p_x,axis=1) - (diffusion**2 / 2) * p_xx)
+
+                x1 = torch.randn(x.shape)
+                t1 = torch.ones_like(t)
+                p1 = self.score_model.energy(x1,t1)
+                terminal  = p1-torch.exp(-0.5*torch.linalg.norm(x,axis=1)**2)
                 #difference = (p_t - (diffusion**2 / 2) * p_xx)
                 #difference = diffusion**2 * torch.exp(-5*t) * difference  # apply weighting
-                return torch.mean(difference**2)
+                return torch.mean(difference**2) + torch.mean(terminal**2)
 
             else:
                 B = x.shape[0] # batch size
