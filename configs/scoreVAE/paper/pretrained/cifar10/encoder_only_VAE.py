@@ -9,9 +9,9 @@ def get_config():
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = '/Users/gbatz97/Desktop/score-based-modelling/projects/scoreVAE/debug/experiments/cifar10'
-  logging.log_name = 'only_encoder_vae_training'
-  logging.top_k = 5
+  logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/cifar10/'
+  logging.log_name = 'only_encoder_VAE_KLweight_1'
+  logging.top_k = 3
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
 
@@ -19,14 +19,14 @@ def get_config():
   config.training = training = ml_collections.ConfigDict()
   config.training.lightning_module = 'encoder_only_pretrained_score_vae'
   training.use_pretrained = True
-  training.prior_checkpoint_path = None
+  training.prior_checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/cifar10/prior/checkpoints/best/epoch=1603--eval_loss_epoch=0.014.ckpt'
   training.encoder_only = True
   training.t_dependent = True
   training.conditioning_approach = 'sr3'
-  training.batch_size = 2
+  training.batch_size = 256
   training.t_batch_size = 1
   training.num_nodes = 1
-  training.gpus = 0
+  training.gpus = 1
   training.accelerator = None if training.gpus == 1 else 'ddp'
   training.accumulate_grad_batches = 1
   training.workers = 4*training.gpus
@@ -42,15 +42,15 @@ def get_config():
   training.visualization_callback = None
   training.show_evolution = False
 
-  training.likelihood_weighting = False
+  training.likelihood_weighting = False #irrelevant for this config
   training.continuous = True
   training.reduce_mean = True 
   training.sde = 'vpsde'
 
   ##new related to the training of Score VAE
   training.variational = True
-  training.cde_loss = False #only difference
-  training.kl_weight = 1
+  training.cde_loss = False #only difference -> this allows us to use the VAE loss
+  training.kl_weight = 1 #KL penalty
 
   # validation
   config.validation = validation = ml_collections.ConfigDict()
@@ -82,7 +82,7 @@ def get_config():
 
   # data
   config.data = data = ml_collections.ConfigDict()
-  data.base_dir = '/Users/gbatz97/Desktop/score-based-modelling/projects/scoreVAE/debug/datasets'
+  data.base_dir = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/datasets'
   data.dataset = 'cifar10'
   data.datamodule = data.dataset
   data.return_labels = False

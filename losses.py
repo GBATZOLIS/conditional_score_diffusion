@@ -52,7 +52,8 @@ def optimization_manager(config):
 
   return optimize_fn
 
-def get_scoreVAE_loss_fn(sde, train, variational=False, likelihood_weighting=True, eps=1e-5, t_batch_size=1, kl_weight=1):
+def get_scoreVAE_loss_fn(sde, train, variational=False, likelihood_weighting=True, eps=1e-5, t_batch_size=1, kl_weight=1, 
+                          use_pretrained=True, encoder_only=True, t_dependent=True):
   if not variational:
     def loss_fn(encoder, score_model, batch):
       x = batch
@@ -84,39 +85,115 @@ def get_scoreVAE_loss_fn(sde, train, variational=False, likelihood_weighting=Tru
       return loss
     
   else:
-    def loss_fn(encoder, score_model, batch):
-      x = batch
-      score_fn = mutils.get_score_fn(sde, score_model, conditional=True, train=train, continuous=True)
+    if not use_pretrained:
+      def loss_fn(encoder, score_model, batch):
+        x = batch
+        score_fn = mutils.get_score_fn(sde, score_model, conditional=True, train=train, continuous=True)
+        
+        #reparametrisation trick
+        mean_z, log_var_z = encoder(x)
+        y = mean_z + torch.sqrt(log_var_z.exp()) * torch.randn_like(mean_z)
+
+        kl_loss = -0.5 * torch.sum(1 + log_var_z - mean_z ** 2 - log_var_z.exp(), dim=1).mean()
+
+        t_losses = torch.zeros(size=(x.size(0),)).type_as(x)
+        for _ in range(t_batch_size):
+          t = torch.rand(x.shape[0]).type_as(x) * (sde.T - eps) + eps
+          z = torch.randn_like(x)
+          mean, std = sde.marginal_prob(x, t)
+          perturbed_x = mean + std[(...,) + (None,) * len(x.shape[1:])] * z
+          perturbed_data = {'x':perturbed_x, 'y':y}
+
+          score = score_fn(perturbed_data, t)
+
+          f, g = sde.sde(torch.zeros_like(x), t, True)
+          g2 = g ** 2
+          grad_log_pert_kernel = -1 * z / std[(...,) + (None,) * len(x.shape[1:])]
+          losses = torch.square(score - grad_log_pert_kernel)-torch.square(grad_log_pert_kernel)
+          losses = torch.sum(losses.reshape(losses.shape[0], -1), dim=-1) * g2
+          losses -= 2*torch.sum(f.reshape(f.shape[0], -1), dim=-1)
+          losses *= 1/2
+
+          t_losses+=losses
+
+        rec_loss = torch.mean(t_losses)/t_batch_size
+        loss = rec_loss + kl_weight * kl_loss
+        return loss
       
-      #reparametrisation trick
-      mean_z, log_var_z = encoder(x)
-      y = mean_z + torch.sqrt(log_var_z.exp()) * torch.randn_like(mean_z)
+    else:
+      assert encoder_only and t_dependent
 
-      kl_loss = -0.5 * torch.sum(1 + log_var_z - mean_z ** 2 - log_var_z.exp(), dim=1).mean()
+      def loss_fn(encoder, unconditional_score_model, batch):
+          def get_latent_correction_fn(encoder, z):
+            def get_log_density_fn(encoder):
+              def log_density_fn(z, x, t):
+                latent_distribution_parameters = encoder(x, t)
+                latent_dim = latent_distribution_parameters.size(1)//2
+                mean_z = latent_distribution_parameters[:, :latent_dim]
+                log_var_z = latent_distribution_parameters[:, latent_dim:]
+                logdensity = -1/2*torch.sum(torch.square(z - mean_z)/log_var_z.exp(), dim=1)
+                return logdensity
+              
+              return log_density_fn
 
-      t_losses = torch.zeros(size=(x.size(0),)).type_as(x)
-      for _ in range(t_batch_size):
-        t = torch.rand(x.shape[0]).type_as(x) * (sde.T - eps) + eps
-        z = torch.randn_like(x)
-        mean, std = sde.marginal_prob(x, t)
-        perturbed_x = mean + std[(...,) + (None,) * len(x.shape[1:])] * z
-        perturbed_data = {'x':perturbed_x, 'y':y}
+            def latent_correction_fn(x, t):
+                if not train: 
+                  torch.set_grad_enabled(True)
 
-        score = score_fn(perturbed_data, t)
+                log_density_fn = get_log_density_fn(encoder)
+                device = x.device
+                x.requires_grad=True
+                ftx = log_density_fn(z, x, t)
+                grad_log_density = torch.autograd.grad(outputs=ftx, inputs=x,
+                                    grad_outputs=torch.ones(ftx.size()).to(device),
+                                    create_graph=True, retain_graph=True, only_inputs=True)[0]
+                assert grad_log_density.size() == x.size()
 
-        f, g = sde.sde(torch.zeros_like(x), t, True)
-        g2 = g ** 2
-        grad_log_pert_kernel = -1 * z / std[(...,) + (None,) * len(x.shape[1:])]
-        losses = torch.square(score - grad_log_pert_kernel)-torch.square(grad_log_pert_kernel)
-        losses = torch.sum(losses.reshape(losses.shape[0], -1), dim=-1) * g2
-        losses -= 2*torch.sum(f.reshape(f.shape[0], -1), dim=-1)
-        losses *= 1/2
+                if not train:
+                  torch.set_grad_enabled(False)
 
-        t_losses+=losses
+                return grad_log_density
 
-      rec_loss = torch.mean(t_losses)/t_batch_size
-      loss = rec_loss + kl_weight * kl_loss
-      return loss
+            return latent_correction_fn
+
+          x = batch
+          unconditional_score_fn = mutils.get_score_fn(sde, unconditional_score_model, conditional=False, train=train, continuous=True)
+
+          t0 = torch.zeros(x.shape[0]).type_as(x)
+          latent_distribution_parameters = encoder(x, t0)
+          latent_dim = latent_distribution_parameters.size(1)//2
+          mean_z = latent_distribution_parameters[:, :latent_dim]
+          log_var_z = latent_distribution_parameters[:, latent_dim:]
+
+          kl_loss = -0.5 * torch.sum(1 + log_var_z - mean_z ** 2 - log_var_z.exp(), dim=1).mean()
+          latent = mean_z + torch.sqrt(log_var_z.exp())*torch.randn_like(mean_z)
+
+          conditional_correction_fn = get_latent_correction_fn(encoder, latent)
+
+          t = torch.rand(x.shape[0]).type_as(x) * (sde.T - eps) + eps
+          z = torch.randn_like(x)
+          mean, std = sde.marginal_prob(x, t)
+          perturbed_x = mean + std[(...,) + (None,) * len(x.shape[1:])] * z
+          
+          unconditional_score = unconditional_score_fn(perturbed_x, t)
+          conditional_correction = conditional_correction_fn(perturbed_x, t)
+
+          score = conditional_correction + unconditional_score
+          
+          f, g = sde.sde(torch.zeros_like(x), t, True)
+          g2 = g ** 2
+          grad_log_pert_kernel = -1 * z / std[(...,) + (None,) * len(x.shape[1:])]
+          losses = torch.square(score - grad_log_pert_kernel)-torch.square(grad_log_pert_kernel)
+          losses = torch.sum(losses.reshape(losses.shape[0], -1), dim=-1) * g2
+          losses -= 2*torch.sum(f.reshape(f.shape[0], -1), dim=-1)
+          losses *= 1/2
+          rec_loss = torch.mean(losses)
+
+          loss = rec_loss + kl_weight * kl_loss
+
+          return loss
+
+
   
   return loss_fn
 
@@ -330,7 +407,6 @@ def get_old_scoreVAE_loss_fn(sde, train, variational=False, likelihood_weighting
         return loss
   
   return loss_fn
-
 
 def get_general_sde_loss_fn(sde, train, conditional=False, reduce_mean=True, continuous=True, likelihood_weighting=True, eps=1e-5):
   """Create a loss function for training with arbirary SDEs.

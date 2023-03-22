@@ -67,7 +67,7 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
                                         variational=config.training.variational, 
                                         likelihood_weighting=config.training.likelihood_weighting,
                                         eps=self.sampling_eps,
-                                        use_pretrained=True,
+                                        use_pretrained=config.training.use_pretrained,
                                         encoder_only = config.training.encoder_only,
                                         t_dependent = config.training.t_dependent)
             else:
@@ -76,14 +76,20 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
                                             likelihood_weighting=config.training.likelihood_weighting,
                                             eps=self.sampling_eps,
                                             t_batch_size=config.training.t_batch_size,
-                                            kl_weight=config.training.kl_weight)
+                                            kl_weight=config.training.kl_weight,
+                                            use_pretrained=config.training.use_pretrained,
+                                            encoder_only = config.training.encoder_only,
+                                            t_dependent = config.training.t_dependent)
         else:
             loss_fn = get_scoreVAE_loss_fn(self.sde, train, 
                                         variational=config.training.variational, 
                                         likelihood_weighting=config.training.likelihood_weighting,
                                         eps=self.sampling_eps,
                                         t_batch_size=config.training.t_batch_size,
-                                        kl_weight=config.training.kl_weight)
+                                        kl_weight=config.training.kl_weight,
+                                        use_pretrained=config.training.use_pretrained,
+                                        encoder_only = config.training.encoder_only,
+                                        t_dependent = config.training.t_dependent)
         
         if config.training.use_pretrained:
             return {0:loss_fn}
@@ -131,7 +137,7 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
             loss = self.eval_loss_fn[1](self.unconditional_score_model, batch)
             self.logger.experiment.add_scalars('val_loss', {'unconditional': loss}, self.global_step)
 
-        if batch_idx == 2 and (self.current_epoch+1) % self.config.training.visualisation_freq == 1:
+        if batch_idx == 2 and (self.current_epoch+1) % self.config.training.visualisation_freq == 0:
             reconstruction = self.encode_n_decode(batch, use_pretrained=self.config.training.use_pretrained,
                                                           encoder_only=self.config.training.encoder_only,
                                                           t_dependent=self.config.training.t_dependent)
@@ -174,7 +180,7 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
                     latent_distribution_parameters = self.encoder(x, t0)
                 else:
                     latent_distribution_parameters = self.encoder(x)
-                    
+
                 latent_dim = latent_distribution_parameters.size(1)//2
                 mean_y = latent_distribution_parameters[:, :latent_dim]
                 log_var_y = latent_distribution_parameters[:, latent_dim:]
