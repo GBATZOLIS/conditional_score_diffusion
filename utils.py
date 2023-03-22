@@ -199,6 +199,10 @@ def calculate_wasserstein(batch1, batch2):
     return wasserstein
 
 
-def remove_outliers(batch, t=1.1):
-  batch = batch[torch.linalg.norm(batch,dim=1) <= t]
+def remove_outliers(batch, t=1.1,checkerboard=True,circles=False):
+  if checkerboard:
+    batch = batch[torch.abs(batch[:,0])<0.55]
+    batch = batch[torch.abs(batch[:,1])<0.55]
+  if circles:
+    batch = batch[torch.linalg.norm(batch,dim=1) <= t]
   return batch

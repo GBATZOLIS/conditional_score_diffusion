@@ -93,7 +93,7 @@ def get_config():
   model.name = 'fcn_potential'
   model.state_size = data.dim
   model.hidden_layers = 3
-  model.hidden_nodes = 64
+  model.hidden_nodes = 256
   model.dropout = 0.0
   model.scale_by_sigma = False
   model.num_scales = 1000
@@ -103,7 +103,7 @@ def get_config():
   optim = config.optim
   optim.weight_decay = 0
   optim.optimizer = 'Adam'
-  optim.lr = 2e-5
+  optim.lr = 2e-4
   optim.beta1 = 0.9
   optim.eps = 1e-8
   optim.warmup = 5000
