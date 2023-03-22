@@ -28,11 +28,14 @@ def get_config():
   #logging
   config.logging = logging = ml_collections.ConfigDict()
   logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/dimension_detection/experiments/mnist/' 
-  logging.log_name = 'unconditional'
+  logging.log_name = 'improved_model'
   logging.top_k = 5
   logging.every_n_epochs = 1000
+  logging.svd_frequency = 50
+  logging.save_svd = True
+  logging.svd_points = 25
   logging.envery_timedelta = timedelta(minutes=1)
-
+  
   # training
   config.training = training = ml_collections.ConfigDict()
   training.num_nodes = 1
@@ -55,7 +58,7 @@ def get_config():
   training.continuous = True
   training.reduce_mean = True #look more for that setting
   training.sde = 'vesde'
-  training.visualization_callback = 'base'
+  training.visualization_callback = ['base', 'ScoreSpectrumVisualization']
   training.show_evolution = False
 
   # validation
@@ -90,10 +93,8 @@ def get_config():
   config.data = data = ml_collections.ConfigDict()
   data.base_dir = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/datasets'
   data.dataset = 'mnist'
-  data.return_labels = True
-  #data.task = 'generation'
   data.datamodule = 'image'
-  #data.scale = 4 #?
+  data.return_labels = True
   data.use_data_mean = False
   data.create_dataset = False
   data.split = [0.8, 0.1, 0.1]
@@ -108,8 +109,8 @@ def get_config():
   
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/dimension_detection/experiments/mnist/unconditional/checkpoints/best/epoch=446--eval_loss_epoch=0.025.ckpt'
-  model.sigma_min = 0.01
+  model.checkpoint_path = None
+  model.sigma_min = 0.009 #0.01
   model.sigma_max = 50
   model.num_scales = 1000
   model.beta_min = 0.1
@@ -124,7 +125,7 @@ def get_config():
   model.normalization = 'GroupNorm'
   model.nonlinearity = 'swish'
   model.nf = 128
-  model.ch_mult = (1, 2, 2, 2)
+  model.ch_mult = (1, 2, 2, 4)
   model.num_res_blocks = 4
   model.attn_resolutions = (16,)
   model.resamp_with_conv = True
