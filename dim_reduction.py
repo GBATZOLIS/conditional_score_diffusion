@@ -124,7 +124,7 @@ def get_manifold_dimension(config, name=None, return_svd=False):
   score_fn = mutils.get_score_fn(sde, score_model, conditional=False, train=False, continuous=True)
   #---- end of setup ----
 
-  num_datapoints = config.get('dim_estimation.num_datapoints', 100)
+  num_datapoints = config.get('dim_estimation.num_datapoints', config.logging.svd_points)
   singular_values = []
   normalized_scores_list = []
   idx = 0
@@ -146,7 +146,7 @@ def get_manifold_dimension(config, name=None, return_svd=False):
 
         num_batches = ambient_dim // batchsize + 1
         extra_in_last_batch = ambient_dim - (ambient_dim // batchsize) * batchsize
-        num_batches *= 8
+        num_batches *= 4
 
         t = pl_module.sampling_eps
         vec_t = torch.ones(x.size(0), device=device) * t
