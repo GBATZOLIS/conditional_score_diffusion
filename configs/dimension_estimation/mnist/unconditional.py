@@ -94,7 +94,7 @@ def get_config():
   data.base_dir = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/datasets'
   data.dataset = 'mnist'
   data.datamodule = 'image'
-  data.return_labels = True
+  data.return_labels = False #True
   data.use_data_mean = False
   data.create_dataset = False
   data.split = [0.8, 0.1, 0.1]
