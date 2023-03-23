@@ -28,8 +28,8 @@ def get_config():
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/dimension_detection/experiments/mnist/' 
-  logging.log_name = 'improved_model'
+  logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/dimension_detection/experiments/gan_data/' 
+  logging.log_name = '100'
   logging.top_k = 5
   logging.every_n_epochs = 1000
   logging.svd_frequency = 50
