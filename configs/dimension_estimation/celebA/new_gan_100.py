@@ -34,7 +34,7 @@ def get_config():
   logging.every_n_epochs = 1000
   logging.svd_frequency = 50
   logging.save_svd = True
-  logging.svd_points = 50
+  logging.svd_points = 1
   logging.envery_timedelta = timedelta(minutes=1)
   
   # training
@@ -110,7 +110,7 @@ def get_config():
 
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = None
+  model.checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/dimension_detection/experiments/gan_data/100/checkpoints/best/last.ckpt'
   model.sigma_min = 0.009 #0.01
   model.sigma_max = 50
   model.num_scales = 1000
