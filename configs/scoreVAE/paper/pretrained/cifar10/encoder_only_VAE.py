@@ -10,7 +10,7 @@ def get_config():
   #logging
   config.logging = logging = ml_collections.ConfigDict()
   logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/cifar10/'
-  logging.log_name = 'only_encoder_VAE_KLweight_0'
+  logging.log_name = 'only_encoder_VAE_KLweight_0.01'
   logging.top_k = 3
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
@@ -50,7 +50,7 @@ def get_config():
   ##new related to the training of Score VAE
   training.variational = True
   training.cde_loss = False #only difference -> this allows us to use the VAE loss
-  training.kl_weight = 0 #KL penalty
+  training.kl_weight = 0.01 #KL penalty
 
   # validation
   config.validation = validation = ml_collections.ConfigDict()
