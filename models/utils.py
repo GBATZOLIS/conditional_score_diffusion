@@ -128,9 +128,12 @@ def load_prior_model(base_config):
   #load a prior score model
   
   prior_config_path = os.path.join(base_config.logging.log_path, 'prior', 'config.pkl')
+  print(prior_config_path)
   if os.path.exists(prior_config_path):
     with open(prior_config_path, 'rb') as file:
       prior_config = pickle.load(file)
+  else:
+    raise NotADirectoryError('The prior config is not found in the specified directory.')
   
   checkpoint_path = base_config.training.prior_checkpoint_path
   if checkpoint_path is None:

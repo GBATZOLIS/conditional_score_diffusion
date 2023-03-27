@@ -9,8 +9,8 @@ def get_config():
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/cifar10/'
-  logging.log_name = 'only_encoder_VAE_KLweight_0.1'
+  logging.log_path = '/Users/gbatz97/Desktop/score-based-modelling/projects/scoreVAE/debug/experiments/cifar10'
+  logging.log_name = 'debug_only_encoder_VAE_KLweight_0.01'
   logging.top_k = 3
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
@@ -19,11 +19,11 @@ def get_config():
   config.training = training = ml_collections.ConfigDict()
   config.training.lightning_module = 'encoder_only_pretrained_score_vae'
   training.use_pretrained = True
-  training.prior_checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/cifar10/prior/checkpoints/best/epoch=1603--eval_loss_epoch=0.014.ckpt'
+  training.prior_checkpoint_path = '/Users/gbatz97/Desktop/score-based-modelling/projects/scoreVAE/experiments/pretrained/cifar10/prior/checkpoints/best/last.ckpt'
   training.encoder_only = True
   training.t_dependent = True
   training.conditioning_approach = 'sr3'
-  training.batch_size = 256
+  training.batch_size = 20
   training.t_batch_size = 1
   training.num_nodes = 1
   training.gpus = 1
@@ -50,7 +50,7 @@ def get_config():
   ##new related to the training of Score VAE
   training.variational = True
   training.cde_loss = False #only difference -> this allows us to use the VAE loss
-  training.kl_weight = 0.1 #KL penalty
+  training.kl_weight = 0.01 #KL penalty
 
   # validation
   config.validation = validation = ml_collections.ConfigDict()
@@ -82,7 +82,7 @@ def get_config():
 
   # data
   config.data = data = ml_collections.ConfigDict()
-  data.base_dir = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/datasets'
+  data.base_dir = '/Users/gbatz97/Desktop/score-based-modelling/projects/scoreVAE/debug/datasets'
   data.dataset = 'cifar10'
   data.datamodule = data.dataset
   data.return_labels = False
@@ -101,7 +101,7 @@ def get_config():
 
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = None
+  model.checkpoint_path = '/Users/gbatz97/Desktop/score-based-modelling/projects/scoreVAE/experiments/pretrained/cifar10/encoder_only/AE/checkpoints/epoch=3911--eval_loss_epoch=0.008.ckpt'
   model.sigma_min = 0.01
   model.sigma_max = 50
   model.num_scales = 1000

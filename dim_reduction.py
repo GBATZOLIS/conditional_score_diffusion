@@ -7,7 +7,10 @@ from models import utils as mutils
 import math
 from tqdm import tqdm
 import pickle
-
+import numpy as np
+import numpy as np
+from scipy.stats import norm
+import matplotlib.pyplot as plt
 
 def get_conditional_manifold_dimension(config, name=None):
   #---- create the setup ---
@@ -95,6 +98,140 @@ def get_conditional_manifold_dimension(config, name=None):
   with open(os.path.join(save_path, 'labels.pkl'), 'wb') as f:
     info = {'labels': labels}
     pickle.dump(info, f)
+
+
+def inspect_VAE(config):
+  #---- create the setup ---
+  log_path = config.logging.log_path
+  log_name = config.logging.log_name
+  save_path = os.path.join(log_path, log_name, 'vae_inspection')
+  Path(save_path).mkdir(parents=True, exist_ok=True)
+
+  DataModule = create_lightning_datamodule(config)
+  DataModule.setup()
+  val_dataloader = DataModule.val_dataloader()
+
+  pl_module = create_lightning_module(config)
+  print('-------')
+  checkpoint = torch.load(config.model.checkpoint_path, map_location=torch.device('cpu'))
+  pl_module.load_state_dict(checkpoint['state_dict'])
+  #pl_module = pl_module.load_from_checkpoint(config.model.checkpoint_path)
+  
+  pl_module.configure_sde(config)
+  sde = pl_module.sde
+
+  device = pl_module.device
+  pl_module = pl_module.to(device)
+  pl_module.eval()
+
+  def get_latent_correction_fn(encoder, z):
+    def get_log_density_fn(encoder):
+      def log_density_fn(z, x, t):
+        latent_distribution_parameters = encoder(x, t)
+        latent_dim = latent_distribution_parameters.size(1)//2
+        mean_z = latent_distribution_parameters[:, :latent_dim]
+        log_var_z = latent_distribution_parameters[:, latent_dim:]
+        logdensity = -1/2*torch.sum(torch.square(z - mean_z)/log_var_z.exp(), dim=1)
+        return logdensity
+              
+      return log_density_fn
+
+    def latent_correction_fn(x, t):
+      torch.set_grad_enabled(True)
+      log_density_fn = get_log_density_fn(encoder)
+      device = x.device
+      x.requires_grad=True
+      ftx = log_density_fn(z, x, t)
+      grad_log_density = torch.autograd.grad(outputs=ftx, inputs=x,
+                                      grad_outputs=torch.ones(ftx.size()).to(device),
+                                      create_graph=True, retain_graph=True, only_inputs=True)[0]
+      assert grad_log_density.size() == x.size()
+      torch.set_grad_enabled(False)
+      return grad_log_density
+
+    return latent_correction_fn
+
+  def get_conditional_score_fn(encoder, unconditional_score_model, latent):
+    unconditional_score_fn = mutils.get_score_fn(sde, unconditional_score_model, conditional=False, train=False, continuous=True)
+    conditional_correction_fn = get_latent_correction_fn(encoder, latent)
+    def score_fn(x, t):
+      return conditional_correction_fn(x, t) + unconditional_score_fn(x, t)
+    return score_fn
+
+  encoder = pl_module.encoder
+  unconditional_score_model = pl_module.unconditional_score_model
+
+  iterations = 1
+  latents = []
+  for i, x in tqdm(enumerate(val_dataloader)):
+    if i == iterations:
+      break
+
+    x = x.to(device)
+
+    t0 = torch.zeros(x.shape[0]).type_as(x)
+    latent_distribution_parameters = encoder(x, t0)
+    latent_dim = latent_distribution_parameters.size(1)//2
+    mean_z = latent_distribution_parameters[:, :latent_dim]
+    log_var_z = latent_distribution_parameters[:, latent_dim:]
+    latent = mean_z + torch.sqrt(log_var_z.exp())*torch.randn_like(mean_z)
+    latents.append(latent)
+
+    
+    conditional_correction_fn = get_latent_correction_fn(encoder, latent)
+    #unconditional_score_fn = mutils.get_score_fn(sde, unconditional_score_model, conditional=False, train=False, continuous=True)  
+    total_score_fn = get_conditional_score_fn(encoder, unconditional_score_model, latent)
+  
+    ts = torch.linspace(start=sde.sampling_eps, end=sde.T, steps=25)
+    ratios = []
+    corrections = []
+    for t_ in tqdm(ts):
+      t = torch.ones(x.shape[0]).type_as(x)*t_
+
+      z = torch.randn_like(x)
+      mean, std = sde.marginal_prob(x, t)
+      perturbed_x = mean + std[(...,) + (None,) * len(x.shape[1:])] * z
+
+      #unconditional_score = unconditional_score_fn(perturbed_x, t)
+      conditional_correction = conditional_correction_fn(perturbed_x, t)
+      total_score = total_score_fn(perturbed_x, t)
+
+      conditional_correction_norm = torch.linalg.norm(conditional_correction.reshape(conditional_correction.shape[0], -1), dim=1)
+      total_score_norm = torch.linalg.norm(total_score.reshape(total_score.shape[0], -1), dim=1)
+      
+      ratio = conditional_correction_norm / total_score_norm
+      mean_ratio = torch.mean(ratio)
+      ratios.append(mean_ratio.item()) 
+      corrections.append(torch.mean(conditional_correction_norm).item())
+    
+    plt.figure()
+    plt.plot(ts, corrections)
+    plt.show()
+
+  '''
+  latents = torch.cat(latents, dim=0)
+
+  flattened = torch.flatten(latents).cpu().detach().numpy()
+  
+
+  plt.figure()
+  plt.hist(flattened, bins=500, density=True, alpha=0.6, color='b')
+
+  # Plot the PDF.
+  xmin, xmax = plt.xlim()
+  x = np.linspace(xmin, xmax, 200)
+  mu = 0
+  std = 1
+  p = norm.pdf(x, mu, std)
+    
+  plt.plot(x, p, 'k', linewidth=2)
+  title = "Fit Values: {:.2f} and {:.2f}".format(mu, std)
+  plt.title(title)
+    
+  plt.show()
+  '''
+
+
 
 def get_manifold_dimension(config, name=None):
   #---- create the setup ---
