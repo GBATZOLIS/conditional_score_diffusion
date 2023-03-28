@@ -181,8 +181,9 @@ def inspect_VAE(config):
     conditional_correction_fn = get_latent_correction_fn(encoder, latent)
     #unconditional_score_fn = mutils.get_score_fn(sde, unconditional_score_model, conditional=False, train=False, continuous=True)  
     total_score_fn = get_conditional_score_fn(encoder, unconditional_score_model, latent)
-  
-    ts = torch.linspace(start=sde.sampling_eps, end=sde.T, steps=25)
+
+    
+    ts = torch.linspace(start=sde.sampling_eps, end=sde.T, steps=10)
     ratios = []
     corrections = []
     for t_ in tqdm(ts):
@@ -207,8 +208,9 @@ def inspect_VAE(config):
     plt.figure()
     plt.plot(ts, corrections)
     plt.show()
+    
 
-  '''
+  
   latents = torch.cat(latents, dim=0)
 
   flattened = torch.flatten(latents).cpu().detach().numpy()
@@ -229,7 +231,7 @@ def inspect_VAE(config):
   plt.title(title)
     
   plt.show()
-  '''
+  
 
 
 

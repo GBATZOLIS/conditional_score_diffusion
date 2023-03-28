@@ -124,6 +124,24 @@ def create_model(config):
   score_model = get_model(model_name)(config)
   return score_model
 
+def load_encoder(base_config):
+  encoder_log_name = 'only_encoder_VAE_KLweight_%s' % base_config.training.kl_weight
+  encoder_config_path = os.path.join(base_config.logging.log_path, encoder_log_name, 'config.pkl')
+  if os.path.exists(encoder_config_path):
+    with open(encoder_config_path, 'rb') as file:
+      encoder_config = pickle.load(file)
+  else:
+    raise NotADirectoryError('The prior config is not found in the specified directory.')
+
+  checkpoint_path = base_config.training.encoder_checkpoint_path
+  if checkpoint_path is None:
+    checkpoint_path = os.path.join(base_config.logging.log_path, encoder_log_name, 'checkpoints', 'best', 'last.ckpt')
+  
+  LightningModule = create_lightning_module(encoder_config)
+  EncoderLightningModule = LightningModule.load_from_checkpoint(checkpoint_path)
+  return EncoderLightningModule.encoder
+
+
 def load_prior_model(base_config):
   #load a prior score model
   
