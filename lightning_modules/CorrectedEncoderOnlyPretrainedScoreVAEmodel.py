@@ -79,7 +79,7 @@ class CorrectedEncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
                                             use_pretrained=config.training.use_pretrained,
                                             encoder_only = config.training.encoder_only,
                                             t_dependent = config.training.t_dependent,
-                                            latent_corrector = config.training.latent_correction
+                                            latent_correction = config.training.latent_correction
                                             )
         else:
             loss_fn = get_scoreVAE_loss_fn(self.sde, train, 
@@ -91,7 +91,7 @@ class CorrectedEncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
                                         use_pretrained=config.training.use_pretrained,
                                         encoder_only = config.training.encoder_only,
                                         t_dependent = config.training.t_dependent,
-                                        latent_corrector = config.training.latent_correction)
+                                        latent_correction = config.training.latent_correction)
         
         if config.training.use_pretrained:
             return {0:loss_fn}
