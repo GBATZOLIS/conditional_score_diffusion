@@ -23,6 +23,7 @@ def get_config():
   training.encoder_only = True
   training.t_dependent = True
   training.latent_correction = True
+  training.encoder_checkpoint_path = None
   training.conditioning_approach = 'sr3'
   training.batch_size = 32
   training.t_batch_size = 1
