@@ -27,7 +27,7 @@ def get_config():
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/dimension_detection/experiments/mnist/' 
+  logging.log_path = '/Users/gbatz97/Desktop/score-based-modelling/projects/dim_estimation/debug/experiments/mnist'
   logging.log_name = 'improved_model'
   logging.top_k = 5
   logging.every_n_epochs = 1000
@@ -91,7 +91,7 @@ def get_config():
 
   # data
   config.data = data = ml_collections.ConfigDict()
-  data.base_dir = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/datasets'
+  data.base_dir = '/Users/gbatz97/Desktop/score-based-modelling/projects/dim_estimation/debug/datasets'
   data.dataset = 'mnist'
   data.datamodule = 'image'
   data.return_labels = False #True
@@ -109,7 +109,7 @@ def get_config():
   
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/dimension_detection/experiments/mnist/improved_model/checkpoints/best/epoch=722--eval_loss_epoch=0.018.ckpt'
+  model.checkpoint_path = '/Users/gbatz97/Desktop/score-based-modelling/projects/dim_estimation/debug/experiments/mnist/improved_model/checkpoint/epoch=722--eval_loss_epoch=0.018.ckpt'
   model.sigma_min = 0.009 #0.01
   model.sigma_max = 50
   model.num_scales = 1000

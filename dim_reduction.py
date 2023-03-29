@@ -33,9 +33,10 @@ def get_conditional_manifold_dimension(config, name=None):
   score_fn = mutils.get_score_fn(sde, score_model, conditional=False, train=False, continuous=True)
   #---- end of setup ----
 
-  num_datapoints = config.get('dim_estimation.num_datapoints', 2500)
+  num_datapoints = config.get('dim_estimation.num_datapoints', 10)
   singular_values = []
   labels = []
+  imgs = []
   idx = 0
   with tqdm(total=num_datapoints) as pbar:
     for orig_batch, orig_labels in train_dataloader:
@@ -49,6 +50,7 @@ def get_conditional_manifold_dimension(config, name=None):
         if idx+1 >= num_datapoints:
           break
         
+        imgs.append(x.permute(1, 2, 0))
         x = x.to(device)
         ambient_dim = math.prod(x.shape[1:])
         x = x.repeat([batchsize,]+[1 for i in range(len(x.shape))])
@@ -88,7 +90,12 @@ def get_conditional_manifold_dimension(config, name=None):
         idx+=1
         pbar.update(1)
 
-  with open(os.path.join(save_path, 'svd.pkl'), 'wb') as f:
+  imgs = torch.stack(imgs).numpy()
+  with open(os.path.join(save_path, 'images.pkl'), 'wb') as f:
+    info = {'images':imgs}
+    pickle.dump(info, f)
+
+  with open(os.path.join(save_path, 'labels_svd.pkl'), 'wb') as f:
     info = {'singular_values':singular_values}
     pickle.dump(info, f)
   
