@@ -139,7 +139,7 @@ def inspect_corrected_VAE(config):
       log_var_z = latent_distribution_parameters[:, latent_dim:]
       latent = mean_z + torch.sqrt(log_var_z.exp())*torch.randn_like(mean_z)
       return latent
-    return encoder_fn
+    return encoding_fn
 
   def get_encoder_latent_correction_fn(encoder):
     def get_log_density_fn(encoder):
