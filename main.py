@@ -56,6 +56,8 @@ def main(argv):
     run_lib.get_conditional_manifold_dimension(config)
   elif FLAGS.mode == 'inspect_VAE':
     run_lib.inspect_VAE(config)
+  elif FLAGS.mode == 'inspect_corrected_VAE':
+    run_lib.inspect_corrected_VAE(config)
 
 if __name__ == "__main__":
   app.run(main)

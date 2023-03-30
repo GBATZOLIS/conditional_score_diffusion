@@ -329,6 +329,9 @@ def multi_scale_test(master_config, log_path):
     #concat_video = create_scale_evolution_video(scale_evolutions['haar']).unsqueeze(0)
     #logger.experiment.add_video('Autoregressive_Sampling_evolution_batch_%d' % i, concat_video, fps=50)
 
+def inspect_corrected_VAE(config):
+  dim_reduction.inspect_corrected_VAE(config)
+  
 def inspect_VAE(config):
   dim_reduction.inspect_VAE(config)
 

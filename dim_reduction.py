@@ -99,30 +99,150 @@ def get_conditional_manifold_dimension(config, name=None):
     info = {'labels': labels}
     pickle.dump(info, f)
 
-
-def inspect_VAE(config):
+def create_vae_setup(config):
   #---- create the setup ---
   log_path = config.logging.log_path
   log_name = config.logging.log_name
   save_path = os.path.join(log_path, log_name, 'vae_inspection')
   Path(save_path).mkdir(parents=True, exist_ok=True)
-
   DataModule = create_lightning_datamodule(config)
   DataModule.setup()
   val_dataloader = DataModule.val_dataloader()
 
   pl_module = create_lightning_module(config)
-  print('-------')
-  checkpoint = torch.load(config.model.checkpoint_path, map_location=torch.device('cpu'))
-  pl_module.load_state_dict(checkpoint['state_dict'])
-  #pl_module = pl_module.load_from_checkpoint(config.model.checkpoint_path)
-  
+
+  if config.training.gpus == 0:
+    device = torch.device('cpu')
+    checkpoint = torch.load(config.model.checkpoint_path, map_location=device)
+    pl_module.load_state_dict(checkpoint['state_dict'])
+  else:
+    device = torch.device('cuda:0')
+    pl_module = pl_module.load_from_checkpoint(config.model.checkpoint_path)
+
   pl_module.configure_sde(config)
   sde = pl_module.sde
 
-  device = pl_module.device
   pl_module = pl_module.to(device)
   pl_module.eval()
+
+  return pl_module, val_dataloader, sde, device, save_path
+
+def inspect_corrected_VAE(config):
+  pl_module, val_dataloader, sde, device, save_path = create_vae_setup(config)
+
+  def get_encoding_fn(encoder):
+    def encoding_fn(x):
+      t0 = torch.zeros(x.shape[0]).type_as(x)
+      latent_distribution_parameters = encoder(x, t0)
+      latent_dim = latent_distribution_parameters.size(1)//2
+      mean_z = latent_distribution_parameters[:, :latent_dim]
+      log_var_z = latent_distribution_parameters[:, latent_dim:]
+      latent = mean_z + torch.sqrt(log_var_z.exp())*torch.randn_like(mean_z)
+      return latent
+    return encoder_fn
+
+  def get_encoder_latent_correction_fn(encoder):
+    def get_log_density_fn(encoder):
+      def log_density_fn(x, z, t):
+        latent_distribution_parameters = encoder(x, t)
+        latent_dim = latent_distribution_parameters.size(1)//2
+        mean_z = latent_distribution_parameters[:, :latent_dim]
+        log_var_z = latent_distribution_parameters[:, latent_dim:]
+        logdensity = -1/2*torch.sum(torch.square(z - mean_z)/log_var_z.exp(), dim=1)
+        return logdensity
+                
+      return log_density_fn
+
+    def latent_correction_fn(x, z, t):
+      torch.set_grad_enabled(True)
+      log_density_fn = get_log_density_fn(encoder)
+      device = x.device
+      x.requires_grad=True
+      ftx = log_density_fn(x, z, t)
+      grad_log_density = torch.autograd.grad(outputs=ftx, inputs=x,
+                                      grad_outputs=torch.ones(ftx.size()).to(device),
+                                      create_graph=True, retain_graph=True, only_inputs=True)[0]
+      assert grad_log_density.size() == x.size()
+      torch.set_grad_enabled(False)
+      return grad_log_density
+
+    return latent_correction_fn
+
+  encoder = pl_module.encoder
+  unconditional_score_model = pl_module.unconditional_score_model
+  latent_correction_model = pl_module.latent_correction_model
+
+  encoding_fn = get_encoding_fn(encoder)
+  encoder_latent_correction_fn = get_encoder_latent_correction_fn(encoder)
+  unconditional_score_fn = mutils.get_score_fn(sde, unconditional_score_model, conditional=False, train=False, continuous=True)
+  auxiliary_correction_fn = mutils.get_score_fn(sde, latent_correction_model, conditional=True, train=False, continuous=True)
+  unconditional_score_fn = mutils.get_score_fn(sde, unconditional_score_model, conditional=False, train=False, continuous=True)
+
+  iterations = 10
+  encoder_correction_percentages = {}
+  auxiliary_correction_percentages = {}
+  unconditional_score_percentages = {}
+  for i, x in tqdm(enumerate(val_dataloader)):
+    if i == iterations:
+      break
+    
+    x = x.to(device)
+    latent = encoding_fn(x)
+
+    ts = torch.linspace(start=sde.sampling_eps, end=sde.T, steps=25)
+    for t_ in ts:
+      n_t = t_.item() 
+      if n_t not in encoder_correction_percentages.keys():
+        encoder_correction_percentages[n_t] = []
+        auxiliary_correction_percentages[n_t] = []
+        unconditional_score_percentages[n_t] = []
+        
+      t = torch.ones(x.shape[0]).type_as(x)*t_
+      z = torch.randn_like(x)
+      mean, std = sde.marginal_prob(x, t)
+      perturbed_x = mean + std[(...,) + (None,) * len(x.shape[1:])] * z
+
+      encoder_correction = encoder_latent_correction_fn(perturbed_x, latent, t)
+      auxiliary_correction = auxiliary_correction_fn({'x':perturbed_x, 'y':latent}, t)
+      unconditional_score = unconditional_score_fn(perturbed_x, t)
+
+      total_score = encoder_correction + auxiliary_correction + unconditional_score
+
+      encoder_correction_norm = torch.linalg.norm(encoder_correction.reshape(encoder_correction.shape[0], -1), dim=1)
+      auxiliary_correction_norm = torch.linalg.norm(auxiliary_correction.reshape(auxiliary_correction.shape[0], -1), dim=1)
+      unconditional_score_norm = torch.linalg.norm(unconditional_score.reshape(unconditional_score.shape[0], -1), dim=1)
+
+      total_score_norm = torch.linalg.norm(total_score.reshape(total_score.shape[0], -1), dim=1)
+
+      encoder_correction_percentages[n_t].append(torch.mean(encoder_correction_norm / total_score_norm).item())
+      auxiliary_correction_percentages[n_t].append(torch.mean(auxiliary_correction_norm / total_score_norm).item())
+      unconditional_score_percentages[n_t].append(torch.mean(unconditional_score_norm / total_score_norm).item())
+  
+  with open(os.path.join(save_path, 'contribution.pkl'), 'wb') as f:
+    contribution = {}
+    contribution['encoder'] = encoder_correction_percentages
+    contribution['auxiliary'] = auxiliary_correction_percentages
+    contribution['pretrained'] = unconditional_score_percentages
+    pickle.dump(contribution, f)
+
+  '''
+  order_times = sorted(list(encoder_correction_percentages.keys()))
+  plt.figure()
+  plt.title('Norm contribution of different latent score components')
+  plt.plot([np.mean(encoder_correction_percentages[t]) for t in order_times], label='encoder')
+  plt.plot([np.mean(auxiliary_correction_percentages[t]) for t in order_times], label='auxiliary_correction')
+  plt.plot([np.mean(unconditional_score_percentages[t]) for t in order_times], label='unconditional_score')
+  plt.legend()
+  plt.show()
+  '''
+
+    
+
+def inspect_VAE(config):
+  pl_module, val_dataloader, sde, device, save_path = create_vae_setup(config)
+
+  encoder = pl_module.encoder
+  unconditional_score_model = pl_module.unconditional_score_model
 
   def get_latent_correction_fn(encoder, z):
     def get_log_density_fn(encoder):
