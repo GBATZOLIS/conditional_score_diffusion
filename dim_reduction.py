@@ -219,7 +219,7 @@ def inspect_corrected_VAE(config):
       auxiliary_correction_percentages[n_t].extend(torch.flatten(auxiliary_correction_norm / total_score_norm).numpy().tolist())
       unconditional_score_percentages[n_t].extend(torch.flatten(unconditional_score_norm / total_score_norm).numpy().tolist())
   
-  with open(os.path.join(save_path, 'contribution.pkl'), 'wb') as f:
+  with open(os.path.join(save_path, 'contribution_pascal.pkl'), 'wb') as f:
     contribution = {}
     contribution['encoder'] = encoder_correction_percentages
     contribution['auxiliary'] = auxiliary_correction_percentages
