@@ -241,6 +241,12 @@ class VPSDE(SDE):
   def T(self):
     return 1
 
+  def snr(self, t):
+    log_mean_coeff = -0.25 * t ** 2 * (self.beta_1 - self.beta_0) - 0.5 * t * self.beta_0
+    alpha_t = torch.exp(log_mean_coeff)
+    std = torch.sqrt(1. - torch.exp(2. * log_mean_coeff))
+    return alpha_t**2/std**2
+
   def sde(self, x, t, return_f=False):
     beta_t = self.beta_0 + t * (self.beta_1 - self.beta_0)
     drift = -0.5 * beta_t[(...,)+(None,)*len(x.shape[1:])] * x

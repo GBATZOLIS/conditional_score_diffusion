@@ -182,7 +182,7 @@ def inspect_corrected_VAE(config):
   encoder_correction_percentages = {}
   auxiliary_correction_percentages = {}
   unconditional_score_percentages = {}
-  for i, x in tqdm(enumerate(val_dataloader)):
+  for i, x in enumerate(val_dataloader):
     if i == iterations:
       break
     
@@ -190,7 +190,7 @@ def inspect_corrected_VAE(config):
     latent = encoding_fn(x)
 
     ts = torch.linspace(start=sde.sampling_eps, end=sde.T, steps=200)
-    for t_ in ts:
+    for t_ in tqdm(ts):
       n_t = t_.item() 
       if n_t not in encoder_correction_percentages.keys():
         encoder_correction_percentages[n_t] = []
