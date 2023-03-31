@@ -25,7 +25,7 @@ def get_config():
   training.latent_correction = True
   training.encoder_checkpoint_path = None
   training.conditioning_approach = 'sr3'
-  training.batch_size = 64
+  training.batch_size = 256
   training.t_batch_size = 1
   training.num_nodes = 1
   training.gpus = 0

@@ -10,14 +10,35 @@ print(contribution.keys())
 
 plt.figure()
 plt.title('mean')
+colors = {'encoder':'red', 'auxiliary':'blue', 'pretrained':'green'}
+store_bps = {}
 for member in contribution.keys():
-    times = sorted(list(contribution[member].keys()))
-    plt.plot(times, [np.mean(contribution[member][t]) for t in times], label=member)
-    below = np.array([np.mean(contribution[member][t]) for t in times]) - np.array([3*np.std(contribution[member][t]) for t in times])
-    above = np.array([np.mean(contribution[member][t]) for t in times]) + np.array([3*np.std(contribution[member][t]) for t in times])
-    plt.fill_between(times, below, above, alpha=0.5)
+    sorted_times = sorted(list(contribution[member].keys()))
+    list_of_arrays = []
+    for t in sorted_times:
+        list_of_arrays.append(contribution[member][t])
+    
+    store_bps[member] = plt.boxplot(list_of_arrays, notch=True, labels=[round(x, 2) for x in sorted_times], patch_artist=True)
+    for i in range(len(list_of_arrays)):
+        store_bps[member]['boxes'][i].set_facecolor(colors[member])
+        store_bps[member]['boxes'][i].set_color(colors[member])
 
+'''
+bp_list = []
+name_list = []
+for member in contribution.keys():
+    num_times = len(contribution[member].keys())
+    bp_list.extend([store_bps[member]["boxes"][x] for x in range(num_times)])
+    name_list.extend([member for _ in range(num_times)])
 
-plt.legend()
+plt.legend(bp_list, name_list, loc='upper right')
+'''
+
+    #plt.plot(times, [np.mean(contribution[member][t]) for t in times], label=member)
+    #below = np.array([np.mean(contribution[member][t]) for t in times]) - np.array([3*np.std(contribution[member][t]) for t in times])
+    #above = np.array([np.mean(contribution[member][t]) for t in times]) + np.array([3*np.std(contribution[member][t]) for t in times])
+    #plt.fill_between(times, below, above, alpha=0.5)
+
+plt.grid()
 plt.show()
 
