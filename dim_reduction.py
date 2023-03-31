@@ -178,7 +178,7 @@ def inspect_corrected_VAE(config):
   auxiliary_correction_fn = mutils.get_score_fn(sde, latent_correction_model, conditional=True, train=False, continuous=True)
   unconditional_score_fn = mutils.get_score_fn(sde, unconditional_score_model, conditional=False, train=False, continuous=True)
 
-  iterations = 10
+  iterations = 1
   encoder_correction_percentages = {}
   auxiliary_correction_percentages = {}
   unconditional_score_percentages = {}
@@ -189,7 +189,7 @@ def inspect_corrected_VAE(config):
     x = x.to(device)
     latent = encoding_fn(x)
 
-    ts = torch.linspace(start=sde.sampling_eps, end=sde.T, steps=25)
+    ts = torch.linspace(start=sde.sampling_eps, end=sde.T, steps=5)
     for t_ in ts:
       n_t = t_.item() 
       if n_t not in encoder_correction_percentages.keys():
@@ -214,9 +214,10 @@ def inspect_corrected_VAE(config):
 
       total_score_norm = torch.linalg.norm(total_score.reshape(total_score.shape[0], -1), dim=1)
 
-      encoder_correction_percentages[n_t].append(torch.mean(encoder_correction_norm / total_score_norm).item())
-      auxiliary_correction_percentages[n_t].append(torch.mean(auxiliary_correction_norm / total_score_norm).item())
-      unconditional_score_percentages[n_t].append(torch.mean(unconditional_score_norm / total_score_norm).item())
+
+      encoder_correction_percentages[n_t].extend(torch.flatten(encoder_correction_norm / total_score_norm).numpy().tolist())
+      auxiliary_correction_percentages[n_t].extend(torch.flatten(auxiliary_correction_norm / total_score_norm).numpy().tolist())
+      unconditional_score_percentages[n_t].extend(torch.flatten(unconditional_score_norm / total_score_norm).numpy().tolist())
   
   with open(os.path.join(save_path, 'contribution.pkl'), 'wb') as f:
     contribution = {}
