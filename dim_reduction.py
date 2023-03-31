@@ -189,7 +189,7 @@ def inspect_corrected_VAE(config):
     x = x.to(device)
     latent = encoding_fn(x)
 
-    ts = torch.linspace(start=sde.sampling_eps, end=sde.T, steps=5)
+    ts = torch.linspace(start=sde.sampling_eps, end=sde.T, steps=50)
     for t_ in ts:
       n_t = t_.item() 
       if n_t not in encoder_correction_percentages.keys():
