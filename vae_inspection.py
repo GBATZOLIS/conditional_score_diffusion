@@ -20,16 +20,20 @@ store_bps = {}
 for member in contribution.keys():
     sorted_times = sorted(list(contribution[member].keys()))
     sorted_snrs = sde.snr(torch.tensor(np.array(sorted_times))).numpy().tolist()
-   
+    
+    plt.plot(sorted_times, [np.mean(contribution[member][t]) for t in sorted_times], c=colors[member])
+
+    '''
     list_of_arrays = []
     for t in sorted_times:
         list_of_arrays.append(contribution[member][t])
     
-    store_bps[member] = plt.boxplot(list_of_arrays, notch=True, labels=[round(x, 2) for x in sorted_snrs], patch_artist=True)
+    store_bps[member] = plt.boxplot(list_of_arrays, notch=True, labels=[round(x, 1) for x in sorted_snrs], patch_artist=True)
     
     for i in range(len(list_of_arrays)):
         store_bps[member]['boxes'][i].set_facecolor(colors[member])
         store_bps[member]['boxes'][i].set_color(colors[member])
+    '''
 
 #plt.plot(sorted_times, [np.mean(contribution[member][t]) for t in sorted_times], label=colors[member])
 
