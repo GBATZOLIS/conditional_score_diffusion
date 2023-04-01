@@ -19,7 +19,7 @@ def get_conditional_manifold_dimension(config, name=None):
   config.data.return_labels = True
   DataModule = create_lightning_datamodule(config)
   DataModule.setup()
-  train_dataloader = DataModule.train_dataloader()
+  train_dataloader = DataModule.val_dataloader()
     
   pl_module = create_lightning_module(config)
   pl_module = pl_module.load_from_checkpoint(config.model.checkpoint_path)
@@ -60,7 +60,7 @@ def get_conditional_manifold_dimension(config, name=None):
         extra_in_last_batch = ambient_dim - (ambient_dim // batchsize) * batchsize
         num_batches *= 4
 
-        t = pl_module.sampling_eps
+        t = 10*pl_module.sampling_eps
         vec_t = torch.ones(x.size(0), device=device) * t
 
         scores = []
