@@ -136,7 +136,7 @@ def get_config():
   model.fourier_scale = 16
   model.conv_size = 3
 
-  model.encoder_name = 'time_dependent_simple_encoder'
+  model.encoder_name = 'time_dependent_DDPM_encoder'
   model.encoder_input_channels = data.num_channels
   model.encoder_latent_dim = data.latent_dim
   model.encoder_base_channel_size = 64
