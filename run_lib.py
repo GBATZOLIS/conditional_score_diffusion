@@ -83,6 +83,7 @@ def test(config, log_path, checkpoint_path):
       create_dataset.create_dataset(config)
 
     DataModule = create_lightning_datamodule(config)
+    DataModule.setup()
     callbacks = get_callbacks(config)
     LightningModule = create_lightning_module(config)
 
