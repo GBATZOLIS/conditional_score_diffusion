@@ -103,7 +103,7 @@ def get_config():
   optim = config.optim
   optim.weight_decay = 0
   optim.optimizer = 'Adam'
-  optim.lr = 2e-5
+  optim.lr = 1e-4
   optim.beta1 = 0.9
   optim.eps = 1e-8
   optim.warmup = 5000
@@ -116,7 +116,7 @@ def get_config():
   #logging
   config.logging = logging = ml_collections.ConfigDict()
   logging.log_path = 'logs/checkerboard/fokker_planck/'
-  logging.log_name = f'VPfp_3-256_{training.alpha}'
+  logging.log_name = f'VPfp_256_bounded_e8_{training.alpha}'
   logging.top_k = 5
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)

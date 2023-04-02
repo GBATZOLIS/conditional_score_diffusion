@@ -35,7 +35,12 @@ class FCN_Potential(pl.LightningModule):
         t = t.unsqueeze(-1)
         inpt = torch.cat([x, t], dim=1)
         out = self.mlp(inpt)
-        return out
+        #return out
+        ub = 60
+        lb = -8
+        yy = (nn.functional.elu(-out-1+ub))-ub
+        yy = nn.functional.elu(-yy-lb-2)+lb +1
+        return yy
 
     def energy(self, x ,t):
         return torch.exp(self.log_energy(x,t))

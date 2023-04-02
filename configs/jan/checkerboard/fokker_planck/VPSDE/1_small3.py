@@ -37,7 +37,7 @@ def get_config():
   training.n_iters = int(1e20)
   training.likelihood_weighting = True
   training.continuous = True
-  training.sde = 'subvpsde'
+  training.sde = 'vpsde'
   training.schedule = 'constant'
   training.alpha=1
   training.alpha_min=1e-4
@@ -103,7 +103,7 @@ def get_config():
   optim = config.optim
   optim.weight_decay = 0
   optim.optimizer = 'Adam'
-  optim.lr = 2e-4
+  optim.lr = 2e-5
   optim.beta1 = 0.9
   optim.eps = 1e-8
   optim.warmup = 5000
@@ -116,7 +116,7 @@ def get_config():
   #logging
   config.logging = logging = ml_collections.ConfigDict()
   logging.log_path = 'logs/checkerboard/fokker_planck/'
-  logging.log_name = f'VPfp_small3_{training.alpha}'
+  logging.log_name = f'VPfp_small3_bounded_e7_smallLR_{training.alpha}'
   logging.top_k = 5
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)

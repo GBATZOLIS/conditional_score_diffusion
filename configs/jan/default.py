@@ -22,7 +22,7 @@ def get_default_configs():
   training.accelerator = None if training.gpus == 1 else 'ddp'
   training.accumulate_grad_batches = 1
   training.workers = 4
-  training.num_epochs = 10000
+  training.num_epochs = 7500
   training.n_iters = 500000
   training.snapshot_freq = 5000
   training.log_freq = 50

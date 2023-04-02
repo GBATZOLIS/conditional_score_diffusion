@@ -102,20 +102,14 @@ class FokkerPlanckModel(pl.LightningModule):
 
                 difference = (p_t +p*f_x + torch.sum(f*p_x,axis=1) - (diffusion**2 / 2) * p_xx)
 
-                x1 = torch.randn(x.shape)
-                t1 = torch.ones_like(t)
-                p1 = self.score_model.energy(x1,t1)
-                terminal  = p1-torch.exp(-0.5*torch.linalg.norm(x,axis=1)**2)
-                #difference = (p_t - (diffusion**2 / 2) * p_xx)
-                #difference = diffusion**2 * torch.exp(-5*t) * difference  # apply weighting
-                return torch.mean(difference**2) + torch.mean(terminal**2)
+                return torch.mean((diffusion**2 * difference)**2), torch.max(p)
 
             else:
                 B = x.shape[0] # batch size
                 grad_norm_2 = torch.linalg.norm(self.score_model.score(x, t).view(B,-1), dim=1)**2
 
                 score_x = lambda y: self.score_model.score(y,t)
-                divergence = compute_divergence(score_x, x, hutchinson=self.config.training.hutchinson)    
+                divergence = compute_divergence(score_x, x)#, hutchinson=self.config.training.hutchinson)    
                 #self.score_model.trace_hessian_log_energy(x, t) 
                 
                 log_energy_t = lambda s: self.score_model.log_energy(x, s) 
@@ -132,7 +126,7 @@ class FokkerPlanckModel(pl.LightningModule):
         #x_grad_fp_loss = compute_grad(lambda x: fp_loss(x,t), perturbed_data)
         #loss_fp = (torch.linalg.norm(x_grad_fp_loss, dim=1)).mean()
         
-        loss_fp = fp_loss(perturbed_data, t)
+        loss_fp,max_p = fp_loss(perturbed_data, t)
         
         #diff_chunked = torch.chunk(difference, n_chunks, dim=0)
         # for chunk in diff_chunked:
@@ -140,7 +134,7 @@ class FokkerPlanckModel(pl.LightningModule):
         #     #loss_fp += torch.cdist(chunk, chunk).mean() / n_chunks
         #     loss_fp += torch.std(chunk) / n_chunks
         
-        return loss_fp
+        return loss_fp,max_p
 
     def compute_ballance_loss(self, batch):
         eps=1e-5
@@ -152,7 +146,7 @@ class FokkerPlanckModel(pl.LightningModule):
         return (norm_correction_model/norm_fp_model).mean()
 
     def training_step(self, batch, batch_idx):
-        loss_fp = self.compute_fp_loss(batch)
+        loss_fp,max_p = self.compute_fp_loss(batch)
         self.log('train_fokker_planck_loss', loss_fp, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         
         #ballance_loss = self.compute_ballance_loss(batch)
@@ -161,6 +155,7 @@ class FokkerPlanckModel(pl.LightningModule):
         loss_dsm = self.train_loss_fn(self.score_model, batch)
         self.log('train_denoising_loss', loss_dsm, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         
+        self.log('max_p', max_p, on_step=True, on_epoch=True, prog_bar=True, logger=True)
 
 
         N = self.config.training.num_epochs
@@ -182,9 +177,15 @@ class FokkerPlanckModel(pl.LightningModule):
         #weight = max(weight, self.config.training.alpha_max)
 
         # loss
-        loss = loss_dsm + weight * loss_fp #+ weight * ballance_loss
+        if weight == 0:
+            loss = loss_dsm
+        else:
+            loss = loss_dsm + weight * loss_fp #+ weight * ballance_loss
+
         self.log('train_full_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
-        
+
+        self.log('max_p', max_p, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+
         return loss
     
     def validation_step(self, batch, batch_idx):

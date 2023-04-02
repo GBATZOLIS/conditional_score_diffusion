@@ -14,7 +14,7 @@
 #! Note that the job submission script will enforce no more than 32 cpus per GPU.
 #SBATCH --gres=gpu:1
 #! How much wallclock time will be required?
-#SBATCH --time=4:00:00
+#SBATCH --time=5:00:00
 #! What types of email messages do you wish to receive?
 #SBATCH --mail-type=begin        # send email when job begins
 #SBATCH --mail-type=end
@@ -31,4 +31,4 @@ nvidia-smi
 source /home/td491/.bashrc
 conda activate scoresde_env
 cd /home/td491/rds/hpc-work/conditional_score_diffusion
-python main.py --config configs/jan/checkerboard/fokker_planck/VPSDE/0_small3.py --mode train
+python main.py --config configs/jan/checkerboard/fokker_planck/subVPSDE/0_3_64.py --mode train
