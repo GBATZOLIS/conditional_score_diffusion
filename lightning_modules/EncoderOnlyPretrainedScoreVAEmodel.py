@@ -14,7 +14,7 @@ import torchvision
 import numpy as np
 import losses
 import torch
-from torchmetrics.image.lpip import LearnedPerceptualImagePatchSimilarity
+import lpips
 
 @utils.register_lightning_module(name='encoder_only_pretrained_score_vae')
 class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
@@ -168,8 +168,8 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
                                                           encoder_only=self.config.training.encoder_only,
                                                           t_dependent=self.config.training.t_dependent)
 
-        lpips = LearnedPerceptualImagePatchSimilarity(net_type='vgg')
-        avg_lpips_score = lpips(reconstruction, batch)
+        lpips_distance_fn = lpips.LPIPS(net='vgg') 
+        avg_lpips_score = lpips_distance_fn(reconstruction, batch)
 
         difference = torch.flatten(reconstruction, start_dim=1)-torch.flatten(batch, start_dim=1)
         L2norm = torch.linalg.vector_norm(difference, ord=2, dim=1)
