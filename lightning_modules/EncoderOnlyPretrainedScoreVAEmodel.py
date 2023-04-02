@@ -14,6 +14,7 @@ import torchvision
 import numpy as np
 import losses
 import torch
+from torchmetrics.image.lpip import LearnedPerceptualImagePatchSimilarity
 
 @utils.register_lightning_module(name='encoder_only_pretrained_score_vae')
 class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
@@ -161,6 +162,25 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
             self.logger.experiment.add_image('unconditional_sample', grid_batch, self.current_epoch)
             
         return loss
+
+    def test_step(self, batch, batch_idx):
+        reconstruction = self.encode_n_decode(batch, use_pretrained=self.config.training.use_pretrained,
+                                                          encoder_only=self.config.training.encoder_only,
+                                                          t_dependent=self.config.training.t_dependent)
+
+        lpips = LearnedPerceptualImagePatchSimilarity(net_type='vgg')
+        avg_lpips_score = lpips(reconstruction, batch)
+
+        difference = torch.flatten(reconstruction, start_dim=1)-torch.flatten(batch, start_dim=1)
+        L2norm = torch.linalg.vector_norm(difference, ord=2, dim=1)
+        avg_L2norm = torch.mean(L2norm)
+
+        output = dict({
+        'LPIPS': avg_lpips_score,
+        'L2': avg_L2norm,
+        })
+        return output
+
 
     def unconditional_sample(self, num_samples=None):
         if num_samples is None:
