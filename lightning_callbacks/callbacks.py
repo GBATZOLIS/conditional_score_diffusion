@@ -149,7 +149,7 @@ class ImageVisualizationCallback(Callback):
 
     def on_validation_epoch_end(self, trainer, pl_module):
         current_epoch = pl_module.current_epoch
-        if current_epoch % 5 == 1:
+        if (current_epoch+1) % 100 == 0:
             if self.show_evolution:
                 samples, sampling_info = pl_module.sample(show_evolution=True)
                 evolution = sampling_info['evolution']
@@ -396,13 +396,11 @@ def sample_model_score(batch, pl_module):
 class ScoreSpectrumVisualization(Callback):
     def __init__(self, show_evolution=False):
         super().__init__()
-        self.evolution = False #show_evolution
-
-        
+        self.evolution = False #show_evolution  
 
     def on_validation_epoch_end(self, trainer, pl_module):
         config = pl_module.config
-        if pl_module.current_epoch %  config.logging.svd_frequency == 0 or pl_module.current_epoch == 1:
+        if (pl_module.current_epoch+1) %  config.logging.svd_frequency == 0:
             config.model.checkpoint_path = os.path.join(config.logging.log_path, config.logging.log_name, "checkpoints/best/last.ckpt")
             name=f'svd_{pl_module.current_epoch}'
             try:

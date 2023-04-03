@@ -7,7 +7,7 @@ from models import utils as mutils
 import math
 from tqdm import tqdm
 import pickle
-
+import numpy as np
 
 def get_conditional_manifold_dimension(config, name=None):
   #---- create the setup ---
@@ -16,9 +16,10 @@ def get_conditional_manifold_dimension(config, name=None):
   save_path = os.path.join(log_path, log_name, 'svd')
   Path(save_path).mkdir(parents=True, exist_ok=True)
 
+  config.data.return_labels = True
   DataModule = create_lightning_datamodule(config)
   DataModule.setup()
-  train_dataloader = DataModule.train_dataloader()
+  train_dataloader = DataModule.val_dataloader()
     
   pl_module = create_lightning_module(config)
   pl_module = pl_module.load_from_checkpoint(config.model.checkpoint_path)
@@ -33,9 +34,10 @@ def get_conditional_manifold_dimension(config, name=None):
   score_fn = mutils.get_score_fn(sde, score_model, conditional=False, train=False, continuous=True)
   #---- end of setup ----
 
-  num_datapoints = config.get('dim_estimation.num_datapoints', 2500)
+  num_datapoints = config.get('dim_estimation.num_datapoints', 2501)
   singular_values = []
   labels = []
+  imgs = []
   idx = 0
   with tqdm(total=num_datapoints) as pbar:
     for orig_batch, orig_labels in train_dataloader:
@@ -49,19 +51,20 @@ def get_conditional_manifold_dimension(config, name=None):
         if idx+1 >= num_datapoints:
           break
         
+        imgs.append(x.permute(1, 2, 0))
         x = x.to(device)
-        ambient_dim = math.prod(x.shape[1:])
+        ambient_dim = np.prod(x.shape[1:])
         x = x.repeat([batchsize,]+[1 for i in range(len(x.shape))])
 
         num_batches = ambient_dim // batchsize + 1
         extra_in_last_batch = ambient_dim - (ambient_dim // batchsize) * batchsize
         num_batches *= 4
 
-        t = pl_module.sampling_eps
+        t = 10*pl_module.sampling_eps
         vec_t = torch.ones(x.size(0), device=device) * t
 
         scores = []
-        for i in range(1, num_batches+1):
+        for i in tqdm(range(1, num_batches+1)):
           batch = x.clone()
 
           mean, std = sde.marginal_prob(batch, vec_t)
@@ -88,7 +91,12 @@ def get_conditional_manifold_dimension(config, name=None):
         idx+=1
         pbar.update(1)
 
-  with open(os.path.join(save_path, 'svd.pkl'), 'wb') as f:
+  imgs = torch.stack(imgs).numpy()
+  with open(os.path.join(save_path, 'images.pkl'), 'wb') as f:
+    info = {'images':imgs}
+    pickle.dump(info, f)
+
+  with open(os.path.join(save_path, 'labels_svd.pkl'), 'wb') as f:
     info = {'singular_values':singular_values}
     pickle.dump(info, f)
   
@@ -124,7 +132,7 @@ def get_manifold_dimension(config, name=None, return_svd=False):
   score_fn = mutils.get_score_fn(sde, score_model, conditional=False, train=False, continuous=True)
   #---- end of setup ----
 
-  num_datapoints = config.get('dim_estimation.num_datapoints', 100)
+  num_datapoints = config.get('dim_estimation.num_datapoints', config.logging.svd_points)
   singular_values = []
   normalized_scores_list = []
   idx = 0
@@ -146,7 +154,7 @@ def get_manifold_dimension(config, name=None, return_svd=False):
 
         num_batches = ambient_dim // batchsize + 1
         extra_in_last_batch = ambient_dim - (ambient_dim // batchsize) * batchsize
-        num_batches *= 8
+        num_batches *= 4
 
         t = pl_module.sampling_eps
         vec_t = torch.ones(x.size(0), device=device) * t

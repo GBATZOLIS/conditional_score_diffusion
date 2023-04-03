@@ -21,26 +21,30 @@ import torch
 import math
 import numpy as np
 from datetime import timedelta
+import os
 
 def get_config():
   config = ml_collections.ConfigDict()
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/dimension_detection/experiments/mnist/' 
-  logging.log_name = 'unconditional'
+  logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/dimension_detection/experiments/gan_data/' 
+  logging.log_name = '100'
   logging.top_k = 5
   logging.every_n_epochs = 1000
+  logging.svd_frequency = 50
+  logging.save_svd = True
+  logging.svd_points = 1
   logging.envery_timedelta = timedelta(minutes=1)
-
+  
   # training
   config.training = training = ml_collections.ConfigDict()
   training.num_nodes = 1
   training.gpus = 1
   training.accelerator = None if training.gpus <= 1 else 'ddp'
-  training.accumulate_grad_batches = 1
+  training.accumulate_grad_batches = 2
   training.lightning_module = 'base' 
-  config.training.batch_size = 256
+  config.training.batch_size = 128
   training.workers = 4
   training.num_epochs = 10000
   training.n_iters = 2500000
@@ -55,7 +59,7 @@ def get_config():
   training.continuous = True
   training.reduce_mean = True #look more for that setting
   training.sde = 'vesde'
-  training.visualization_callback = 'base'
+  training.visualization_callback = ['base', 'ScoreSpectrumVisualization']
   training.show_evolution = False
 
   # validation
@@ -89,32 +93,30 @@ def get_config():
   # data
   config.data = data = ml_collections.ConfigDict()
   data.base_dir = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/datasets'
-  data.dataset = 'mnist'
-  data.return_labels = True
-  #data.task = 'generation'
-  data.datamodule = 'image'
-  #data.scale = 4 #?
+  data.datamodule = 'Gan'
+  data.data_path = os.path.join(data.base_dir, 'gan_data') #'datasets' ->put the directory where you have the dataset: /datasets/. It will load .../datasets/celebA
+  data.latent_dim = 100
   data.use_data_mean = False
   data.create_dataset = False
   data.split = [0.8, 0.1, 0.1]
-  data.image_size = 32
+  data.image_size = 64
   data.effective_image_size = data.image_size
-  data.shape = [1, data.image_size, data.image_size]
+  data.shape = [3, data.image_size, data.image_size]
   data.centered = False
-  data.use_flip = False
-  data.crop = False
+  data.random_flip = False
+  data.crop = True
   data.uniform_dequantization = False
   data.num_channels = data.shape[0] #the number of channels the model sees as input.
-  
+
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/dimension_detection/experiments/mnist/unconditional/checkpoints/best/epoch=446--eval_loss_epoch=0.025.ckpt'
-  model.sigma_min = 0.01
+  model.checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/dimension_detection/experiments/gan_data/100/checkpoints/best/last.ckpt'
+  model.sigma_min = 0.009 #0.01
   model.sigma_max = 50
   model.num_scales = 1000
   model.beta_min = 0.1
   model.beta_max = 20.
-  model.dropout = 0.1
+  model.dropout = 0.05
   model.embedding_type = 'fourier'
 
   model.name = 'ddpm' #'ncsnpp'
@@ -124,7 +126,7 @@ def get_config():
   model.normalization = 'GroupNorm'
   model.nonlinearity = 'swish'
   model.nf = 128
-  model.ch_mult = (1, 2, 2, 2)
+  model.ch_mult = (1, 2, 2, 3, 3)
   model.num_res_blocks = 4
   model.attn_resolutions = (16,)
   model.resamp_with_conv = True
@@ -145,7 +147,7 @@ def get_config():
   config.optim = optim = ml_collections.ConfigDict()
   optim.weight_decay = 0
   optim.optimizer = 'Adam'
-  optim.lr = 2e-4
+  optim.lr = 1e-4
   optim.beta1 = 0.9
   optim.eps = 1e-8
   optim.warmup = 5000

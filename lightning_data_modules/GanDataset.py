@@ -45,7 +45,7 @@ class SyntheticDataModule(pl.LightningDataModule):
         self.train_data, self.valid_data, self.test_data = random_split(self.dataset, [int(self.split[0]*l), int(self.split[1]*l), int(self.split[2]*l)]) 
     
     def train_dataloader(self):
-        return DataLoader(self.train_data, batch_size = self.train_batch, num_workers=self.train_workers) 
+        return DataLoader(self.train_data, batch_size = self.train_batch, num_workers=self.train_workers, shuffle=True) 
   
     def val_dataloader(self):
         return DataLoader(self.valid_data, batch_size = self.val_batch, num_workers=self.val_workers) 
