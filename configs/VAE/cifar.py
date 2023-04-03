@@ -29,39 +29,38 @@ def get_config():
   # data
   config.data = data = ml_collections.ConfigDict()
   data.base_dir = '/store/CIA/js2164/data'
-  data.dataset = 'celeba'
-  data.task = 'generation'
-  data.datamodule = 'unpaired_PKLDataset'
-  data.scale = 4 
+  data.dataset = 'cifar10'
+  data.datamodule = data.dataset
+  data.return_labels = False
   data.use_data_mean = False
   data.create_dataset = False
   data.split = [0.8, 0.1, 0.1]
-  data.image_size = 64
+  data.image_size = 32
   data.effective_image_size = data.image_size
   data.shape = [3, data.image_size, data.image_size]
   data.centered = False
-  data.use_flip = True
-  data.crop = True
+  data.use_flip = False
+  data.crop = False
   data.uniform_dequantization = False
-  data.num_channels = data.shape[0] 
+  data.num_channels = data.shape[0] #the number of channels the model sees as input.
 
   # model
   config.model = model = ml_collections.ConfigDict()
   model.nonlinearity = 'swish'
-  model.latent_dim = 512
+  model.latent_dim = 384
   model.kl_weight = 0.01
 
-  # encoder model
+# encoder model
   config.encoder = encoder = ml_collections.ConfigDict()
   encoder.name = 'half_U_encoder'
   encoder.scale_by_sigma = False
   encoder.ema_rate = 0.9999
-  encoder.dropout = 0.0
+  encoder.dropout = 0.1
   encoder.normalization = 'GroupNorm'
   encoder.nonlinearity = model.nonlinearity
   encoder.nf = 128
-  encoder.ch_mult = (1, 1, 2, 2, 3)
-  encoder.num_res_blocks = 2
+  encoder.ch_mult = (1, 2, 2, 2)
+  encoder.num_res_blocks = 4
   encoder.attn_resolutions = (16,)
   encoder.resamp_with_conv = True
   encoder.conditional = False
@@ -78,12 +77,12 @@ def get_config():
   decoder.name = 'half_U_decoder'
   decoder.scale_by_sigma = False
   decoder.ema_rate = 0.9999
-  decoder.dropout = 0.0
+  decoder.dropout = 0.1
   decoder.normalization = 'GroupNorm'
   decoder.nonlinearity = model.nonlinearity
   decoder.nf = 128
-  decoder.ch_mult = (1, 1, 2, 2, 3)
-  decoder.num_res_blocks = 2
+  decoder.ch_mult = (1, 2, 2, 2)
+  decoder.num_res_blocks = 4
   decoder.attn_resolutions = (16,)
   decoder.resamp_with_conv = True
   decoder.conditional = False

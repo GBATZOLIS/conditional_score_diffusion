@@ -6,6 +6,7 @@ sys.path.append(f'{repo_path}/janutils')
 import pytorch_lightning as pl
 from configs.utils import read_config
 from lightning_data_modules.SRFLOWDataset import UnpairedDataModule
+from lightning_data_modules.ImageDatasets import Cifar10DataModule
 from lightning_modules.VAE import VAE
 from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, LearningRateMonitor
@@ -22,8 +23,7 @@ def train(config):
     kl_weight = config.model.kl_weight
 
     if config.data.dataset == 'cifar10':
-        pass
-        #data_module = Cifar10DataModule(config)
+        data_module = Cifar10DataModule(config)
     elif config.data.dataset == 'celeba':
         data_module = UnpairedDataModule(config)
     #else:
@@ -64,7 +64,7 @@ def train(config):
     lr_monitor = LearningRateMonitor()
 
     trainer = pl.Trainer(gpus=1, 
-                        max_epochs=1000,
+                        max_epochs=100000,
                         logger=tb_logger,
                         #resume_from_checkpoint=args.checkpoint,
                         callbacks=[checkpoint_callback, 
@@ -77,5 +77,6 @@ def train(config):
     trainer.fit(model, train_dataloader, val_dataloader)
 
 
-config = read_config('configs/VAE/celebA.py')
+#config = read_config('configs/VAE/celebA.py')
+config = read_config('configs/VAE/cifar.py')
 train(config)
