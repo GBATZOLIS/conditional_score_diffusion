@@ -451,7 +451,7 @@ class DDPMEncoder(pl.LightningModule):
       return h
 
 
-@utils.register_model(name='time_dependent_half_U_encoder')
+@utils.register_model(name='time_dependent_efficient_ResNet_encoder')
 class HalfUEncoder(pl.LightningModule):
   def __init__(self, config):
     super().__init__()
