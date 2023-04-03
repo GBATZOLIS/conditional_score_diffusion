@@ -419,7 +419,7 @@ class ScoreSpectrumVisualization(Callback):
 
                 pl_module.logger.experiment.add_image('score specturm', image, pl_module.current_epoch)
                 pl_module.logger.experiment.add_image('dim_distribution', image_distro, pl_module.current_epoch)
-                pl_module.logger.log('dim', dim, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+                pl_module.log('dim', dim, on_step=False, on_epoch=True, prog_bar=True, logger=True)
                 
             except Exception as e:
                 logging.warning('Could not create a score spectrum')

@@ -171,8 +171,6 @@ def plot_distribution(svd, mode='first', return_tensor=False):
         dim = len(soft)-soft.argmax()
         dims.append(dim)
 
- 
-
     if return_tensor:
         buf = io.BytesIO()
         plt.savefig(buf, format='jpeg')
