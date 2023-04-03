@@ -31,7 +31,7 @@
             "program": "${file}",
             "args": [
                 "--config",
-                "configs/celebA/ddpm.py",
+                "configs/jan/halfU.py",
                 "--log_path",
                 "./test_logs",
                 "--debug",
