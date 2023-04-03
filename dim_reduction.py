@@ -107,7 +107,7 @@ def create_vae_setup(config):
   Path(save_path).mkdir(parents=True, exist_ok=True)
   DataModule = create_lightning_datamodule(config)
   DataModule.setup()
-  val_dataloader = DataModule.val_dataloader()
+  test_dataloader = DataModule.test_dataloader()
 
   pl_module = create_lightning_module(config)
 
@@ -125,7 +125,16 @@ def create_vae_setup(config):
   pl_module = pl_module.to(device)
   pl_module.eval()
 
-  return pl_module, val_dataloader, sde, device, save_path
+  return pl_module, test_dataloader, sde, device, save_path
+
+def evaluate_VAE(config):
+  pl_module, test_dataloader, sde, device, save_path = create_vae_setup(config)
+  
+  for i, x in enumerate(test_dataloader):
+    reconstruction = pl_module.encode_n_decode(batch, use_pretrained=config.training.use_pretrained,
+                                                          encoder_only=config.training.encoder_only,
+                                                          t_dependent=config.training.t_dependent)
+
 
 def inspect_corrected_VAE(config):
   pl_module, val_dataloader, sde, device, save_path = create_vae_setup(config)
