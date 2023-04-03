@@ -1,7 +1,7 @@
 import os
 import sys
-#repo_path='/rds/user/js2164/hpc-work/repos/autoencoder_dim_reduction' 
-repo_path = '/store/CIA/js2164/repos/diffusion/score_sde_pytorch'
+from pathlib import Path
+repo_path=Path('.').absolute()
 sys.path.append(f'{repo_path}/janutils')
 import pytorch_lightning as pl
 from configs.utils import read_config
@@ -11,7 +11,7 @@ from lightning_modules.VAE import VAE
 from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, LearningRateMonitor
 from janutils.callbacks import VisualizationCallback
-
+from argparse import ArgumentParser
 
 
 def train(config):
@@ -20,7 +20,7 @@ def train(config):
     #config.model.latent_dim = args.latent_dim
 
     model = VAE(config)
-    kl_weight = config.model.kl_weight
+    kl_weight = config.model.kl_weightconfig.model.kl_weight
 
     if config.data.dataset == 'cifar10':
         data_module = Cifar10DataModule(config)
@@ -76,7 +76,16 @@ def train(config):
 
     trainer.fit(model, train_dataloader, val_dataloader)
 
+if __name__ == '__main__':
+    parser = ArgumentParser()
+    parser.add_argument('--config', type=str)
+    args = parser.parse_args()
+    config = read_config(args.config)
+    print(f'Latent dim: {config.model.latent_dim}')
+    train(config)
+
+
 
 #config = read_config('configs/VAE/celebA.py')
-config = read_config('configs/VAE/cifar.py')
-train(config)
+#config = read_config('configs/VAE/cifar.py')
+#train(config)
