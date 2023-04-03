@@ -459,7 +459,7 @@ class HalfUEncoder(pl.LightningModule):
 
     #extra logic
     self.variational = config.training.variational
-    if hasattr(config.model, 'encoder_split_output'):
+    if hasattr(config.encoder, 'split_output'):
       self.split_output = config.encoder.split_output
     else:
       self.split_output = True
@@ -500,7 +500,7 @@ class HalfUEncoder(pl.LightningModule):
 
     if self.latent_dim:
         self.last_hidden_dim = self.all_resolutions[-1]**2 * output_channels
-        self.latent_projection = nn.Linear(self.last_hidden_dim, 2 * self.latent_dim)
+        self.latent_projection = nn.Linear(self.last_hidden_dim, out_dim)
 
     # ddpm_conv3x3
     modules.append(conv3x3(input_channels, nf))
