@@ -1662,3 +1662,8 @@ DEBUG:matplotlib.font_manager:findfont: score(<Font 'Overpass' (Overpass-ExtraLi
 DEBUG:matplotlib.font_manager:findfont: score(<Font 'C059' (C059-Roman.otf) normal normal 400 normal>) = 10.05
 DEBUG:matplotlib.font_manager:findfont: score(<Font 'STIX' (STIX-BoldItalic.otf) italic normal 700 normal>) = 11.335
 DEBUG:matplotlib.font_manager:findfont: Matching sans\-serif:style=normal:variant=normal:weight=normal:stretch=normal:size=16.0 to DejaVu Sans ('/rds/user/js2164/hpc-work/conda_envs/score_sde/lib/python3.9/site-packages/matplotlib/mpl-data/fonts/ttf/DejaVuSans.ttf') with score of 0.050000.
+DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/score_sde_pytorch/test_logs/1be8133a-32cd-4003-b562-58784de0819d/hparams.yaml
+DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/score_sde_pytorch/test_logs/67c401cc-4c73-4d8a-ad9d-8969d3f1e2c9/hparams.yaml
+DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/score_sde_pytorch/test_logs/8b6ca4b4-da9e-4753-8e0f-4f6da39435ec/hparams.yaml
+DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/score_sde_pytorch/test_logs/0fc0e722-adf8-4775-8a49-0620a9ad647d/hparams.yaml
+DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/score_sde_pytorch/test_logs/7f57541f-d7dd-46f6-802f-04be41c851b2/hparams.yaml
