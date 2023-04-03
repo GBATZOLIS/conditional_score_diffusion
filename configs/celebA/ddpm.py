@@ -91,7 +91,7 @@ def get_config():
 
   # data
   config.data = data = ml_collections.ConfigDict()
-  data.base_dir = '/rds/user/js2164/hpc-work/data/'
+  data.base_dir = '/store/CIA/js2164/data' #'/rds/user/js2164/hpc-work/data/'
   data.dataset = 'celeba'
   data.task = 'generation'
   data.datamodule = 'unpaired_PKLDataset'
@@ -110,7 +110,7 @@ def get_config():
 
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = '/home/js2164/rds/hpc-work/repos/score_sde_pytorch/logs/celebA/real_celebA_crop_ampere_2/checkpoints/best/last.ckpt'
+  model.checkpoint_path = None #'/home/js2164/rds/hpc-work/repos/score_sde_pytorch/logs/celebA/real_celebA_crop_ampere_2/checkpoints/best/last.ckpt'
   model.num_scales = 1000
   model.sigma_max = np.sqrt(np.prod(data.shape))
   model.sigma_min = 0.01
