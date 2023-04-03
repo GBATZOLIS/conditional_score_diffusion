@@ -19,8 +19,7 @@ t = torch.randn((1,))
 
 #y = ddpm(x,t)
 
-z = encoder(x, t)
-x_hat = decoder(z, t)
-
+z = encoder(x)
+x_hat = decoder(z)
 
 print(torch.linalg.norm(x-x_hat).item())

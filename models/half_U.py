@@ -84,6 +84,8 @@ class HalfUEncoder(pl.LightningModule):
       modules.append(nn.Linear(nf * 4, nf * 4))
       modules[1].weight.data = default_initializer()(modules[1].weight.data.shape)
       nn.init.zeros_(modules[1].bias)
+    else:
+      modules = []
 
     self.centered = config.data.centered
     input_channels = config.encoder.input_channels
@@ -91,7 +93,7 @@ class HalfUEncoder(pl.LightningModule):
 
     if self.latent_dim:
         self.last_hidden_dim = self.all_resolutions[-1]**2 * output_channels
-        self.latent_projection = nn.Linear(self.last_hidden_dim, self.latent_dim)
+        self.latent_projection = nn.Linear(self.last_hidden_dim, 2 * self.latent_dim)
 
     # ddpm_conv3x3
     modules.append(conv3x3(input_channels, nf))
@@ -119,7 +121,7 @@ class HalfUEncoder(pl.LightningModule):
     modules.append(conv3x3(in_ch, output_channels, init_scale=0.))
     self.all_modules = nn.ModuleList(modules)
 
-  def forward(self, x, labels):
+  def forward(self, x, labels=None):
     modules = self.all_modules
     m_idx = 0
     if self.conditional:
@@ -173,7 +175,7 @@ class HalfUEncoder(pl.LightningModule):
     if self.latent_dim:
         h = h.reshape((h.shape[0], -1))
         h = self.latent_projection(h)
-    return h
+    return h[:, :self.latent_dim], h[:, :self.latent_dim]
   
 
 @utils.register_model(name='half_U_decoder')
@@ -204,6 +206,8 @@ class HalfUDecoder(pl.LightningModule):
       modules.append(nn.Linear(nf * 4, nf * 4))
       modules[1].weight.data = default_initializer()(modules[1].weight.data.shape)
       nn.init.zeros_(modules[1].bias)
+    else:
+      modules = []
 
     self.centered = config.data.centered
     self.input_channels = config.decoder.input_channels
@@ -231,7 +235,7 @@ class HalfUDecoder(pl.LightningModule):
     modules.append(conv3x3(in_ch, output_channels, init_scale=0.))
     self.all_modules = nn.ModuleList(modules)
 
-  def forward(self, x, labels):
+  def forward(self, x, labels=None):
 
     if self.latent_dim:
        h = self.latent_projection(x)

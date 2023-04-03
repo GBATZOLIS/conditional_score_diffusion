@@ -137,7 +137,7 @@ def get_config():
   encoder.num_res_blocks = 3
   encoder.attn_resolutions = (16,)
   encoder.resamp_with_conv = True
-  encoder.conditional = True
+  encoder.conditional = False
   encoder.fir = False
   encoder.fir_kernel = [1, 3, 3, 1]
   encoder.skip_rescale = True
@@ -177,7 +177,7 @@ def get_config():
   decoder.num_res_blocks = 3
   decoder.attn_resolutions = (16,)
   decoder.resamp_with_conv = True
-  decoder.conditional = True
+  decoder.conditional = False
   decoder.fir = False
   decoder.fir_kernel = [1, 3, 3, 1]
   decoder.skip_rescale = True
