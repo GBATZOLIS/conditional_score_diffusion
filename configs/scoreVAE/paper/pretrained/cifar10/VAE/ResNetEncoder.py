@@ -135,7 +135,7 @@ def get_config():
   model.init_scale = 0.
   model.fourier_scale = 16
   model.conv_size = 3
-  model.encoder_name = 'time_dependent_efficient_ResNet_encoder'
+  model.encoder_name = 'time_dependent_DDPM_encoder'
   
   config.encoder = encoder = ml_collections.ConfigDict()
   encoder.name = model.encoder_name
