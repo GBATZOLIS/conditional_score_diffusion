@@ -101,7 +101,7 @@ def get_config():
 
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = None
+  model.checkpoint_path = '/home/gb511/scripts/scoreVAE/paper/pretrained/celebA_64/VAE/ResNetEncoder.py'
   model.sigma_min = 0.01
   model.sigma_max = 50
   model.num_scales = 1000
