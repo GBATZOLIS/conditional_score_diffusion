@@ -214,7 +214,7 @@ class HalfUDecoder(pl.LightningModule):
     output_channels = config.decoder.output_channels
     
     if self.latent_dim:
-        self.last_hidden_dim = self.all_resolutions[-1]**2 * output_channels
+        self.last_hidden_dim = self.all_resolutions[-1]**2 * self.input_channels
         self.latent_projection = nn.Linear(self.latent_dim, self.last_hidden_dim)
 
     # ddpm_conv3x3
