@@ -112,7 +112,7 @@ def get_config():
 
   model.unconditional_score_model_name = 'ddpm'
   model.name = 'ddpm_mirror_decoder'
-  model.input_channels = 2*data.num_channels
+  model.input_channels = data.num_channels
   model.output_channels = data.num_channels
   model.scale_by_sigma = True
   model.ema_rate = 0.9999
