@@ -10,7 +10,7 @@ def get_config():
   #logging
   config.logging = logging = ml_collections.ConfigDict()
   logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/cifar10/'
-  logging.log_name = 'only_EfficientResNetEncoder_VAE_KLweight_0.01'
+  logging.log_name = 'only_ResNetEncoder_VAE_KLweight_0.01'
   logging.top_k = 3
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
@@ -23,7 +23,7 @@ def get_config():
   training.encoder_only = True
   training.t_dependent = True
   training.conditioning_approach = 'sr3'
-  training.batch_size = 256
+  training.batch_size = 32
   training.t_batch_size = 1
   training.num_nodes = 1
   training.gpus = 1
