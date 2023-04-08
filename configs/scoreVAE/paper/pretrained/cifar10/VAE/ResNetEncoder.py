@@ -135,8 +135,14 @@ def get_config():
   model.init_scale = 0.
   model.fourier_scale = 16
   model.conv_size = 3
+
   model.encoder_name = 'time_dependent_DDPM_encoder'
+  model.encoder_input_channels = data.num_channels
+  model.encoder_latent_dim = data.latent_dim
+  model.encoder_base_channel_size = 64
+  model.encoder_split_output=False
   
+  '''
   config.encoder = encoder = ml_collections.ConfigDict()
   encoder.name = model.encoder_name
   encoder.scale_by_sigma = False
@@ -166,6 +172,7 @@ def get_config():
   encoder.output_channels = 128
   encoder.latent_dim = data.latent_dim
   encoder.split_output = False
+  '''
 
   # optimization
   config.optim = optim = ml_collections.ConfigDict()
