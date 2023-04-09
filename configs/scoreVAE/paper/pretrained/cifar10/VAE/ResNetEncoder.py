@@ -101,7 +101,7 @@ def get_config():
 
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = None
+  model.checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/cifar10/only_ResNetEncoder_VAE_KLweight_0.01/checkpoints/best/epoch=261--eval_loss_epoch=1207.593.ckpt'
   model.sigma_min = 0.01
   model.sigma_max = 50
   model.num_scales = 1000
@@ -178,7 +178,7 @@ def get_config():
   config.optim = optim = ml_collections.ConfigDict()
   optim.weight_decay = 0
   optim.optimizer = 'Adam'
-  optim.lr = 2e-4
+  optim.lr = 1e-4
   optim.beta1 = 0.9
   optim.eps = 1e-8
   optim.warmup = 2500
