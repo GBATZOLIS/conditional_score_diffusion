@@ -175,6 +175,9 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
         L2norm = torch.linalg.vector_norm(difference, ord=2, dim=1)
         avg_L2norm = torch.mean(L2norm)
 
+        self.log("LPIPS", avg_lpips_score, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        self.log("L2", avg_L2norm, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+
         output = dict({
         'LPIPS': avg_lpips_score,
         'L2': avg_L2norm,
