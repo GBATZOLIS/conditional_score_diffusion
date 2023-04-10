@@ -85,32 +85,18 @@ def test(config, log_path, checkpoint_path):
     DataModule = create_lightning_datamodule(config)
     DataModule.setup()
     callbacks = get_callbacks(config)
-    LightningModule = create_lightning_module(config)
 
     if config.logging.log_path is not None:
       log_path = config.logging.log_path
     if config.logging.log_name is not None:
       log_name = config.logging.log_name
-
     logger = pl.loggers.TensorBoardLogger(log_path, name='test', version=log_name)
 
-    if checkpoint_path is not None or config.model.checkpoint_path is not None:
-      if config.model.checkpoint_path is not None and checkpoint_path is None:
-        checkpoint_path = config.model.checkpoint_path
-
-      trainer = pl.Trainer(gpus=config.training.gpus,
-                          num_nodes = config.training.num_nodes,
-                          accelerator = config.training.accelerator, #plugins = DDPPlugin(find_unused_parameters=False) if config.training.accelerator=='ddp' else None,
-                          accumulate_grad_batches = config.training.accumulate_grad_batches,
-                          gradient_clip_val = config.optim.grad_clip,
-                          max_steps=config.training.n_iters, 
-                          max_epochs =config.training.num_epochs,
-                          callbacks=callbacks, 
-                          logger = logger,
-                          resume_from_checkpoint=checkpoint_path
-                          )
-    else:  
-      trainer = pl.Trainer(gpus=config.training.gpus,
+    checkpoint_path = config.model.checkpoint_path
+    pl_module = create_lightning_module(config)
+    pl_module = pl_module.load_from_checkpoint(checkpoint_path)
+    
+    trainer = pl.Trainer(gpus=config.training.gpus,
                           num_nodes = config.training.num_nodes,
                           accelerator = config.training.accelerator,
                           accumulate_grad_batches = config.training.accumulate_grad_batches,
@@ -121,7 +107,7 @@ def test(config, log_path, checkpoint_path):
                           logger = logger                          
                           )
     
-    trainer.test(LightningModule, test_dataloaders = DataModule.test_dataloader())
+    trainer.test(pl_module, test_dataloaders = DataModule.test_dataloader())
 
 
 def multi_scale_test(master_config, log_path):
