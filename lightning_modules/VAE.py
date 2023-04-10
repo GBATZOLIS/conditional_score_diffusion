@@ -2,7 +2,9 @@ import torch
 import torch.nn as nn
 import numpy as np
 import pytorch_lightning as pl
-from models.half_U import HalfUEncoder, HalfUDecoder
+from models.half_U import HalfUEncoder, HalfUDecoder, HalfUDecoderNoConv
+from models.encoder import DDPMEncoder
+import lpips
 
 class VAE(pl.LightningModule):
 
@@ -10,8 +12,14 @@ class VAE(pl.LightningModule):
         super().__init__()
         self.config = config
         self.latent_dim = config.model.latent_dim
-        self.encoder = HalfUEncoder(config)
-        self.decoder = HalfUDecoder(config)
+        net_options = {
+            'half_U_encoder' : HalfUEncoder,
+            'time_dependent_DDPM_encoder': DDPMEncoder,
+            'half_U_decoder': HalfUDecoder,
+            'half_U_decoder_no_conv': HalfUDecoderNoConv
+        }
+        self.encoder = net_options[config.encoder.name](config)
+        self.decoder = net_options[config.decoder.name](config)
         self.decoder_sigmoid = nn.Sigmoid()
         self.save_hyperparameters()
 
@@ -58,6 +66,25 @@ class VAE(pl.LightningModule):
         self.log('val_rec_loss', rec_loss)
         self.log('val_kl_loss', kl_loss)
         return loss
+    
+    def test_step(self, batch, batch_idx):
+        if batch_idx == 0:
+            self.lpips_distance_fn = lpips.LPIPS(net='vgg').to(self.device) 
+            
+        z, _ = self.encode(batch)
+        reconstruction, _ = self.decode(z)
+
+        avg_lpips_score = torch.mean(self.lpips_distance_fn(reconstruction, batch))
+
+        difference = torch.flatten(reconstruction, start_dim=1)-torch.flatten(batch, start_dim=1)
+        L2norm = torch.linalg.vector_norm(difference, ord=2, dim=1)
+        avg_L2norm = torch.mean(L2norm)
+
+        output = dict({
+        'LPIPS': avg_lpips_score,
+        'L2': avg_L2norm,
+        })
+        return output
     
     def configure_optimizers(self):
         optim = torch.optim.Adam(self.parameters(), lr=self.config.optim.lr)
