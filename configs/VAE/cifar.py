@@ -3,6 +3,7 @@ import torch
 import math
 import numpy as np
 from datetime import timedelta
+from configs.utils import get_path
 
 def get_config():
   config = ml_collections.ConfigDict()
@@ -28,7 +29,7 @@ def get_config():
   
   # data
   config.data = data = ml_collections.ConfigDict()
-  data.base_dir = '/store/CIA/js2164/data'
+  data.base_dir = get_path('data_path')
   data.dataset = 'cifar10'
   data.datamodule = data.dataset
   data.return_labels = False

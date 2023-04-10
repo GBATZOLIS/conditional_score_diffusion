@@ -20,7 +20,7 @@ def train(config):
     #config.model.latent_dim = args.latent_dim
 
     model = VAE(config)
-    kl_weight = config.model.kl_weightconfig.model.kl_weight
+    kl_weight = config.model.kl_weight
 
     if config.data.dataset == 'cifar10':
         data_module = Cifar10DataModule(config)
