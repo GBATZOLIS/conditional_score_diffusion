@@ -168,8 +168,8 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
                                                           encoder_only=self.config.training.encoder_only,
                                                           t_dependent=self.config.training.t_dependent)
 
-        lpips_distance_fn = lpips.LPIPS(net='vgg') 
-        avg_lpips_score = torch.mean(lpips_distance_fn(reconstruction, batch))
+        lpips_distance_fn = lpips.LPIPS(net='vgg')
+        avg_lpips_score = torch.mean(lpips_distance_fn(reconstruction.to(self.device), batch))
 
         difference = torch.flatten(reconstruction, start_dim=1)-torch.flatten(batch, start_dim=1)
         L2norm = torch.linalg.vector_norm(difference, ord=2, dim=1)
