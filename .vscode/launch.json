@@ -12,15 +12,15 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "Test_Benchmark",
+            "name": "Test_VAE",
             "type": "python",
             "request": "launch",
             "program": "${file}",
             "args": [
-                "--file",
-                "benchmark_small.csv",
-                "--max_samples",
-                "10000"
+                "--config",
+                "configs/VAE/celebA_no_conv.py",
+                "--mode",
+                "train"
             ],
             "console": "integratedTerminal"
         },

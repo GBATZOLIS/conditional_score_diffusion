@@ -22,7 +22,7 @@ for config_path in configs:
         os.makedirs(output_path)
 
     create_mainsh(main_sh_path = main_sh_path,
-                  file_path='train_vae.py',
+                  file_path='vae_main .py',
                   args_dict={'config': config_path},
                   job_name=f'VAE_{config.data.dataset}_kl_{config.model.kl_weight}',
                   partition='ampere',

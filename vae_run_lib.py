@@ -76,13 +76,21 @@ def train(config):
 
     trainer.fit(model, train_dataloader, val_dataloader)
 
-if __name__ == '__main__':
-    parser = ArgumentParser()
-    parser.add_argument('--config', type=str)
-    args = parser.parse_args()
-    config = read_config(args.config)
-    print(f'Latent dim: {config.model.latent_dim}')
-    train(config)
+
+def evaluate(config):
+    if config.data.dataset == 'cifar10':
+        data_module = Cifar10DataModule(config)
+    elif config.data.dataset == 'celeba':
+        data_module = UnpairedDataModule(config)
+    #else:
+        #data_module = ImageDataModule(config)
+
+    trainer = pl.Trainer(gpus=1)
+    model = VAE.load_from_checkpoint(config.eval_path)
+    output = trainer.test(datamodule=data_module, model=model)
+    print(output)
+    return output
+
 
 
 

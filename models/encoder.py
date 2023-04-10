@@ -329,7 +329,7 @@ class DDPMEncoder(pl.LightningModule):
     super().__init__()
     #encoder extra settings
     self.latent_dim = latent_dim = config.data.latent_dim
-    self.variational = config.training.variational
+    self.variational = True
     if hasattr(config.model, 'encoder_split_output'):
       self.split_output = config.model.encoder_split_output
     else:
@@ -354,6 +354,8 @@ class DDPMEncoder(pl.LightningModule):
     AttnBlock = functools.partial(layers.AttnBlock)
     self.conditional = conditional = config.model.conditional
     ResnetBlock = functools.partial(ResnetBlockDDPM, act=act, temb_dim=4 * nf, dropout=dropout)
+
+
     if conditional:
       # Condition on noise levels.
       modules = [nn.Linear(nf, nf * 4)]
@@ -362,6 +364,8 @@ class DDPMEncoder(pl.LightningModule):
       modules.append(nn.Linear(nf * 4, nf * 4))
       modules[1].weight.data = default_initializer()(modules[1].weight.data.shape)
       nn.init.zeros_(modules[1].bias)
+    else:
+      modules = []
 
     self.centered = config.data.centered
     input_channels = config.model.input_channels
@@ -393,7 +397,7 @@ class DDPMEncoder(pl.LightningModule):
 
     self.all_modules = nn.ModuleList(modules)
 
-  def forward(self, x, labels):
+  def forward(self, x, labels=None):
     modules = self.all_modules
     m_idx = 0
     if self.conditional:
