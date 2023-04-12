@@ -165,7 +165,10 @@ class FokkerPlanckModel(pl.LightningModule):
         
         # constant weight
         if self.config.training.schedule == 'constant':
-            weight = self.config.training.alpha 
+            if t<0.05:
+                weight = self.config.training.alpha*0
+            else:
+                weight = self.config.training.alpha 
         # geometric schedule
         elif self.config.training.schedule == 'geometric':
             weight = self.config.training.alpha_min * (self.config.training.alpha_max / self.config.training.alpha_min) ** t
