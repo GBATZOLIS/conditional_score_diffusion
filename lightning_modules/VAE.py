@@ -3,7 +3,8 @@ import torch.nn as nn
 import numpy as np
 import pytorch_lightning as pl
 from models.half_U import HalfUEncoder, HalfUDecoder, HalfUDecoderNoConv
-from models.encoder import DDPMEncoder
+from models.encoder import DDPMEncoder, Encoder
+from models.decoder import MirrorDecoder
 import lpips
 
 class VAE(pl.LightningModule):
@@ -13,6 +14,8 @@ class VAE(pl.LightningModule):
         self.config = config
         self.latent_dim = config.model.latent_dim
         net_options = {
+            'simple_encoder': Encoder,
+            'simple_decoder': MirrorDecoder,
             'half_U_encoder' : HalfUEncoder,
             'time_dependent_DDPM_encoder': DDPMEncoder,
             'half_U_decoder': HalfUDecoder,

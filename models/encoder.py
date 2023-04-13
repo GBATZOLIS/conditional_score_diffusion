@@ -264,6 +264,7 @@ class Encoder(pl.LightningModule):
         self.latent_dim = latent_dim = config.model.encoder_latent_dim
         act_fn = nn.GELU
         self.variational = config.training.variational
+        self.time_conditional = config.model.get('time_conditional', True)
 
         if hasattr(config.model, 'encoder_split_output'):
           self.split_output = config.model.encoder_split_output
@@ -291,8 +292,10 @@ class Encoder(pl.LightningModule):
               act_fn(),
               nn.Flatten() # Image grid to single feature vector
           )
-
-          self.linear = nn.Linear(2*16*c_hid+1, out_dim)
+          if self.time_conditional:
+            self.linear = nn.Linear(2*16*c_hid+1, out_dim)
+          else:
+            self.linear = nn.Linear(2*16*c_hid, out_dim)
       
         elif config.data.image_size == 64:
           self.net = nn.Sequential(
@@ -312,12 +315,18 @@ class Encoder(pl.LightningModule):
               act_fn(),
               nn.Flatten(), # Image grid to single feature vector
             )
-          self.linear = nn.Linear(4*16*c_hid+1, out_dim)
+          if self.time_conditional:
+            self.linear = nn.Linear(4*16*c_hid+1, out_dim)
+          else:
+            self.linear = nn.Linear(4*16*c_hid, out_dim)
       
-    def forward(self, x, t):
+    def forward(self, x, t=None):
         flattened_img = self.net(x)
-        concat = torch.cat((flattened_img, t[:, None]), dim=1)
-        out = self.linear(concat)
+        if self.time_conditional:
+          concat = torch.cat((flattened_img, t[:, None]), dim=1)
+          out = self.linear(concat)
+        else:
+          out = self.linear(flattened_img)
         if self.variational and self.split_output:
           return out[:,:self.latent_dim], out[:,self.latent_dim:]
         else:

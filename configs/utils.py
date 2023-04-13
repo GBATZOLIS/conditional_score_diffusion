@@ -16,7 +16,7 @@ def get_path(path_type):
     # Jan's configuration
     if user[:6] == 'js2164':
         # holiday
-        if machine[:7] == 'holiday':
+        if machine[:7] in ['holiday', 'holly-a']:
             path_dict = {
                 'data_path': '/store/CIA/js2164/data'
             }

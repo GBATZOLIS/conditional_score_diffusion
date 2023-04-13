@@ -18,7 +18,7 @@
             "program": "${file}",
             "args": [
                 "--config",
-                "configs/VAE/celebA_no_conv.py",
+                "configs/VAE/cifar_simple.py",
                 "--mode",
                 "train"
             ],

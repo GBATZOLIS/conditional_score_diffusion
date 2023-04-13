@@ -17,6 +17,7 @@ get_normalization = normalization.get_normalization
 default_initializer = layers.default_init
 
         
+@utils.register_model(name='simple_decoder')
 class MirrorDecoder(pl.LightningModule):
     def __init__(self, config):
         """
@@ -32,6 +33,7 @@ class MirrorDecoder(pl.LightningModule):
         latent_dim = config.model.encoder_latent_dim
         act_fn = nn.GELU
         c_hid = base_channel_size
+        
 
         if config.data.image_size == 32:
           self.linear = nn.Sequential(
