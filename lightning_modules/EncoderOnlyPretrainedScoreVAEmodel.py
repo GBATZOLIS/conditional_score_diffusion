@@ -15,6 +15,7 @@ import numpy as np
 import losses
 import torch
 import lpips
+from pathlib import Path
 
 @utils.register_lightning_module(name='encoder_only_pretrained_score_vae')
 class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
@@ -167,9 +168,33 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
         reconstruction = self.encode_n_decode(batch, use_pretrained=self.config.training.use_pretrained,
                                                           encoder_only=self.config.training.encoder_only,
                                                           t_dependent=self.config.training.t_dependent)
+        if batch_idx == 0:
+            self.lpips_distance_fn = lpips.LPIPS(net='vgg').to(self.device)
 
-        lpips_distance_fn = lpips.LPIPS(net='vgg').to(self.device)
-        avg_lpips_score = torch.mean(lpips_distance_fn(reconstruction.to(self.device), batch))
+            #save the first batch and its reconstruction
+            log_path = self.config.logging.log_path
+            log_name = self.config.logging.log_name
+
+            base_save_path = os.path.join(log_path, log_name, 'images')
+            Path(base_save_path).mkdir(parents=True, exist_ok=True)
+
+            original_save_path = os.path.join(log_path, log_name, 'images', 'original')
+            Path(original_save_path).mkdir(parents=True, exist_ok=True)
+
+            reconstruction_save_path = os.path.join(log_path, log_name, 'images', 'reconstructions')
+            Path(reconstruction_save_path).mkdir(parents=True, exist_ok=True)
+
+            for i in range(batch.size(0)):
+                torchvision.utils.save_image(batch[i, :, :, :], os.path.join(original_save_path,'{}.png'.format(i+1)))
+            
+            for i in range(batch.size(0)):
+                a = reconstruction[i, :, :, :]
+                min_a, max_a = a.min(), a.max()
+                a -= min_a
+                a /= max_a - min_a
+                torchvision.utils.save_image(a, os.path.join(reconstruction_save_path,'{}.png'.format(i+1)))
+
+        avg_lpips_score = torch.mean(self.lpips_distance_fn(reconstruction.to(self.device), batch))
 
         difference = torch.flatten(reconstruction, start_dim=1)-torch.flatten(batch, start_dim=1)
         L2norm = torch.linalg.vector_norm(difference, ord=2, dim=1)

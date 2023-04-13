@@ -23,7 +23,7 @@ def get_config():
   training.encoder_only = True
   training.t_dependent = True
   training.conditioning_approach = 'sr3'
-  training.batch_size = 32
+  training.batch_size = 256
   training.t_batch_size = 1
   training.num_nodes = 1
   training.gpus = 1
@@ -82,7 +82,7 @@ def get_config():
 
   # data
   config.data = data = ml_collections.ConfigDict()
-  data.base_dir = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/datasets'
+  data.base_dir = '/home/gb511/restore/score_sde_pytorch-1/datasets'
   data.dataset = 'celebA-HQ-160'
   data.datamodule = 'unpaired_PKLDataset'
   data.return_labels = False
