@@ -13,11 +13,14 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('--mode', type=str, default='train')
     parser.add_argument('--config', type=str)
+    parser.add_argument('--eval_path', type=str, default='none')
     args = parser.parse_args()
     config = read_config(args.config)
     print(f'Latent dim: {config.model.latent_dim}')
     if args.mode == 'train':
         train(config)
     elif args.mode == 'eval':
-        #config.eval_path  = 'logs/VAE/celeba/kl_0.01/latent_dim_512/checkpoints/epoch=139--val_loss=12.000.ckpt'
-        evaluate(config)
+        if args.eval_path == 'none':
+            evaluate(config)
+        else:
+            evaluate(config, args.eval_path)
