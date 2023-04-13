@@ -77,7 +77,7 @@ def train(config):
     trainer.fit(model, train_dataloader, val_dataloader)
 
 
-def evaluate(config):
+def evaluate(config, eval_path = None):
     if config.data.dataset == 'cifar10':
         data_module = Cifar10DataModule(config)
     elif config.data.dataset == 'celeba':
@@ -86,7 +86,9 @@ def evaluate(config):
         #data_module = ImageDataModule(config)
 
     trainer = pl.Trainer(gpus=1)
-    model = VAE.load_from_checkpoint(config.eval_path)
+    if eval_path is None:
+        eval_path = config.eval_path
+    model = VAE.load_from_checkpoint(eval_path)
     output = trainer.test(datamodule=data_module, model=model)
     print(output)
     return output
