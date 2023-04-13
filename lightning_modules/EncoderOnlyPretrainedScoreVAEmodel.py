@@ -15,6 +15,7 @@ import numpy as np
 import losses
 import torch
 import lpips
+from pathlib import Path
 
 @utils.register_lightning_module(name='encoder_only_pretrained_score_vae')
 class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
@@ -169,6 +170,29 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
                                                           t_dependent=self.config.training.t_dependent)
         if batch_idx == 0:
             self.lpips_distance_fn = lpips.LPIPS(net='vgg').to(self.device)
+
+            #save the first batch and its reconstruction
+            log_path = self.config.logging.log_path
+            log_name = self.config.logging.log_name
+
+            base_save_path = os.path.join(log_path, log_name, 'images')
+            Path(base_save_path).mkdir(parents=True, exist_ok=True)
+
+            original_save_path = os.path.join(log_path, log_name, 'images', 'original')
+            Path(original_save_path).mkdir(parents=True, exist_ok=True)
+
+            reconstruction_save_path = os.path.join(log_path, log_name, 'images', 'reconstructions')
+            Path(reconstruction_save_path).mkdir(parents=True, exist_ok=True)
+
+            for i in range(batch.size(0)):
+                torchvision.utils.save_image(batch[i, :, :, :], os.path.join(original_save_path,'{}.png'.format(i+1)))
+            
+            for i in range(batch.size(0)):
+                a = reconstruction[i, :, :, :]
+                min_a, max_a = a.min(), a.max()
+                a -= min_a
+                a /= max_a - min_a
+                torchvision.utils.save_image(a, os.path.join(reconstruction_save_path,'{}.png'.format(i+1)))
 
         avg_lpips_score = torch.mean(self.lpips_distance_fn(reconstruction.to(self.device), batch))
 
