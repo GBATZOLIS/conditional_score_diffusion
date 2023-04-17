@@ -29,7 +29,7 @@ def get_config():
   training.encoder_checkpoint_path = None #if set to None, we use the last checkpoint
 
   training.conditioning_approach = 'sr3'
-  training.batch_size = 32
+  training.batch_size = 256
   training.t_batch_size = 1
   training.num_nodes = 1
   training.gpus = 1
