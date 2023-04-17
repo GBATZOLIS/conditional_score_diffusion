@@ -107,6 +107,7 @@ def get_config():
 
   # model
   config.model = model = ml_collections.ConfigDict()
+  model.use_config_translator = False
   model.checkpoint_path = None
   model.sigma_min = 0.01
   model.sigma_max = 50

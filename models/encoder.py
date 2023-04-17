@@ -106,7 +106,12 @@ class Encoder(pl.LightningModule):
 class DDPMEncoder(pl.LightningModule):
   def __init__(self, config):
     super().__init__()
-    config = config_translator(config, 'time_dependent_DDPM_encoder')
+    if hasattr(config.model, 'use_config_translator'):
+      if config.model.use_config_translator:
+        config = config_translator(config, 'time_dependent_DDPM_encoder')
+    else:
+      config = config_translator(config, 'time_dependent_DDPM_encoder')
+      
     #encoder extra settings
     self.latent_dim = latent_dim = config.data.latent_dim
     self.variational = True
