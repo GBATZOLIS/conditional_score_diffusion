@@ -23,7 +23,7 @@ def get_config():
   training.prior_checkpoint_path = None
   training.encoder_only = True
   training.t_dependent = True
-  
+
   #correction settings
   training.latent_correction = True
   training.encoder_checkpoint_path = None #if set to None, we use the last checkpoint
