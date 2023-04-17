@@ -65,7 +65,7 @@ def get_config():
   encoder.num_res_blocks = 2
   encoder.attn_resolutions = (16,)
   encoder.resamp_with_conv = True
-  encoder.conditional = False
+  encoder.time_conditional = False
   encoder.init_scale = 0.
   encoder.embedding_type = 'positional'
   encoder.conv_size = 3
@@ -87,7 +87,7 @@ def get_config():
   decoder.num_res_blocks = 2
   decoder.attn_resolutions = (16,)
   decoder.resamp_with_conv = True
-  decoder.conditional = False
+  decoder.time_conditional = False
   decoder.init_scale = 0.
   decoder.embedding_type = 'positional'
   decoder.conv_size = 3

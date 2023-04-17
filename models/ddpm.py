@@ -93,7 +93,7 @@ class DDPM(pl.LightningModule):
     self.all_resolutions = all_resolutions = [config.data.effective_image_size // (2 ** i) for i in range(num_resolutions)] #80,40,20,10
 
     AttnBlock = functools.partial(layers.AttnBlock)
-    self.conditional = conditional = config.model.conditional
+    self.conditional = conditional = config.model.time_conditional
     ResnetBlock = functools.partial(ResnetBlockDDPM, act=act, temb_dim=4 * nf, dropout=dropout)
     if conditional:
       # Condition on noise levels.

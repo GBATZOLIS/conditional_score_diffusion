@@ -105,7 +105,7 @@ def get_config():
   model.num_res_blocks = 2
   model.attn_resolutions = (16,)
   model.resamp_with_conv = True
-  model.conditional = True
+  model.time_conditional = True
 
   # optimization
   config.optim = optim = ml_collections.ConfigDict()

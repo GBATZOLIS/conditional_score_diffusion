@@ -107,7 +107,7 @@ def get_config():
   model.num_res_blocks = 2
   model.attn_resolutions = (24, 12, 6)
   model.resamp_with_conv = True
-  model.conditional = True
+  model.time_conditional = True
   model.conv_size = 3
   model.input_channels = data.num_channels
   model.output_channels = data.num_channels

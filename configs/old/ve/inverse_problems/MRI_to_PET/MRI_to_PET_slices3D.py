@@ -112,7 +112,7 @@ def get_config():
   model.num_res_blocks = 2
   model.attn_resolutions = () #(24, 12, 6) -> attention is not supported for ddpm3D yet.
   model.resamp_with_conv = False #code modifications needed in the downsample and upsample functions to make this True.
-  model.conditional = True
+  model.time_conditional = True
   model.conv_size = 3
   model.input_channels = data.num_channels
   model.output_channels = data.num_channels
