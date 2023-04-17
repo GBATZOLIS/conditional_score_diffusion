@@ -132,7 +132,11 @@ class DDPMEncoder(pl.LightningModule):
     self.all_resolutions = all_resolutions = [config.data.effective_image_size // (2 ** i) for i in range(num_resolutions)] #80,40,20,10
 
     AttnBlock = functools.partial(layers.AttnBlock)
-    self.time_conditional = time_conditional = config.model.time_conditional
+    if hasattr(config.model, 'time_conditional'):
+      self.time_conditional = time_conditional = config.model.time_conditional
+    else:
+      self.time_conditional = time_conditional = config.model.conditional
+
     ResnetBlock = functools.partial(ResnetBlockDDPM, act=act, temb_dim=4 * nf, dropout=dropout)
 
 
