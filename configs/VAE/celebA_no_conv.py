@@ -55,42 +55,24 @@ def get_config():
 
   # encoder model
   config.encoder = encoder = ml_collections.ConfigDict()
-  encoder.name = 'time_dependent_DDPM_encoder'
-
-  model.checkpoint_path = None
-  model.sigma_min = 0.01
-  model.sigma_max = 50
-  model.num_scales = 1000
-  model.beta_min = 0.1
-  model.beta_max = 20.
-  model.dropout = 0.
-  model.embedding_type = 'fourier'
-
-  model.unconditional_score_model_name = 'ddpm'
-  model.name = 'ddpm_mirror_decoder'
-  model.input_channels = data.num_channels
-  model.output_channels = data.num_channels
-  model.scale_by_sigma = True
-  model.ema_rate = 0.9999
-  model.normalization = 'GroupNorm'
-  model.nonlinearity = 'swish'
-  model.nf = 128
-  model.ch_mult = (1, 1, 2, 2, 3)
-  model.num_res_blocks = 2
-  model.attn_resolutions = (16,)
-  model.resamp_with_conv = True
-  model.conditional = False
-  model.fir = True
-  model.fir_kernel = [1, 3, 3, 1]
-  model.skip_rescale = True
-  model.resblock_type = 'biggan'
-  model.progressive = 'none'
-  model.progressive_input = 'residual'
-  model.progressive_combine = 'sum'
-  model.attention_type = 'ddpm'
-  model.init_scale = 0.
-  model.fourier_scale = 16
-  model.conv_size = 3
+  encoder.name = 'half_U_encoder_no_conv'
+  encoder.scale_by_sigma = False
+  encoder.ema_rate = 0.9999
+  encoder.dropout = 0.0
+  encoder.normalization = 'GroupNorm'
+  encoder.nonlinearity = model.nonlinearity
+  encoder.nf = 128
+  encoder.ch_mult = (1, 1, 2, 2, 3)
+  encoder.num_res_blocks = 2
+  encoder.attn_resolutions = (16,)
+  encoder.resamp_with_conv = True
+  encoder.conditional = False
+  encoder.init_scale = 0.
+  encoder.embedding_type = 'positional'
+  encoder.conv_size = 3
+  encoder.input_channels = data.num_channels
+  encoder.output_channels = 128
+  encoder.latent_dim = model.latent_dim
 
 
   # decoder model

@@ -8,7 +8,8 @@ from pathlib import Path
 configs = [
             #'configs/VAE/celebA.py',
             #'configs/VAE/cifar.py',
-            'configs/VAE/celebA_no_conv.py'
+            #'configs/VAE/celebA_no_conv.py'
+            'configs/VAE/cifar_simple.py'
         ]
            
 

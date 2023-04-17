@@ -120,7 +120,7 @@ def get_config():
   model.num_res_blocks = 3
   model.attn_resolutions = (20, 10)
   model.resamp_with_conv = True
-  model.conditional = True
+  model.time_conditional = True
   model.conv_size = 3
 
   # optimization

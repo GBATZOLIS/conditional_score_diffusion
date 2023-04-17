@@ -130,7 +130,7 @@ def get_config():
   model.num_res_blocks = 3
   model.attn_resolutions = (16,)
   model.resamp_with_conv = True
-  model.conditional = True
+  model.time_conditional = True
   model.fir = False
   model.fir_kernel = [1, 3, 3, 1]
   model.skip_rescale = True

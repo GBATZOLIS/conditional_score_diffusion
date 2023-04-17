@@ -17,7 +17,7 @@ class VAE(pl.LightningModule):
             'simple_encoder': Encoder,
             'simple_decoder': MirrorDecoder,
             'half_U_encoder' : HalfUEncoder,
-            'time_dependent_DDPM_encoder': DDPMEncoder,
+            'half_U_encoder_no_conv': DDPMEncoder,
             'half_U_decoder': HalfUDecoder,
             'half_U_decoder_no_conv': HalfUDecoderNoConv
         }

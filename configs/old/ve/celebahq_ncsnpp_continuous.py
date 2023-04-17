@@ -79,7 +79,7 @@ def get_config():
   model.attn_resolutions = (16,)
   model.dropout = 0.
   model.resamp_with_conv = True
-  model.conditional = True
+  model.time_conditional = True
   model.fir = True
   model.fir_kernel = [1, 3, 3, 1]
   model.skip_rescale = True
