@@ -125,7 +125,7 @@ def create_model(config):
   return score_model
 
 def load_encoder(base_config):
-  encoder_log_name = 'only_encoder_VAE_KLweight_%s' % base_config.training.kl_weight
+  encoder_log_name = base_config.encoder_log_name
   encoder_config_path = os.path.join(base_config.logging.log_path, encoder_log_name, 'config.pkl')
   if os.path.exists(encoder_config_path):
     with open(encoder_config_path, 'rb') as file:
