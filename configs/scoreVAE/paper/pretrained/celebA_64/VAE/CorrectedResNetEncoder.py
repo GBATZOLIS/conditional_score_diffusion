@@ -10,7 +10,7 @@ def get_config():
   #logging
   config.logging = logging = ml_collections.ConfigDict()
   logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/celebA_64/'
-  logging.encoder_log_name = 'ResNetEncoder_VAE_KLweight_0.01'
+  logging.encoder_log_name = 'only_ResNetEncoder_VAE_KLweight_0.01'
   logging.log_name = 'corrected' + '_' + logging.encoder_log_name
   logging.top_k = 3
   logging.every_n_epochs = 1000
