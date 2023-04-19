@@ -29,7 +29,7 @@ def get_config():
   training.batch_size = 256
   training.t_batch_size = 1
   training.num_nodes = 1
-  training.gpus = 0
+  training.gpus = 1
   training.accelerator = None if training.gpus == 1 else 'ddp'
   training.accumulate_grad_batches = 1
   training.workers = 4*training.gpus
@@ -105,7 +105,7 @@ def get_config():
   # model
   config.model = model = ml_collections.ConfigDict()
   model.use_config_translator = False
-  model.checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/cifar10/corrected_only_encoder_VAE_KLweight_0.01/checkpoints/best/last.ckpt'
+  model.checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/cifar10/corrected_only_encoder_VAE_KLweight_0.01/checkpoints/best/epoch=1341--eval_loss_epoch=834.183.ckpt'
   model.sigma_min = 0.01
   model.sigma_max = 50
   model.num_scales = 1000
