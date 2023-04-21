@@ -169,8 +169,6 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
                                                           encoder_only=self.config.training.encoder_only,
                                                           t_dependent=self.config.training.t_dependent)
         if batch_idx == 0:
-            self.lpips_distance_fn = lpips.LPIPS(net='vgg').to(self.device)
-
             #save the first batch and its reconstruction
             log_path = self.config.logging.log_path
             log_name = self.config.logging.log_name
@@ -194,6 +192,7 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
                 a /= max_a - min_a
                 torchvision.utils.save_image(a, os.path.join(reconstruction_save_path,'{}.png'.format(i+1)))
 
+        self.lpips_distance_fn = lpips.LPIPS(net='vgg').to(self.device)
         avg_lpips_score = torch.mean(self.lpips_distance_fn(reconstruction.to(self.device), batch))
 
         difference = torch.flatten(reconstruction, start_dim=1)-torch.flatten(batch, start_dim=1)
