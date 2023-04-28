@@ -140,7 +140,7 @@ def get_config():
   model.encoder_input_channels = data.num_channels
   model.encoder_latent_dim = data.latent_dim
   model.encoder_base_channel_size = 64
-  model.encoder_split_output=False
+  model.encoder_split_output=True
   
   '''
   config.encoder = encoder = ml_collections.ConfigDict()
