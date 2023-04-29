@@ -135,8 +135,8 @@ class DDPMEncoder(pl.LightningModule):
     self.all_resolutions = all_resolutions = [config.data.effective_image_size // (2 ** i) for i in range(num_resolutions)] #80,40,20,10
 
     AttnBlock = functools.partial(layers.AttnBlock)
-    if hasattr(config.model, 'time_conditional'):
-      self.time_conditional = time_conditional = config.model.time_conditional
+    if hasattr(config.model, 'encoder_time_conditional'):
+      self.time_conditional = time_conditional = config.model.encoder_time_conditional
     else:
       self.time_conditional = time_conditional = config.model.conditional
 
@@ -155,7 +155,7 @@ class DDPMEncoder(pl.LightningModule):
       modules = []
 
     self.centered = config.data.centered
-    input_channels = config.model.input_channels
+    input_channels = 3 #config.model.input_channels
     #output_channels = config.model.output_channels
 
     # ddpm_conv3x3
