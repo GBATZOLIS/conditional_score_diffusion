@@ -6,7 +6,7 @@ import numpy as np
 import torch as th
 from torch import nn
 import torch.nn.functional as F
-from choices import *
+from .BeatGANs_choices import *
 from .config_base import BaseConfig
 from .BeatGANsblocks import *
 from . import utils
@@ -281,11 +281,13 @@ class BeatGANsUNetModel(nn.Module):
 
         h = h.type(x.dtype)
         pred = self.out(h)
-        return Return(pred=pred)
+        return pred
+        #return Return(pred=pred)
 
-
+'''
 class Return(NamedTuple):
     pred: th.Tensor
+'''
 
 
 '''

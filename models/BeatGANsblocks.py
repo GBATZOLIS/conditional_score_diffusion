@@ -5,7 +5,7 @@ from numbers import Number
 
 import torch as th
 import torch.nn.functional as F
-from choices import *
+from .BeatGANs_choices import *
 from .config_base import BaseConfig
 from torch import nn
 

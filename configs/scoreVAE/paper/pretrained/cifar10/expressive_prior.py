@@ -9,8 +9,8 @@ def get_config():
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/FFHQ_128/'
-  logging.log_name = 'prior'
+  logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/cifar10/' #'/Users/gbatz97/Desktop/score-based-modelling/projects/scoreVAE/debug/experiments/cifar10'
+  logging.log_name = 'BeatGANs_prior'
   logging.top_k = 3
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
@@ -82,17 +82,17 @@ def get_config():
 
   # data
   config.data = data = ml_collections.ConfigDict()
-  data.base_dir = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/datasets'
-  data.dataset = 'celebA-HQ-160'
-  data.datamodule = 'unpaired_PKLDataset'
+  data.base_dir = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/datasets' #'/Users/gbatz97/Desktop/score-based-modelling/projects/scoreVAE/debug/datasets' 
+  data.dataset = 'cifar10'
+  data.datamodule = data.dataset
   data.return_labels = False
   data.use_data_mean = False
   data.create_dataset = False
   data.split = [0.8, 0.1, 0.1]
-  data.image_size = 128
+  data.image_size = 32
   data.effective_image_size = data.image_size
   data.shape = [3, data.image_size, data.image_size]
-  data.latent_dim = 512
+  data.latent_dim = 384
   data.centered = False
   data.use_flip = False
   data.crop = False
@@ -136,7 +136,7 @@ def get_config():
   model.time_embed_channels: int = None
   # dropout applies to the resblocks (on feature maps)
   model.dropout: float = 0.1
-  model.channel_mult = (1, 1, 2, 3, 4)
+  model.channel_mult = (1, 1, 2, 3)
   model.input_channel_mult = None
   model.conv_resample: bool = True
   # always 2 = 2d conv
