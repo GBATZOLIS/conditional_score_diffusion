@@ -10,13 +10,13 @@ from .BeatGANs_choices import *
 from .config_base import BaseConfig
 from .BeatGANsblocks import *
 from . import utils
-
+import pytorch_lightning as pl
 from .BeatGANs_nn import (conv_nd, linear, normalization, timestep_embedding,
                  torch_checkpoint, zero_module)
 
 
 @utils.register_model(name='BeatGANsUNetModel')
-class BeatGANsUNetModel(nn.Module):
+class BeatGANsUNetModel(pl.LightningModule):
     def __init__(self, config):
         super().__init__()
         self.conf = config.model
