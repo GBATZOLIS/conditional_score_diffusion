@@ -24,7 +24,7 @@ class BeatGANsUNetModel(pl.LightningModule):
         if self.conf.num_heads_upsample == -1:
             self.num_heads_upsample = self.conf.num_heads
 
-        self.dtype = th.float32
+        #self.dtype = th.float32
 
         self.time_emb_channels = self.conf.time_embed_channels or self.conf.model_channels
         self.time_embed = nn.Sequential(
