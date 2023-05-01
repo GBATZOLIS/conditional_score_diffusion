@@ -71,20 +71,11 @@ class MNISTDataset(datasets.MNIST):
         else:
             return x
 
-def load_file_paths(dataset_base_dir, data_type=None):
-    if data_type is None:
-        listOfFiles = [os.path.join(dataset_base_dir, f) for f in os.listdir(dataset_base_dir)]
-    else:
-        listOfFiles = []
-        for f in os.listdir(dataset_base_dir):
-            if f.endswith(data_type):
-                listOfFiles.append(os.path.join(dataset_base_dir, f))
+def load_file_paths(dataset_base_dir):
+    listOfFiles = [os.path.join(dataset_base_dir, f) for f in os.listdir(dataset_base_dir) if os.path.isfile(os.path.join(dataset_base_dir, f))]
     return listOfFiles
 
-
-
 class MNISTLatentDataset(MNISTDataset):
-
     def __init__(self, config) -> None:
         super().__init__(config)
         dataset_path = os.path.join(config.data.base_dir, 'MNIST_latents')
@@ -127,11 +118,6 @@ class MNISTLatentDataset(MNISTDataset):
         #z = self.autoencoder.encode(x.unsqueeze(0)).squeeze()
         return x, z
 
-
-
-
-
-
 #the code should become more general for the ImageDataset class.
 class ImageDataset(Dataset):
     def __init__(self, config):
@@ -155,7 +141,7 @@ class ImageDataset(Dataset):
                 [transforms.ToTensor(),
                 transforms.Resize(size=(res_x, res_y))])
             
-        self.image_paths = load_file_paths(path, data_type='jpg')
+        self.image_paths = load_file_paths(path)
 
     def __getitem__(self, index):
         image = Image.open(self.image_paths[index]).convert('RGB')
