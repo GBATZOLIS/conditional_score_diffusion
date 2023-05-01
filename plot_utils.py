@@ -108,18 +108,19 @@ def plot_log_energy(score_model, t=0.0, X=None, Y=None):
     return Z
 
 
-def plot_spectrum(svd, return_tensor=False, mode='first'):
+def plot_spectrum(svd, return_tensor=False, mode='first', title='Score Spectrum'):
     singular_values = extract_sing_vals(svd, mode)
     sing_vals = singular_values[0]
     
     plt.rcParams.update({'font.size': 16})
     plt.figure(figsize=(15,10))
     plt.grid(alpha=0.5)
-    plt.title('Score Spectrum')
+    plt.title(title)
     plt.xticks(np.arange(0, len(sing_vals)+1, 10))
     for sing_vals in singular_values:
         #plt.bar(list(range(1, len(sing_vals)+1)),sing_vals)
         plt.plot(list(range(1, len(sing_vals)+1)),sing_vals)
+
     if return_tensor:
         buf = io.BytesIO()
         plt.savefig(buf, format='jpeg')
@@ -128,6 +129,8 @@ def plot_spectrum(svd, return_tensor=False, mode='first'):
         image = transforms.ToTensor()(image)
         plt.close()
         return image
+    else:
+        return plt.gcf()
 
 def plot_norms(samples, return_tensor=False):
     norms=torch.linalg.norm(samples, dim=1).cpu().detach().numpy()
