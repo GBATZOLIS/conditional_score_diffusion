@@ -106,7 +106,10 @@ class Encoder(pl.LightningModule):
 class DDPMEncoder(pl.LightningModule):
   def __init__(self, config):
     super().__init__()
-    config = config_translator(config, 'time_dependent_DDPM_encoder')
+    if hasattr(config.model, 'use_config_translator'):
+      if config.model.use_config_translator:
+        config = config_translator(config, 'time_dependent_DDPM_encoder')
+
     #encoder extra settings
     self.latent_dim = latent_dim = config.data.latent_dim
     self.variational = True
@@ -132,7 +135,11 @@ class DDPMEncoder(pl.LightningModule):
     self.all_resolutions = all_resolutions = [config.data.effective_image_size // (2 ** i) for i in range(num_resolutions)] #80,40,20,10
 
     AttnBlock = functools.partial(layers.AttnBlock)
-    self.time_conditional = time_conditional = config.model.time_conditional
+    if hasattr(config.model, 'encoder_time_conditional'):
+      self.time_conditional = time_conditional = config.model.encoder_time_conditional
+    else:
+      self.time_conditional = time_conditional = config.model.conditional
+
     ResnetBlock = functools.partial(ResnetBlockDDPM, act=act, temb_dim=4 * nf, dropout=dropout)
 
 
@@ -148,7 +155,7 @@ class DDPMEncoder(pl.LightningModule):
       modules = []
 
     self.centered = config.data.centered
-    input_channels = config.model.input_channels
+    input_channels = 3 #config.model.input_channels
     #output_channels = config.model.output_channels
 
     # ddpm_conv3x3

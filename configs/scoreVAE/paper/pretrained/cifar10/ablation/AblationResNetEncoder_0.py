@@ -9,22 +9,19 @@ def get_config():
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/cifar10/'
-  logging.encoder_log_name = 'only_encoder_VAE_KLweight_0.01'
-  logging.log_name = 'corrected' + '_' + logging.encoder_log_name
+  logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/cifar10/' #'/Users/gbatz97/Desktop/score-based-modelling/projects/scoreVAE/debug/experiments/cifar10/ablation'
+  logging.log_name = 'ablation_VAE_KLweight_0'
   logging.top_k = 3
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
 
   # training
   config.training = training = ml_collections.ConfigDict()
-  config.training.lightning_module = 'corrected_encoder_only_pretrained_score_vae'
-  training.use_pretrained = True
-  training.prior_checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/cifar10/prior/checkpoints/best/epoch=1603--eval_loss_epoch=0.014.ckpt'
+  config.training.lightning_module = 'score_vae'
+  training.use_pretrained = False
+  training.prior_checkpoint_path = None
   training.encoder_only = True
   training.t_dependent = True
-  training.latent_correction = True
-  training.encoder_checkpoint_path = None
   training.conditioning_approach = 'sr3'
   training.batch_size = 256
   training.t_batch_size = 1
@@ -41,7 +38,7 @@ def get_config():
   training.eval_freq = 2500
   #------              --------
   
-  training.visualisation_freq = 100
+  training.visualisation_freq = 50
   training.visualization_callback = None
   training.show_evolution = False
 
@@ -53,7 +50,7 @@ def get_config():
   ##new related to the training of Score VAE
   training.variational = True
   training.cde_loss = False #only difference -> this allows us to use the VAE loss
-  training.kl_weight = 0.01 #KL penalty
+  training.kl_weight = 0 #KL penalty
 
   # validation
   config.validation = validation = ml_collections.ConfigDict()
@@ -85,7 +82,7 @@ def get_config():
 
   # data
   config.data = data = ml_collections.ConfigDict()
-  data.base_dir = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/datasets'
+  data.base_dir = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/datasets' #'/Users/gbatz97/Desktop/score-based-modelling/projects/scoreVAE/debug/datasets' 
   data.dataset = 'cifar10'
   data.datamodule = data.dataset
   data.return_labels = False
@@ -104,8 +101,7 @@ def get_config():
 
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.use_config_translator = False
-  model.checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/cifar10/corrected_only_encoder_VAE_KLweight_0.01/checkpoints/best/last.ckpt'
+  model.checkpoint_path = None
   model.sigma_min = 0.01
   model.sigma_max = 50
   model.num_scales = 1000
@@ -140,18 +136,50 @@ def get_config():
   model.fourier_scale = 16
   model.conv_size = 3
 
-  model.encoder_name = 'time_dependent_simple_encoder'
+  model.encoder_name = 'time_dependent_DDPM_encoder'
   model.encoder_input_channels = data.num_channels
   model.encoder_latent_dim = data.latent_dim
+  model.encoder_split_output=True
+  model.encoder_time_conditional = False
   model.encoder_base_channel_size = 64
-  model.encoder_split_output=False
-
+  
+  '''
+  config.encoder = encoder = ml_collections.ConfigDict()
+  encoder.name = model.encoder_name
+  encoder.scale_by_sigma = False
+  encoder.ema_rate = 0.9999
+  encoder.dropout = 0.1
+  encoder.normalization = 'GroupNorm'
+  encoder.nonlinearity = model.nonlinearity
+  encoder.nf = 128
+  encoder.ch_mult = (1, 2, 2, 2)
+  encoder.num_res_blocks = 4
+  encoder.attn_resolutions = (16,)
+  encoder.resamp_with_conv = True
+  encoder.conditional = False
+  encoder.fir = False
+  encoder.fir_kernel = [1, 3, 3, 1]
+  encoder.skip_rescale = True
+  encoder.resblock_type = 'biggan'
+  encoder.progressive = 'none'
+  encoder.progressive_input = 'none'
+  encoder.progressive_combine = 'sum'
+  encoder.attention_type = 'ddpm'
+  encoder.init_scale = 0.
+  encoder.embedding_type = 'positional'
+  encoder.fourier_scale = 16
+  encoder.conv_size = 3
+  encoder.input_channels = data.num_channels
+  encoder.output_channels = 128
+  encoder.latent_dim = data.latent_dim
+  encoder.split_output = False
+  '''
 
   # optimization
   config.optim = optim = ml_collections.ConfigDict()
   optim.weight_decay = 0
   optim.optimizer = 'Adam'
-  optim.lr = 2e-4
+  optim.lr = 1e-4
   optim.beta1 = 0.9
   optim.eps = 1e-8
   optim.warmup = 2500

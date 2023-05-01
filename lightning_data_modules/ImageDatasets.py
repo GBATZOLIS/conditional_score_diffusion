@@ -72,13 +72,10 @@ class MNISTDataset(datasets.MNIST):
             return x
 
 def load_file_paths(dataset_base_dir):
-    listOfFiles = [os.path.join(dataset_base_dir, f) for f in os.listdir(dataset_base_dir)]
+    listOfFiles = [os.path.join(dataset_base_dir, f) for f in os.listdir(dataset_base_dir) if os.path.isfile(os.path.join(dataset_base_dir, f))]
     return listOfFiles
 
-
-
 class MNISTLatentDataset(MNISTDataset):
-
     def __init__(self, config) -> None:
         super().__init__(config)
         dataset_path = os.path.join(config.data.base_dir, 'MNIST_latents')
@@ -120,11 +117,6 @@ class MNISTLatentDataset(MNISTDataset):
         z = self.latents[index]
         #z = self.autoencoder.encode(x.unsqueeze(0)).squeeze()
         return x, z
-
-
-
-
-
 
 #the code should become more general for the ImageDataset class.
 class ImageDataset(Dataset):
@@ -186,8 +178,10 @@ class ImageDataModule(pl.LightningDataModule):
         
         print(len(data))
         l=len(data)
+        torch.manual_seed(0)
         self.train_data, self.valid_data, self.test_data = random_split(data, [int(self.split[0]*l), int(self.split[1]*l), l - int(self.split[0]*l) - int(self.split[1]*l)]) 
-    
+        torch.manual_seed(torch.initial_seed())
+
     def train_dataloader(self):
         return DataLoader(self.train_data, batch_size = self.train_batch, num_workers=self.train_workers, shuffle=True) 
   
