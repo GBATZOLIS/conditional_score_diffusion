@@ -71,8 +71,14 @@ class MNISTDataset(datasets.MNIST):
         else:
             return x
 
-def load_file_paths(dataset_base_dir):
-    listOfFiles = [os.path.join(dataset_base_dir, f) for f in os.listdir(dataset_base_dir)]
+def load_file_paths(dataset_base_dir, data_type=None):
+    if data_type is None:
+        listOfFiles = [os.path.join(dataset_base_dir, f) for f in os.listdir(dataset_base_dir)]
+    else:
+        listOfFiles = []
+        for f in os.listdir(dataset_base_dir):
+            if f.endswith(data_type):
+                listOfFiles.append(os.path.join(dataset_base_dir, f))
     return listOfFiles
 
 
@@ -149,7 +155,7 @@ class ImageDataset(Dataset):
                 [transforms.ToTensor(),
                 transforms.Resize(size=(res_x, res_y))])
             
-        self.image_paths = load_file_paths(path)
+        self.image_paths = load_file_paths(path, data_type='jpg')
 
     def __getitem__(self, index):
         image = Image.open(self.image_paths[index]).convert('RGB')
@@ -186,8 +192,10 @@ class ImageDataModule(pl.LightningDataModule):
         
         print(len(data))
         l=len(data)
+        torch.manual_seed(0)
         self.train_data, self.valid_data, self.test_data = random_split(data, [int(self.split[0]*l), int(self.split[1]*l), l - int(self.split[0]*l) - int(self.split[1]*l)]) 
-    
+        torch.manual_seed(torch.initial_seed())
+
     def train_dataloader(self):
         return DataLoader(self.train_data, batch_size = self.train_batch, num_workers=self.train_workers, shuffle=True) 
   
