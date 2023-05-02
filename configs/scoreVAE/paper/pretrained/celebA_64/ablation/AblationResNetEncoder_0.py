@@ -42,7 +42,7 @@ def get_config():
   training.visualization_callback = None
   training.show_evolution = False
 
-  training.likelihood_weighting = False
+  training.likelihood_weighting = True
   training.continuous = True
   training.reduce_mean = True 
   training.sde = 'vpsde'

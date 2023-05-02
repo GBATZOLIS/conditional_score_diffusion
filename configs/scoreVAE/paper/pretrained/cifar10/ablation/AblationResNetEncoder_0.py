@@ -23,7 +23,7 @@ def get_config():
   training.encoder_only = True
   training.t_dependent = True
   training.conditioning_approach = 'sr3'
-  training.batch_size = 32
+  training.batch_size = 256
   training.t_batch_size = 1
   training.num_nodes = 1
   training.gpus = 1
@@ -42,7 +42,7 @@ def get_config():
   training.visualization_callback = None
   training.show_evolution = False
 
-  training.likelihood_weighting = False #irrelevant for this config
+  training.likelihood_weighting = True #irrelevant for this config
   training.continuous = True
   training.reduce_mean = True 
   training.sde = 'vpsde'
