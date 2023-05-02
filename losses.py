@@ -94,7 +94,8 @@ def get_scoreVAE_loss_fn(sde, train, variational=False, likelihood_weighting=Tru
         mean_z, log_var_z = encoder(x)
         y = mean_z + torch.sqrt(log_var_z.exp()) * torch.randn_like(mean_z)
 
-        kl_loss = -0.5 * torch.sum(1 + log_var_z - mean_z ** 2 - log_var_z.exp(), dim=1).mean()
+        if kl_weight > 1e-9:
+          kl_loss = -0.5 * torch.sum(1 + log_var_z - mean_z ** 2 - log_var_z.exp(), dim=1).mean()
 
         #t_losses = torch.zeros(size=(x.size(0),)).type_as(x)
         #for _ in range(t_batch_size):
@@ -117,8 +118,11 @@ def get_scoreVAE_loss_fn(sde, train, variational=False, likelihood_weighting=Tru
 
         #t_losses+=losses
         #rec_loss = torch.mean(t_losses)/t_batch_size
-        
-        loss = rec_loss + kl_weight * kl_loss
+        if kl_weight > 1e-9:
+          loss = rec_loss + kl_weight * kl_loss
+        else:
+          loss = rec_loss
+
         return loss
       
     else:
