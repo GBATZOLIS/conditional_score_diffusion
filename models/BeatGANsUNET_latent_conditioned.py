@@ -7,6 +7,7 @@ import torch
 from torch import Tensor
 from torch.nn.functional import silu
 from typing import NamedTuple
+from . import utils
 
 @utils.register_model(name='BeatGANsLatentScoreModel')
 class BeatGANsAutoencModel(BeatGANsUNetModel):

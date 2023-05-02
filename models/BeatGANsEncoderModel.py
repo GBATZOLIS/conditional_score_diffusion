@@ -13,6 +13,7 @@ from . import utils
 import pytorch_lightning as pl
 from .BeatGANs_nn import (conv_nd, linear, normalization, timestep_embedding,
                  torch_checkpoint, zero_module)
+from . import utils
 
 @utils.register_model(name='BeatGANsEncoderModel')
 class BeatGANsEncoderModel(nn.Module):
