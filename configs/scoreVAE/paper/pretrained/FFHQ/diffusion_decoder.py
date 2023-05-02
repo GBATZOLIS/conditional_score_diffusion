@@ -162,6 +162,7 @@ def get_config():
   model.resnet_use_zero_module: bool = True
   # gradient checkpoint the attention operation
   model.attn_checkpoint: bool = False
+  model.resnet_two_cond = True
 
 
   #extra encoder settings
