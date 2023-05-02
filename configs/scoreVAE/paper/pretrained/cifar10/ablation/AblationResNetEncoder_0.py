@@ -48,9 +48,9 @@ def get_config():
   training.sde = 'vpsde'
 
   ##new related to the training of Score VAE
-  training.variational = True
-  training.cde_loss = False #only difference -> this allows us to use the VAE loss
-  training.kl_weight = 0 #KL penalty
+  training.variational = False
+  training.cde_loss = True #only difference -> this allows us to use the VAE loss
+  training.kl_weight = 0. #KL penalty
 
   # validation
   config.validation = validation = ml_collections.ConfigDict()

@@ -48,8 +48,8 @@ def get_config():
   training.sde = 'vpsde'
 
   ##new related to the training of Score VAE
-  training.variational = True
-  training.cde_loss = False
+  training.variational = False
+  training.cde_loss = True
   training.kl_weight = 0.
 
   # validation
