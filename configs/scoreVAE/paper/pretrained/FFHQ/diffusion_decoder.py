@@ -167,7 +167,7 @@ def get_config():
   #extra encoder settings
   model.encoder_name = 'BeatGANsEncoderModel'
   model.enc_out_channels = 2*data.latent_dim
-  model.enc_attn_resolutions = None
+  model.enc_attn_resolutions = []
   model.enc_pool = 'depthconv'
   model.enc_num_res_blocks = 2
   model.enc_channel_mult = (1, 1, 2, 3, 4, 4)
