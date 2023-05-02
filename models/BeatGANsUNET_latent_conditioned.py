@@ -8,7 +8,9 @@ from torch import Tensor
 from torch.nn.functional import silu
 from typing import NamedTuple
 from . import utils
-
+from .BeatGANs_nn import (conv_nd, linear, normalization, timestep_embedding,
+                 torch_checkpoint, zero_module)
+                 
 @utils.register_model(name='BeatGANsLatentScoreModel')
 class BeatGANsAutoencModel(BeatGANsUNetModel):
     def __init__(self, config):
