@@ -19,11 +19,11 @@ def get_config():
   config.training = training = ml_collections.ConfigDict()
   config.training.lightning_module = 'encoder_only_pretrained_score_vae'
   training.use_pretrained = True
-  training.prior_checkpoint_path = None #if set to None, we should the last checkpoint.
+  training.prior_checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/FFHQ_128/prior/checkpoints/best/epoch=159--eval_loss_epoch=0.007.ckpt' #if set to None, we should the last checkpoint.
   training.encoder_only = True
   training.t_dependent = True
   training.conditioning_approach = 'sr3'
-  training.batch_size = 64
+  training.batch_size = 12 #64
   training.t_batch_size = 1
   training.num_nodes = 1
   training.gpus = 1
