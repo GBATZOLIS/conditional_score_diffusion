@@ -112,7 +112,7 @@ class DDPMEncoder(pl.LightningModule):
 
     #encoder extra settings
     self.latent_dim = latent_dim = config.data.latent_dim
-    self.variational = True
+    self.variational = config.training.variational
     if hasattr(config.model, 'encoder_split_output'):
       self.split_output = config.model.encoder_split_output
     else:
