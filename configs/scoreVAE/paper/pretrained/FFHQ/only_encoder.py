@@ -173,7 +173,7 @@ def get_config():
   model.enc_num_res_blocks = 2
   model.enc_channel_mult = (1, 1, 2, 3, 4, 4)
   model.enc_grad_checkpoint = False
-  model.encoder_split_output = True
+  model.encoder_split_output = False
   model.latent_dim = data.latent_dim
   model.enc_use_time_condition = True
 
