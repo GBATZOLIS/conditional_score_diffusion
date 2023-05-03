@@ -136,9 +136,9 @@ class DDPMEncoder(pl.LightningModule):
 
     AttnBlock = functools.partial(layers.AttnBlock)
     if hasattr(config.model, 'encoder_time_conditional'):
-      self.time_conditional = time_conditional = config.model.encoder_time_conditional
+      self.conditional = time_conditional = config.model.encoder_time_conditional
     else:
-      self.time_conditional = time_conditional = config.model.time_conditional
+      self.conditional = time_conditional = config.model.time_conditional
 
     ResnetBlock = functools.partial(ResnetBlockDDPM, act=act, temb_dim=4 * nf, dropout=dropout)
 
@@ -187,7 +187,7 @@ class DDPMEncoder(pl.LightningModule):
   def forward(self, x, labels=None):
     modules = self.all_modules
     m_idx = 0
-    if self.time_conditional:
+    if self.conditional:
       # timestep/scale embedding
       timesteps = labels
       temb = layers.get_timestep_embedding(timesteps, self.nf)
