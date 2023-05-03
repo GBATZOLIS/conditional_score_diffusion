@@ -138,7 +138,7 @@ class DDPMEncoder(pl.LightningModule):
     if hasattr(config.model, 'encoder_time_conditional'):
       self.time_conditional = time_conditional = config.model.encoder_time_conditional
     else:
-      self.time_conditional = time_conditional = config.model.conditional
+      self.time_conditional = time_conditional = config.model.time_conditional
 
     ResnetBlock = functools.partial(ResnetBlockDDPM, act=act, temb_dim=4 * nf, dropout=dropout)
 
