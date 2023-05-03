@@ -216,6 +216,40 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
             sampling_shape = [num_samples] +  self.config.data.shape
         sampling_fn = get_sampling_fn(self.config, self.usde, sampling_shape, self.sampling_eps)
         return sampling_fn(self.unconditional_score_model)
+    
+    def interpolate(self, x, num_points):
+        assert x.size(0) == 2
+
+        t0 = torch.zeros(x.shape[0]).type_as(x)
+        latent_distribution_parameters = self.encoder(x, t0)
+        latent_dim = latent_distribution_parameters.size(1)//2
+        mean_y = latent_distribution_parameters[:, :latent_dim]
+        log_var_y = latent_distribution_parameters[:, latent_dim:]
+        y = mean_y + torch.sqrt(log_var_y.exp()) * torch.randn_like(mean_y)
+
+        weights = torch.linspace(0, 1, steps=num_points+2)
+        z = torch.zeros(size=(num_points, y.size(1))).type_as(x)
+        for i in range(weights.size(0)-2):
+            z[i] = torch.lerp(y[0], y[1], weights[i+1])
+        
+        sampling_shape = [z.size(0)]+self.config.data.shape
+        conditional_sampling_fn = get_conditional_sampling_fn(config=self.config, sde=self.sde, 
+                                                              shape=sampling_shape, eps=self.sampling_eps, 
+                                                              predictor='default', corrector='default', 
+                                                              p_steps='default', c_steps='default', snr='default', 
+                                                              denoise='default', use_path=False, 
+                                                              use_pretrained=True, encoder_only=False, t_dependent=True)
+
+        model = {'unconditional_score_model':self.unconditional_score_model,
+                 'encoder': self.encoder}
+        
+        interpolation = conditional_sampling_fn(model, z, False)
+
+        augmented = torch.zeros(size=tuple([num_points+2]+self.config.data.shape))
+        augmented[0] =  x[0]
+        augmented[1:-1] = interpolation
+        augmented[-1] = x[1]
+        return augmented
 
     def encode_n_decode(self, x, show_evolution=False, predictor='default', corrector='default', p_steps='default', \
                      c_steps='default', snr='default', denoise='default', use_pretrained=True, encoder_only=False, t_dependent=True):

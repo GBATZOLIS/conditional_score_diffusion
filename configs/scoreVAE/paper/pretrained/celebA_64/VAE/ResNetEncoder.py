@@ -9,7 +9,7 @@ def get_config():
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/celebA_64/'
+  logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/celebA_64/' #'/Users/gbatz97/Desktop/score-based-modelling/projects/scoreVAE/debug/experiments/celebA_64'
   logging.log_name = 'only_ResNetEncoder_VAE_KLweight_0.01'
   logging.top_k = 3
   logging.every_n_epochs = 1000
@@ -19,7 +19,7 @@ def get_config():
   config.training = training = ml_collections.ConfigDict()
   config.training.lightning_module = 'encoder_only_pretrained_score_vae'
   training.use_pretrained = True
-  training.prior_checkpoint_path = None
+  training.prior_checkpoint_path = None #'/Users/gbatz97/Desktop/score-based-modelling/projects/scoreVAE/debug/experiments/celebA_64/prior/checkpoints/last.ckpt'
   training.encoder_only = True
   training.t_dependent = True
   training.conditioning_approach = 'sr3'
@@ -82,7 +82,7 @@ def get_config():
 
   # data
   config.data = data = ml_collections.ConfigDict()
-  data.base_dir = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/datasets'
+  data.base_dir = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/datasets' #'/Users/gbatz97/Desktop/score-based-modelling/projects/scoreVAE/debug/datasets' 
   data.dataset = 'celebA-HQ-160'
   data.datamodule = 'unpaired_PKLDataset'
   data.return_labels = False
@@ -105,7 +105,7 @@ def get_config():
 
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/celebA_64/only_ResNetEncoder_VAE_KLweight_0.01/checkpoints/best/last.ckpt'
+  model.checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/celebA_64/only_ResNetEncoder_VAE_KLweight_0.01/checkpoints/best/last.ckpt' #'/Users/gbatz97/Desktop/score-based-modelling/projects/scoreVAE/debug/experiments/celebA_64/only_ResNetEncoder_VAE_KLweight_0.01/checkpoints/epoch=332--eval_loss_epoch=5293.512.ckpt' 
   model.sigma_min = 0.01
   model.sigma_max = 50
   model.num_scales = 1000

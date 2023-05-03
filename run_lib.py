@@ -93,9 +93,14 @@ def test(config, log_path, checkpoint_path):
     logger = pl.loggers.TensorBoardLogger(log_path, name='test', version=log_name)
 
     checkpoint_path = config.model.checkpoint_path
+    print('-----')
     pl_module = create_lightning_module(config)
-    pl_module = pl_module.load_from_checkpoint(checkpoint_path)
-    
+    print('------')
+    #print(config.logging.log_path)
+    pl_module = pl_module.load_from_checkpoint(checkpoint_path, config=config)
+    #print(config.logging.log_path)
+    print('------')
+
     trainer = pl.Trainer(gpus=config.training.gpus,
                           num_nodes = config.training.num_nodes,
                           accelerator = config.training.accelerator,
