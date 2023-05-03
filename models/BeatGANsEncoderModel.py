@@ -141,7 +141,7 @@ class BeatGANsEncoderModel(nn.Module):
         :return: an [N x K] Tensor of outputs.
         """
         if self.conf.enc_use_time_condition:
-            emb = self.time_embed(timestep_embedding(t, self.model_channels))
+            emb = self.time_embed(timestep_embedding(t, self.conf.model_channels))
         else:
             emb = None
 
