@@ -139,7 +139,7 @@ def get_config():
   model.encoder_name = 'time_dependent_DDPM_encoder'
   model.encoder_input_channels = data.num_channels
   model.encoder_latent_dim = data.latent_dim
-  model.encoder_split_output=True
+  model.encoder_split_output=False
   model.encoder_time_conditional = False
   model.encoder_base_channel_size = 64
   

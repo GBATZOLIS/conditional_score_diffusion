@@ -10,20 +10,20 @@ def get_config():
   #logging
   config.logging = logging = ml_collections.ConfigDict()
   logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/FFHQ_128/'
-  logging.log_name = 'diffusion_decoder'
+  logging.log_name = 'only_encoder_VAE_KLweight_0.01'
   logging.top_k = 3
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
 
   # training
   config.training = training = ml_collections.ConfigDict()
-  config.training.lightning_module = 'score_vae'
-  training.use_pretrained = False
-  training.prior_checkpoint_path = None
+  config.training.lightning_module = 'encoder_only_pretrained_score_vae'
+  training.use_pretrained = True
+  training.prior_checkpoint_path = None #if set to None, we should the last checkpoint.
   training.encoder_only = True
   training.t_dependent = True
   training.conditioning_approach = 'sr3'
-  training.batch_size = 2 #64
+  training.batch_size = 64
   training.t_batch_size = 1
   training.num_nodes = 1
   training.gpus = 1
@@ -48,9 +48,9 @@ def get_config():
   training.sde = 'vpsde'
 
   ##new related to the training of Score VAE
-  training.variational = False
-  training.cde_loss = True
-  training.kl_weight = 0.
+  training.variational = True
+  training.cde_loss = False
+  training.kl_weight = 0.01
 
   # validation
   config.validation = validation = ml_collections.ConfigDict()
@@ -167,15 +167,15 @@ def get_config():
 
   #extra encoder settings
   model.encoder_name = 'BeatGANsEncoderModel'
-  model.enc_out_channels = data.latent_dim #For stochastic encoder: make this 2*data.latent_dim
+  model.enc_out_channels = 2*data.latent_dim
   model.enc_attn_resolutions = []
   model.enc_pool = 'adaptivenonzero'
   model.enc_num_res_blocks = 2
   model.enc_channel_mult = (1, 1, 2, 3, 4, 4)
   model.enc_grad_checkpoint = False
-  model.encoder_split_output = False #For stochastic encoder: make this True
+  model.encoder_split_output = True
   model.latent_dim = data.latent_dim
-  model.enc_use_time_condition = False
+  model.enc_use_time_condition = True
 
 
 
