@@ -23,7 +23,7 @@ def get_config():
   training.encoder_only = True
   training.t_dependent = True
   training.conditioning_approach = 'sr3'
-  training.batch_size = 32
+  training.batch_size = 16
   training.t_batch_size = 1
   training.num_nodes = 1
   training.gpus = 1
@@ -98,6 +98,10 @@ def get_config():
   data.crop = False
   data.uniform_dequantization = False
   data.num_channels = data.shape[0] #the number of channels the model sees as input.
+
+  #test if we can do inpainting
+  data.mask = 'central' #set it to None for no masking
+
 
   # model
   config.model = model = ml_collections.ConfigDict()
