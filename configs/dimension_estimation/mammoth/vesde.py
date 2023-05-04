@@ -34,6 +34,8 @@ def get_config():
   logging.top_k = 5
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
+  logging.svd_frequency = 1000
+  logging.save_svd = False
 
   # training
   training = config.training
