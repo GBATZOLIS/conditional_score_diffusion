@@ -39,7 +39,7 @@ def get_config():
   #------              --------
   
   training.visualisation_freq = 15
-  training.visualization_callback = ['base']
+  training.visualization_callback = None
   training.show_evolution = False
 
   training.likelihood_weighting = True
