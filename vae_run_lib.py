@@ -6,7 +6,7 @@ sys.path.append(f'{repo_path}/janutils')
 import pytorch_lightning as pl
 from configs.utils import read_config
 from lightning_data_modules.SRFLOWDataset import UnpairedDataModule
-from lightning_data_modules.ImageDatasets import Cifar10DataModule
+from lightning_data_modules.ImageDatasets import Cifar10DataModule, ImageDataModule
 from lightning_modules.VAE import VAE
 from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, LearningRateMonitor
@@ -22,12 +22,7 @@ def train(config):
     model = VAE(config)
     kl_weight = config.model.kl_weight
 
-    if config.data.dataset == 'cifar10':
-        data_module = Cifar10DataModule(config)
-    elif config.data.dataset == 'celeba':
-        data_module = UnpairedDataModule(config)
-    #else:
-        #data_module = ImageDataModule(config)
+    data_module = get_datamodule(config)
         
     data_module.setup()
     train_dataloader = data_module.train_dataloader()
@@ -78,12 +73,7 @@ def train(config):
 
 
 def evaluate(config, eval_path = None):
-    if config.data.dataset == 'cifar10':
-        data_module = Cifar10DataModule(config)
-    elif config.data.dataset == 'celeba':
-        data_module = UnpairedDataModule(config)
-    #else:
-        #data_module = ImageDataModule(config)
+    data_module = get_datamodule(config)
 
     trainer = pl.Trainer(gpus=1)
     if eval_path is None:
@@ -94,6 +84,14 @@ def evaluate(config, eval_path = None):
     return output
 
 
+def get_datamodule(config):
+    if config.data.dataset == 'cifar10':
+        data_module = Cifar10DataModule(config)
+    elif config.data.dataset == 'celeba':
+        data_module = UnpairedDataModule(config)
+    elif config.data.dataset == 'mnist':
+        data_module = ImageDataModule(config)
+    return data_module
 
 
 #config = read_config('configs/VAE/celebA.py')

@@ -53,7 +53,7 @@ def get_config():
 
 # encoder model
   config.encoder = encoder = ml_collections.ConfigDict()
-  encoder.name = 'half_U_encoder'
+  encoder.name = 'half_U_encoder_no_conv'
   encoder.scale_by_sigma = False
   encoder.ema_rate = 0.9999
   encoder.dropout = 0.1
@@ -75,7 +75,7 @@ def get_config():
 
   # decoder model
   config.decoder = decoder = ml_collections.ConfigDict()
-  decoder.name = 'half_U_decoder'
+  decoder.name = 'half_U_decoder_no_conv'
   decoder.scale_by_sigma = False
   decoder.ema_rate = 0.9999
   decoder.dropout = 0.1

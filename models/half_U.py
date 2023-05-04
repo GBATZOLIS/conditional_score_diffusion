@@ -74,7 +74,7 @@ class HalfUEncoder(pl.LightningModule):
     self.all_resolutions = all_resolutions = [config.data.effective_image_size // (2 ** i) for i in range(num_resolutions)] #80,40,20,10
 
     AttnBlock = functools.partial(layers.AttnBlock)
-    self.conditional = conditional = config.encoder.conditional
+    self.conditional = conditional = config.encoder.time_conditional
     ResnetBlock = functools.partial(ResnetBlockDDPM, act=act, temb_dim=4 * nf, dropout=dropout)
     if conditional:
       # Condition on noise levels.
@@ -196,7 +196,7 @@ class HalfUDecoder(pl.LightningModule):
 
 
     AttnBlock = functools.partial(layers.AttnBlock)
-    self.conditional = conditional = config.decoder.conditional
+    self.conditional = conditional = config.decoder.time_conditional
     ResnetBlock = functools.partial(ResnetBlockDDPM, act=act, temb_dim=4 * nf, dropout=dropout)
     if conditional:
       # Condition on noise levels.
@@ -299,7 +299,7 @@ class HalfUDecoderNoConv(pl.LightningModule):
 
 
     AttnBlock = functools.partial(layers.AttnBlock)
-    self.conditional = conditional = config.decoder.conditional
+    self.conditional = conditional = config.decoder.time_conditional
     ResnetBlock = functools.partial(ResnetBlockDDPM, act=act, temb_dim=4 * nf, dropout=dropout)
     if conditional:
       # Condition on noise levels.

@@ -50,11 +50,12 @@ def get_config():
   config.model = model = ml_collections.ConfigDict()
   model.nonlinearity = 'swish'
   model.latent_dim = 512
+  data.latent_dim = model.latent_dim
   model.kl_weight = 0.01
 
   # encoder model
   config.encoder = encoder = ml_collections.ConfigDict()
-  encoder.name = 'half_U_encoder'
+  encoder.name = 'half_U_encoder_no_conv'
   encoder.scale_by_sigma = False
   encoder.ema_rate = 0.9999
   encoder.dropout = 0.0
@@ -76,7 +77,7 @@ def get_config():
 
   # decoder model
   config.decoder = decoder = ml_collections.ConfigDict()
-  decoder.name = 'half_U_decoder'
+  decoder.name = 'half_U_decoder_no_conv'
   decoder.scale_by_sigma = False
   decoder.ema_rate = 0.9999
   decoder.dropout = 0.0
@@ -91,7 +92,7 @@ def get_config():
   decoder.init_scale = 0.
   decoder.embedding_type = 'positional'
   decoder.conv_size = 3
-  decoder.input_channels = encoder.output_channels
+  decoder.input_channels = model.ch_mult[-1] * model.nf
   decoder.output_channels = data.num_channels
   decoder.latent_dim = model.latent_dim
 
