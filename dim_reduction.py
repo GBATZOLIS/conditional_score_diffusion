@@ -132,7 +132,12 @@ def get_manifold_dimension(config, name=None, return_svd=False):
   score_fn = mutils.get_score_fn(sde, score_model, conditional=False, train=False, continuous=True)
   #---- end of setup ----
 
-  num_datapoints = config.get('dim_estimation.num_datapoints', config.logging.svd_points)
+  if hasattr(config, 'dim_estimation.num_datapoints'):
+    num_datapoints = config.dim_estimation.num_datapoints
+  elif hasattr(config, 'logging.svd_points'):
+    num_datapoints = config.logging.svd_points
+  
+  
   singular_values = []
   normalized_scores_list = []
   idx = 0

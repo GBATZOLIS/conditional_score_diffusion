@@ -194,7 +194,7 @@ def extract_sing_vals(svd, mode='first'):
     elif mode == 'all':
         return singular_vals
     
-def plot_dims(svd):
+def plot_dims(svd, title='Histogram of dimensions'):
     def softmax(x):
         """Compute softmax values for each sets of scores in x."""
         e_x = np.exp(x - np.max(x))
@@ -204,9 +204,12 @@ def plot_dims(svd):
     sing_vals = singular_values[0]
     
     plt.rcParams.update({'font.size': 16})
+    plt.rcParams["figure.autolayout"] = True
     plt.figure(figsize=(15,10))
     plt.grid(alpha=0.5)
-    plt.title('Dims')
+    plt.xlabel('dimension')
+    plt.ylabel('count')
+    plt.title(title)
     dims=[]
     for sing_vals in singular_values:
         s=sing_vals
@@ -215,5 +218,11 @@ def plot_dims(svd):
         soft = softmax(diff)
         dim = len(soft)-soft.argmax()
         dims.append(dim)      
-    plt.hist(dims)
-    return dims
+    n, bins, patches = plt.hist(dims, bins=np.arange(1,max(dims)+1,0.5))
+    ticklabels = (bins[1:] + bins[:-1]) // 2 ## or ticks
+    ticklabels = [int(label) for label in ticklabels][::2]
+    ticks = [(patch.get_x() + (patch.get_x() + patch.get_width()))/2 for patch in patches][::2] ## or ticklabels
+
+    plt.xticks(ticks, np.round(ticklabels, 2))
+
+    return plt.gcf(), dims
