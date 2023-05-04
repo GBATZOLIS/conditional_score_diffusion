@@ -22,7 +22,7 @@ import math
 import numpy as np
 from datetime import timedelta
 
-from configs.ksphere.vesde import get_config as veconfig
+from configs.dimension_estimation.ksphere.vesde import get_config as veconfig
 
 def get_config():
   config = veconfig()
