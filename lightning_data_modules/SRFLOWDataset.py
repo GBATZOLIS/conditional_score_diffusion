@@ -54,7 +54,7 @@ class PKLDataset(data.Dataset):
         hr_file_path = get_exact_paths(config, phase)['GT']
         self.images = self.load_pkls(hr_file_path, n_max=int(1e9))
 
-        self.mask = config.data.mask 
+        #self.mask = config.data.mask 
 
     def load_pkls(self, path, n_max):
         assert os.path.isfile(path), path
@@ -78,12 +78,14 @@ class PKLDataset(data.Dataset):
         img -= img.min()
         img /= img.max()
 
+        '''
         if self.mask == 'central':
             w, h = img.size(1), img.size(2)
             mask_len = int(np.sqrt(w*h*0.2))
             x1 = w//2-mask_len//2
             x2 = h//2-mask_len//2
             img[:, x1: x1+mask_len, x2:x2+mask_len]=0.5
+        '''
 
         return img
 
