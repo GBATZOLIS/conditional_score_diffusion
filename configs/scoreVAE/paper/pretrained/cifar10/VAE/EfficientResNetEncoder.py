@@ -149,7 +149,7 @@ def get_config():
   encoder.num_res_blocks = 4
   encoder.attn_resolutions = (16,)
   encoder.resamp_with_conv = True
-  encoder.conditional = False
+  encoder.time_conditional = False
   encoder.fir = False
   encoder.fir_kernel = [1, 3, 3, 1]
   encoder.skip_rescale = True

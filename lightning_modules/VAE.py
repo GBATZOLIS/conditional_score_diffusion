@@ -30,8 +30,13 @@ class VAE(pl.LightningModule):
         return x
 
     def encode(self, x):
-        mean_z, log_var_z = self.encoder(x)
-        return mean_z, log_var_z
+        if self.config.model.variational:
+            mean_z, log_var_z = self.encoder(x)
+            return mean_z, log_var_z
+        else:
+            z = self.encoder(x)
+            return z, None
+        
 
     def decode(self, z):
         out = self.decoder(z)
@@ -43,18 +48,27 @@ class VAE(pl.LightningModule):
     def compute_loss(self, batch):
         B = batch.shape[0]
         D_Z = self.latent_dim
-        mean_z, log_var_z = self.encode(batch) # (B, D_Z), (B, D_Z) assuming Sigma_z is diagonal
-        z = torch.randn((B, self.latent_dim), device=self.device) * torch.sqrt(log_var_z.exp()) + mean_z
-        mean_x, _ = self.decode(z) # (B, D_X), (B, D_X) assuming Sigma_x is the identity matrix. (fine when using the kl weight)
+        if self.config.model.variational:
+            mean_z, log_var_z = self.encode(batch) # (B, D_Z), (B, D_Z) assuming Sigma_z is diagonal
+            z = torch.randn((B, self.latent_dim), device=self.device) * torch.sqrt(log_var_z.exp()) + mean_z
+            mean_x, _ = self.decode(z) # (B, D_X), (B, D_X) assuming Sigma_x is the identity matrix. (fine when using the kl weight)
 
-        kl_loss =  -0.5 * torch.sum(1 + log_var_z - mean_z ** 2 - log_var_z.exp(), dim=1)
-        kl_loss = kl_loss.mean()
-        rec_loss = torch.linalg.norm(batch.view(B,-1) - mean_x.view(B,-1), dim=1)
-        rec_loss = rec_loss.mean()
-        kl_weight = self.config.model.kl_weight
-        loss = rec_loss + kl_weight * kl_loss
+            kl_loss =  -0.5 * torch.sum(1 + log_var_z - mean_z ** 2 - log_var_z.exp(), dim=1)
+            kl_loss = kl_loss.mean()
+            rec_loss = torch.linalg.norm(batch.view(B,-1) - mean_x.view(B,-1), dim=1)
+            rec_loss = rec_loss.mean()
+            kl_weight = self.config.model.kl_weight
+            loss = rec_loss + kl_weight * kl_loss
+        else:
+            z, _ = self.encode(batch)
+            mean_x, _ = self.decode(z)
+            rec_loss = torch.linalg.norm(batch.view(B,-1) - mean_x.view(B,-1), dim=1)
+            rec_loss = rec_loss.mean()
+            kl_loss = torch.tensor(0.)
+            loss = rec_loss
 
         return loss, rec_loss.detach() , kl_loss.detach()
+
 
     def training_step(self, batch, batch_idx):
         loss, rec_loss, kl_loss = self.compute_loss(batch)

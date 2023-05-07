@@ -51,12 +51,13 @@ def config_translator(config, mode):
         config.model.num_res_blocks = config.encoder.num_res_blocks
         config.model.attn_resolutions = config.encoder.attn_resolutions
         config.model.resamp_with_conv = config.encoder.resamp_with_conv
-        config.model.conditional = config.encoder.conditional
+        config.model.time_conditional = config.encoder.time_conditional
         config.model.init_scale = config.encoder.init_scale
         config.model.embedding_type = config.encoder.embedding_type
         config.model.conv_size = config.encoder.conv_size
         config.model.input_channels = config.encoder.input_channels
         config.model.output_channels = config.encoder.output_channels
         config.data.latent_dim = config.model.latent_dim
+        config.training.variational = config.model.variational
     return config
     

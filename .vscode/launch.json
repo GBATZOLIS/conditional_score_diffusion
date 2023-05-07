@@ -18,7 +18,7 @@
             "program": "${file}",
             "args": [
                 "--config",
-                "configs/VAE/cifar_simple.py",
+                "configs/VAE/mnist.py",
                 "--mode",
                 "train"
             ],
