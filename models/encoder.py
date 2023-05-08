@@ -155,8 +155,8 @@ class DDPMEncoder(pl.LightningModule):
       modules = []
 
     self.centered = config.data.centered
-    input_channels = config.model.input_channels
-    #output_channels = config.model.output_channels
+
+    input_channels = config.model.encoder_input_channels
 
     # ddpm_conv3x3
     modules.append(conv3x3(input_channels, nf))
