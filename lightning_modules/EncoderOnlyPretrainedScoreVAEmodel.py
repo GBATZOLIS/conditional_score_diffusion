@@ -238,7 +238,9 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
                                                               predictor='default', corrector='default', 
                                                               p_steps='default', c_steps='default', snr='default', 
                                                               denoise='default', use_path=False, 
-                                                              use_pretrained=True, encoder_only=False, t_dependent=True)
+                                                              use_pretrained=self.config.training.use_pretrained, 
+                                                              encoder_only=self.config.training.encoder_only, 
+                                                              t_dependent=self.config.training.t_dependent)
 
         model = {'unconditional_score_model':self.unconditional_score_model,
                  'encoder': self.encoder}

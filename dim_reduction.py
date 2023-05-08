@@ -8,9 +8,11 @@ import math
 from tqdm import tqdm
 import pickle
 import numpy as np
-import numpy as np
 from scipy.stats import norm
+from scipy import stats
 import matplotlib.pyplot as plt
+from torchvision.utils import save_image
+import torchvision
 
 def get_conditional_manifold_dimension(config, name=None):
   #---- create the setup ---
@@ -135,7 +137,6 @@ def evaluate_VAE(config):
                                                           encoder_only=config.training.encoder_only,
                                                           t_dependent=config.training.t_dependent)
 
-
 def inspect_corrected_VAE(config):
   pl_module, val_dataloader, sde, device, save_path = create_vae_setup(config)
 
@@ -246,8 +247,6 @@ def inspect_corrected_VAE(config):
   plt.show()
   '''
 
-    
-
 def inspect_VAE(config):
   pl_module, val_dataloader, sde, device, save_path = create_vae_setup(config)
 
@@ -293,12 +292,22 @@ def inspect_VAE(config):
 
   iterations = 1
   latents = []
+  
+  interpolations_path = os.path.join(save_path, 'interpolation')
+  Path(interpolations_path).mkdir(parents=True, exist_ok=True)
   for i, x in tqdm(enumerate(val_dataloader)):
     if i == iterations:
       break
 
     x = x.to(device)
 
+    ### INTERPOLATION
+    interpolations = pl_module.interpolate(x[:2], num_points=16)
+    grid_interpolations = torchvision.utils.make_grid(interpolations, nrow=1, normalize=True, scale_each=True)
+    save_image(grid_interpolations, os.path.join(interpolations_path, '%d.png' % i))
+
+    ### SAVE LATENT VALUES (FOR KOLMOGOROV-SMIRNOV TEST) 
+    '''
     t0 = torch.zeros(x.shape[0]).type_as(x)
     latent_distribution_parameters = encoder(x, t0)
     latent_dim = latent_distribution_parameters.size(1)//2
@@ -306,8 +315,10 @@ def inspect_VAE(config):
     log_var_z = latent_distribution_parameters[:, latent_dim:]
     latent = mean_z + torch.sqrt(log_var_z.exp())*torch.randn_like(mean_z)
     latents.append(latent)
+    '''
 
-    
+    ### EVALUATE THE CONTRIBUTION RATIO
+    '''
     conditional_correction_fn = get_latent_correction_fn(encoder, latent)
     #unconditional_score_fn = mutils.get_score_fn(sde, unconditional_score_model, conditional=False, train=False, continuous=True)  
     total_score_fn = get_conditional_score_fn(encoder, unconditional_score_model, latent)
@@ -338,29 +349,22 @@ def inspect_VAE(config):
     plt.figure()
     plt.plot(ts, corrections)
     plt.show()
-    
+    '''
 
+
+  ### DISPLAY THE KS HISTOGRAM
+  '''
+  latents = torch.cat(latents, dim=0) #(num_samples, latent_dimension)
+  latent_dim = latents.size(1)
+  ks_stats = []
+  for i in range(latent_dim):
+    ks = stats.ks_1samp(latents[:,i].detach().numpy(), stats.norm.cdf)
+    ks_stats.append(ks.statistic)
   
-  latents = torch.cat(latents, dim=0)
-
-  flattened = torch.flatten(latents).cpu().detach().numpy()
-  
-
   plt.figure()
-  plt.hist(flattened, bins=500, density=True, alpha=0.6, color='b')
-
-  # Plot the PDF.
-  xmin, xmax = plt.xlim()
-  x = np.linspace(xmin, xmax, 200)
-  mu = 0
-  std = 1
-  p = norm.pdf(x, mu, std)
-    
-  plt.plot(x, p, 'k', linewidth=2)
-  title = "Fit Values: {:.2f} and {:.2f}".format(mu, std)
-  plt.title(title)
-    
+  plt.hist(ks_stats, bins=50)
   plt.show()
+  '''
   
 
 
