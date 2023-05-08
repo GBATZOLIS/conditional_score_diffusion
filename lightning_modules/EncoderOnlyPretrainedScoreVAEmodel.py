@@ -227,7 +227,7 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
         log_var_y = latent_distribution_parameters[:, latent_dim:]
         y = mean_y + torch.sqrt(log_var_y.exp()) * torch.randn_like(mean_y)
 
-        weights = torch.linspace(0, 1, steps=num_points+2)
+        weights = torch.linspace(0, 1, steps=num_points+2).to(device)
         z = torch.zeros(size=(num_points, y.size(1))).type_as(x)
         for i in range(weights.size(0)-2):
             z[i] = torch.lerp(y[0], y[1], weights[i+1])
