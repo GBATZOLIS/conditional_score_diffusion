@@ -119,7 +119,7 @@ def create_vae_setup(config):
     pl_module.load_state_dict(checkpoint['state_dict'])
   else:
     device = torch.device('cuda:0')
-    pl_module = pl_module.load_from_checkpoint(config.model.checkpoint_path)
+    pl_module = pl_module.load_from_checkpoint(config.model.checkpoint_path, config=config)
 
   pl_module.configure_sde(config)
   sde = pl_module.sde
