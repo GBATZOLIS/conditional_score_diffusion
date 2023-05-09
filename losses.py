@@ -187,12 +187,16 @@ def get_scoreVAE_loss_fn(sde, train, variational=False, likelihood_weighting=Tru
 
             score = latent_correction + encoder_correction + unconditional_score
             
-            f, g = sde.sde(torch.zeros_like(x), t, True)
-            g2 = g ** 2
             grad_log_pert_kernel = -1 * z / std[(...,) + (None,) * len(x.shape[1:])]
-            losses = torch.square(score - grad_log_pert_kernel) #-torch.square(grad_log_pert_kernel)
-            losses = torch.sum(losses.reshape(losses.shape[0], -1), dim=-1) * g2
-            #losses -= 2*torch.sum(f.reshape(f.shape[0], -1), dim=-1)
+            losses = torch.square(score - grad_log_pert_kernel)
+            
+            if likelihood_weighting:
+              _, g = sde.sde(torch.zeros_like(x), t, True)
+              w2 = g ** 2
+            else:
+              w2 = std ** 2
+            
+            losses = torch.sum(losses.reshape(losses.shape[0], -1), dim=-1) * w2
             losses *= 1/2
             rec_loss = torch.mean(losses)
 
@@ -258,12 +262,16 @@ def get_scoreVAE_loss_fn(sde, train, variational=False, likelihood_weighting=Tru
 
             score = conditional_correction + unconditional_score
             
-            f, g = sde.sde(torch.zeros_like(x), t, True)
-            g2 = g ** 2
             grad_log_pert_kernel = -1 * z / std[(...,) + (None,) * len(x.shape[1:])]
-            losses = torch.square(score - grad_log_pert_kernel) #-torch.square(grad_log_pert_kernel)
-            losses = torch.sum(losses.reshape(losses.shape[0], -1), dim=-1) * g2
-            #losses -= 2*torch.sum(f.reshape(f.shape[0], -1), dim=-1)
+            losses = torch.square(score - grad_log_pert_kernel)
+            
+            if likelihood_weighting:
+              _, g = sde.sde(torch.zeros_like(x), t, True)
+              w2 = g ** 2
+            else:
+              w2 = std ** 2
+            
+            losses = torch.sum(losses.reshape(losses.shape[0], -1), dim=-1) * w2
             losses *= 1/2
             rec_loss = torch.mean(losses)
 
