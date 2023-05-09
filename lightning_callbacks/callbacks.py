@@ -169,6 +169,7 @@ class LoadPriorCallback(Callback):
     
     def on_train_start(self, trainer, pl_module):
         pl_module.unconditional_score_model = mutils.load_prior_model(self.config)
+        pl_module.unconditional_score_model = pl_module.unconditional_score_model.to(pl_module.device)
         pl_module.unconditional_score_model.freeze()
 
 
