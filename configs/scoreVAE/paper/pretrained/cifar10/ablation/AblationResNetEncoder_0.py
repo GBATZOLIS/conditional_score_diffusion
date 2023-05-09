@@ -42,7 +42,7 @@ def get_config():
   training.visualization_callback = None
   training.show_evolution = False
 
-  training.likelihood_weighting = True #irrelevant for this config
+  training.likelihood_weighting = False
   training.continuous = True
   training.reduce_mean = True 
   training.sde = 'vpsde'
@@ -101,7 +101,7 @@ def get_config():
 
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/cifar10/ablation_VAE_KLweight_0/checkpoints/best/last.ckpt'
+  model.checkpoint_path = None
   model.sigma_min = 0.01
   model.sigma_max = 50
   model.num_scales = 1000
@@ -142,38 +142,6 @@ def get_config():
   model.encoder_split_output=False
   model.encoder_time_conditional = False
   model.encoder_base_channel_size = 64
-  
-  '''
-  config.encoder = encoder = ml_collections.ConfigDict()
-  encoder.name = model.encoder_name
-  encoder.scale_by_sigma = False
-  encoder.ema_rate = 0.9999
-  encoder.dropout = 0.1
-  encoder.normalization = 'GroupNorm'
-  encoder.nonlinearity = model.nonlinearity
-  encoder.nf = 128
-  encoder.ch_mult = (1, 2, 2, 2)
-  encoder.num_res_blocks = 4
-  encoder.attn_resolutions = (16,)
-  encoder.resamp_with_conv = True
-  encoder.time_conditional = False
-  encoder.fir = False
-  encoder.fir_kernel = [1, 3, 3, 1]
-  encoder.skip_rescale = True
-  encoder.resblock_type = 'biggan'
-  encoder.progressive = 'none'
-  encoder.progressive_input = 'none'
-  encoder.progressive_combine = 'sum'
-  encoder.attention_type = 'ddpm'
-  encoder.init_scale = 0.
-  encoder.embedding_type = 'positional'
-  encoder.fourier_scale = 16
-  encoder.conv_size = 3
-  encoder.input_channels = data.num_channels
-  encoder.output_channels = 128
-  encoder.latent_dim = data.latent_dim
-  encoder.split_output = False
-  '''
 
   # optimization
   config.optim = optim = ml_collections.ConfigDict()
