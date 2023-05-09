@@ -26,6 +26,9 @@ def get_callbacks(config):
     callbacks=[get_callback_by_name('ema')(decay=config.model.ema_rate)]
     #callbacks = []
 
+    if config.training.lightning_module == 'encoder_only_pretrained_score_vae':
+      callbacks.append(get_callback_by_name('load_new_prior')(config))
+
     if config.logging.top_k is not None:
       callbacks.append(get_callback_by_name('CheckpointTopK')(config))
     if config.logging.every_n_epochs is not None:

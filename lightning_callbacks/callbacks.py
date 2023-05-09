@@ -13,6 +13,7 @@ import datetime
 import pickle
 from dim_reduction import get_manifold_dimension
 import logging
+from models import utils as mutils
 
 @utils.register_callback(name='configuration')
 class ConfigurationSetterCallback(Callback):
@@ -159,6 +160,17 @@ class EMACallback(Callback):
     def on_train_epoch_start(self, trainer, pl_module):
         pl_module.ema.restore(pl_module.parameters())
 '''
+
+@utils.register_callback(name='load_new_prior')
+class LoadPriorCallback(Callback):
+    def __init__(self, config):
+        super().__init__()
+        self.config=config
+    
+    def on_train_start(self, trainer, pl_module):
+        pl_module.unconditional_score_model = mutils.load_prior_model(self.config)
+        pl_module.unconditional_score_model.freeze()
+
 
 @utils.register_callback(name='base')
 class ImageVisualizationCallback(Callback):
