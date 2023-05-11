@@ -218,6 +218,14 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
         return sampling_fn(self.unconditional_score_model)
     
     def interpolate(self, x, num_points):
+        def slerp(low, high, val):
+            low_norm = low/torch.norm(low, dim=1, keepdim=True)
+            high_norm = high/torch.norm(high, dim=1, keepdim=True)
+            omega = torch.acos((low_norm*high_norm).sum(1))
+            so = torch.sin(omega)
+            res = (torch.sin((1.0-val)*omega)/so).unsqueeze(1)*low + (torch.sin(val*omega)/so).unsqueeze(1) * high
+            return res
+
         assert x.size(0) == 2
 
         t0 = torch.zeros(x.shape[0]).type_as(x)
@@ -230,7 +238,7 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
         weights = torch.linspace(0, 1, steps=num_points+2).to(self.device)
         z = torch.zeros(size=(num_points, y.size(1))).type_as(x)
         for i in range(weights.size(0)-2):
-            z[i] = torch.nn.functional.interpolate.slerp(y[0], y[1], weights[i+1])
+            z[i] = slerp(y[0], y[1], weights[i+1])
         
         sampling_shape = [z.size(0)]+self.config.data.shape
         conditional_sampling_fn = get_conditional_sampling_fn(config=self.config, sde=self.sde, 
