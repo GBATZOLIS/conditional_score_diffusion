@@ -219,11 +219,11 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
     
     def interpolate(self, x, num_points):
         def slerp(low, high, val):
-            low_norm = low/torch.linalg.norm(low, ord=2, keepdim=True)
-            high_norm = high/torch.linalg.norm(high, ord=2, keepdim=True)
-            omega = torch.acos((low_norm*high_norm).sum(1))
+            low_norm = low/torch.linalg.norm(low, ord=2)
+            high_norm = high/torch.linalg.norm(high, ord=2)
+            omega = torch.acos((low_norm*high_norm).sum())
             so = torch.sin(omega)
-            res = (torch.sin((1.0-val)*omega)/so).unsqueeze(1)*low + (torch.sin(val*omega)/so).unsqueeze(1) * high
+            res = (torch.sin((1.0-val)*omega)/so)*low + (torch.sin(val*omega)/so) * high
             return res
 
         assert x.size(0) == 2
