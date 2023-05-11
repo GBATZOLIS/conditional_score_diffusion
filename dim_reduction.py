@@ -290,7 +290,7 @@ def inspect_VAE(config):
   encoder = pl_module.encoder
   unconditional_score_model = pl_module.unconditional_score_model
 
-  iterations = 1
+  iterations = 8
   num_interpolations = 1
   latents = []
   
@@ -303,14 +303,10 @@ def inspect_VAE(config):
     x = x.to(device)
 
     ### INTERPOLATION
-    interpolations = pl_module.interpolate(x[:2], num_points=16)
+    interpolations = pl_module.interpolate(x[4:6], num_points=20)
     grid_interpolations = torchvision.utils.make_grid(interpolations, nrow=interpolations.size(0), normalize=True, scale_each=True)
     save_image(grid_interpolations, os.path.join(interpolations_path, '%d.png' % num_interpolations))
     num_interpolations+=1
-
-    interpolations = pl_module.interpolate(x[2:4], num_points=16)
-    grid_interpolations = torchvision.utils.make_grid(interpolations, nrow=interpolations.size(0), normalize=True, scale_each=True)
-    save_image(grid_interpolations, os.path.join(interpolations_path, '%d.png' % num_interpolations))
 
     ### SAVE LATENT VALUES (FOR KOLMOGOROV-SMIRNOV TEST) 
     '''
