@@ -230,7 +230,7 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
         weights = torch.linspace(0, 1, steps=num_points+2).to(self.device)
         z = torch.zeros(size=(num_points, y.size(1))).type_as(x)
         for i in range(weights.size(0)-2):
-            z[i] = torch.lerp(y[0], y[1], weights[i+1])
+            z[i] = torch.nn.functional.interpolate.slerp(y[0], y[1], weights[i+1])
         
         sampling_shape = [z.size(0)]+self.config.data.shape
         conditional_sampling_fn = get_conditional_sampling_fn(config=self.config, sde=self.sde, 
