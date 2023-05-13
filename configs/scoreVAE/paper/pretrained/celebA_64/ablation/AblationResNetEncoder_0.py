@@ -98,6 +98,7 @@ def get_config():
   data.crop = False
   data.uniform_dequantization = False
   data.num_channels = data.shape[0] #the number of channels the model sees as input.
+  data.mask = None
 
   # model
   config.model = model = ml_collections.ConfigDict()
