@@ -282,7 +282,7 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
         else:
             y = self.encoder(x)
 
-        y = y / torch.linalg.norm(y, dim=1, keepdim=True) #this must be removed.
+        #y = y / torch.linalg.norm(y, dim=1, keepdim=True) #this must be removed.
 
         sampling_shape = [x.size(0)]+self.config.data.shape
         conditional_sampling_fn = get_conditional_sampling_fn(config=self.config, sde=self.sde, 
