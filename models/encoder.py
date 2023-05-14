@@ -33,7 +33,7 @@ class Encoder(pl.LightningModule):
         base_channel_size = config.model.encoder_base_channel_size
         self.latent_dim = latent_dim = config.model.encoder_latent_dim
         act_fn = nn.GELU
-        self.pl = config.training.variational
+        self.variational = config.training.variational
         self.time_conditional = config.model.get('time_conditional', True)
 
         if hasattr(config.model, 'encoder_split_output'):
