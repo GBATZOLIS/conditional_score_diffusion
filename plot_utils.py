@@ -108,15 +108,21 @@ def plot_log_energy(score_model, t=0.0, X=None, Y=None):
     return Z
 
 
-def plot_spectrum(svd, return_tensor=False, mode='first', title='Score Spectrum'):
+def plot_spectrum(svd, return_tensor=False, mode='first', title='Score Spectrum', ground_truth=None):
     singular_values = extract_sing_vals(svd, mode)
     sing_vals = singular_values[0]
     
-    plt.rcParams.update({'font.size': 16})
+    plt.rcParams.update({'font.size': 24})
     plt.figure(figsize=(15,10))
     plt.grid(alpha=0.5)
     plt.title(title)
     plt.xticks(np.arange(0, len(sing_vals)+1, 10))
+    if ground_truth:
+        if isinstance(ground_truth, list):
+            for gt in ground_truth:
+                plt.axvline(x=len(sing_vals)-gt, color='red', ls='--')
+        else:
+            plt.axvline(x=len(sing_vals)-ground_truth, color='red', ls='--')
     for sing_vals in singular_values:
         #plt.bar(list(range(1, len(sing_vals)+1)),sing_vals)
         plt.plot(list(range(1, len(sing_vals)+1)),sing_vals)
@@ -134,7 +140,7 @@ def plot_spectrum(svd, return_tensor=False, mode='first', title='Score Spectrum'
 
 def plot_norms(samples, return_tensor=False):
     norms=torch.linalg.norm(samples, dim=1).cpu().detach().numpy()
-    plt.rcParams.update({'font.size': 16})
+    plt.rcParams.update({'font.size': 24})
     plt.figure(figsize=(10,10))
     plt.grid(alpha=0.5)
     plt.hist(norms, bins=50)
@@ -159,7 +165,7 @@ def plot_distribution(svd, mode='first', return_tensor=False):
     singular_values = extract_sing_vals(svd, mode)
     sing_vals = singular_values[0]
     
-    plt.rcParams.update({'font.size': 16})
+    plt.rcParams.update({'font.size': 24})
     plt.figure(figsize=(15,10))
     plt.grid(alpha=0.5)
     plt.title('Dimension distribution')
@@ -193,8 +199,10 @@ def extract_sing_vals(svd, mode='first'):
         return [singular_vals[0]]
     elif mode == 'all':
         return singular_vals
+    elif mode == 'mean':
+        return [np.mean(singular_vals, axis=0)]
     
-def plot_dims(svd, title='Histogram of dimensions'):
+def plot_dims(svd, title='Histogram of dimensions', tick_step=2, tick_start=1):
     def softmax(x):
         """Compute softmax values for each sets of scores in x."""
         e_x = np.exp(x - np.max(x))
@@ -203,7 +211,7 @@ def plot_dims(svd, title='Histogram of dimensions'):
     singular_values = extract_sing_vals(svd, 'all')
     sing_vals = singular_values[0]
     
-    plt.rcParams.update({'font.size': 16})
+    plt.rcParams.update({'font.size': 24})
     plt.rcParams["figure.autolayout"] = True
     plt.figure(figsize=(15,10))
     plt.grid(alpha=0.5)
@@ -218,10 +226,10 @@ def plot_dims(svd, title='Histogram of dimensions'):
         soft = softmax(diff)
         dim = len(soft)-soft.argmax()
         dims.append(dim)      
-    n, bins, patches = plt.hist(dims, bins=np.arange(1,max(dims)+1,0.5))
+    n, bins, patches = plt.hist(dims, bins=np.arange(tick_start,max(dims)+1,0.5))
     ticklabels = (bins[1:] + bins[:-1]) // 2 ## or ticks
-    ticklabels = [int(label) for label in ticklabels][::2]
-    ticks = [(patch.get_x() + (patch.get_x() + patch.get_width()))/2 for patch in patches][::2] ## or ticklabels
+    ticklabels = [int(label) for label in ticklabels][::tick_step]
+    ticks = [(patch.get_x() + (patch.get_x() + patch.get_width()))/2 for patch in patches][::tick_step] ## or ticklabels
 
     plt.xticks(ticks, np.round(ticklabels, 2))
 
