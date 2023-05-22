@@ -146,6 +146,9 @@ def scoreVAE_fidelity(config):
     
     grid_batch = torchvision.utils.make_grid(batch, nrow=int(np.sqrt(batch.size(0))), normalize=True, scale_each=True)
     torchvision.utils.save_image(grid_batch, os.path.join(images_save_path, 'original.png'))
+    
+    batch = batch.to(device)
+
 
     for gamma in [0.5, 1., 1.5, 2., 3., 5.]:
       if gamma not in gamma_to_rec:
