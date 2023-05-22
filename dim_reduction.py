@@ -13,6 +13,7 @@ from scipy import stats
 import matplotlib.pyplot as plt
 from torchvision.utils import save_image
 import torchvision
+import lpips
 
 def get_conditional_manifold_dimension(config, name=None):
   #---- create the setup ---
@@ -129,13 +130,45 @@ def create_vae_setup(config):
 
   return pl_module, test_dataloader, sde, device, save_path
 
-def evaluate_VAE(config):
+def scoreVAE_fidelity(config):
   pl_module, test_dataloader, sde, device, save_path = create_vae_setup(config)
-  
-  for i, x in enumerate(test_dataloader):
-    reconstruction = pl_module.encode_n_decode(batch, use_pretrained=config.training.use_pretrained,
+  save_path = os.path.join(save_path, 'fidelity')
+  Path(save_path).mkdir(parents=True, exist_ok=True)
+  images_save_path = os.path.join(save_path, 'images')
+  Path(images_save_path).mkdir(parents=True, exist_ok=True)
+
+  lpips_distance_fn = lpips.LPIPS(net='vgg').to(device)
+
+  gamma_to_rec = {}
+  for i, batch in enumerate(test_dataloader):
+    if i >= 1:
+      break
+    
+    grid_batch = torchvision.utils.make_grid(batch, nrow=int(np.sqrt(batch.size(0))), normalize=True, scale_each=True)
+    torchvision.utils.save_image(grid_batch, os.path.join(images_save_path, 'original.png'))
+
+    for gamma in [0.5, 1., 1.5, 2., 3., 5.]:
+      if gamma not in gamma_to_rec:
+        gamma_to_rec[gamma] = {'LPIPS': 0, 'L2': 0}
+
+      reconstruction = pl_module.encode_n_decode(batch, use_pretrained=config.training.use_pretrained,
                                                           encoder_only=config.training.encoder_only,
-                                                          t_dependent=config.training.t_dependent)
+                                                          t_dependent=config.training.t_dependent, 
+                                                          gamma=gamma)
+
+      grid_reconstruction = torchvision.utils.make_grid(reconstruction, nrow=int(np.sqrt(reconstruction.size(0))), normalize=True, scale_each=True)
+      torchvision.utils.save_image(grid_reconstruction, os.path.join(images_save_path,'%.1f.png' % gamma))
+
+      avg_lpips_score = torch.mean(lpips_distance_fn(reconstruction.to(device), batch))
+      gamma_to_rec[gamma]['LPIPS'] = avg_lpips_score
+      
+      difference = torch.flatten(reconstruction, start_dim=1)-torch.flatten(batch, start_dim=1)
+      L2norm = torch.linalg.vector_norm(difference, ord=2, dim=1)
+      avg_L2norm = torch.mean(L2norm)
+      gamma_to_rec[gamma]['L2'] = avg_L2norm
+  
+      with open(os.path.join(save_path, 'fidelity.pkl'), 'wb') as f:
+        pickle.dump(gamma_to_rec, f)
 
 def inspect_corrected_VAE(config):
   pl_module, val_dataloader, sde, device, save_path = create_vae_setup(config)

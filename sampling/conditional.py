@@ -7,7 +7,7 @@ from models import utils as mutils
 
 def get_conditional_sampling_fn(config, sde, shape, eps, 
                           predictor='default', corrector='default', p_steps='default', 
-                          c_steps='default', snr='default', denoise='default', use_path='default', use_pretrained=False, encoder_only=False, t_dependent=True, latent_correction=False):
+                          c_steps='default', snr='default', denoise='default', use_path='default', use_pretrained=False, encoder_only=False, t_dependent=True, latent_correction=False, gamma=1):
 
     if predictor == 'default':
       predictor = get_predictor(config.sampling.predictor.lower())
@@ -45,12 +45,13 @@ def get_conditional_sampling_fn(config, sde, shape, eps,
                                             use_pretrained=use_pretrained,
                                             encoder_only=encoder_only,
                                             t_dependent=t_dependent,
-                                            latent_correction=latent_correction)
+                                            latent_correction=latent_correction,
+                                            gamma=gamma)
     return sampling_fn
 
 def get_pc_conditional_sampler(sde, shape, predictor, corrector, snr, p_steps,
                    c_steps=1, probability_flow=False, continuous=False, 
-                   denoise=True, use_path=False, eps=1e-5, use_pretrained=False, encoder_only=False, t_dependent=True, latent_correction=False):
+                   denoise=True, use_path=False, eps=1e-5, use_pretrained=False, encoder_only=False, t_dependent=True, latent_correction=False, gamma=1.):
 
   """Create a Predictor-Corrector (PC) sampler.
   Args:
@@ -205,7 +206,7 @@ def get_pc_conditional_sampler(sde, shape, predictor, corrector, snr, p_steps,
           device = unconditional_score_model.device
         else:
           if t_dependent:
-            if not latent_correction:
+            if not latent_correction: #BASIC CONFIG
               def get_latent_correction_fn(encoder):
                 def get_log_density_fn(encoder):
                   def log_density_fn(x, z, t):
@@ -242,7 +243,7 @@ def get_pc_conditional_sampler(sde, shape, predictor, corrector, snr, p_steps,
 
               def get_conditional_score_fn_with_prior(unconditional_score_fn, conditional_correction_fn):
                 def conditional_score_fn(x, y, t):
-                  conditional_score = conditional_correction_fn(x, y, t) + unconditional_score_fn(x, t)
+                  conditional_score = gamma*conditional_correction_fn(x, y, t) + unconditional_score_fn(x, t)
                   return conditional_score
                 return conditional_score_fn
 

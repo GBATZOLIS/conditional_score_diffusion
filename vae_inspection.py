@@ -4,7 +4,7 @@ import numpy as np
 import sde_lib
 import torch
 
-filepath = '/Users/gbatz97/Desktop/score-based-modelling/projects/scoreVAE/experiments/pretrained/cifar10/encoder_only/VAE/corrected_only_encoder_VAE_KLweight_0.01/inspection/contribution.pkl'
+filepath = '/Users/gbatz97/Desktop/score-based-modelling/projects/scoreVAE/experiments/pretrained/cifar10/paper/encoder_only/VAE/corrected_only_encoder_VAE_KLweight_0.01/inspection/contribution.pkl'
 with open(filepath, 'rb') as f:
     contribution = pickle.load(f)
 
@@ -14,14 +14,21 @@ eps=1e-3
 sde = sde_lib.VPSDE()
 
 plt.figure()
-plt.title('mean')
+plt.title('Average contribution')
 colors = {'encoder':'red', 'auxiliary':'blue', 'pretrained':'green'}
 store_bps = {}
 for member in contribution.keys():
     sorted_times = sorted(list(contribution[member].keys()))
     sorted_snrs = sde.snr(torch.tensor(np.array(sorted_times))).numpy().tolist()
     
-    plt.plot(sorted_times, [np.mean(contribution[member][t]) for t in sorted_times], c=colors[member])
+    if member == 'auxiliary':
+        labeled_member = 'corrector'
+    elif member == 'pretrained':
+        labeled_member = 'prior'
+    else:
+        labeled_member = member
+        
+    plt.plot(sorted_times, [np.mean(contribution[member][t]) for t in sorted_times], c=colors[member], label=labeled_member)
 
     '''
     list_of_arrays = []
@@ -53,6 +60,7 @@ plt.legend(bp_list, name_list, loc='upper right')
     #above = np.array([np.mean(contribution[member][t]) for t in times]) + np.array([3*np.std(contribution[member][t]) for t in times])
     #plt.fill_between(times, below, above, alpha=0.5)
 
+plt.legend()
 plt.grid()
 plt.show()
 

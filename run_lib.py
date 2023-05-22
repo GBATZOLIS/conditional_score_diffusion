@@ -342,6 +342,9 @@ def inspect_corrected_VAE(config):
 def inspect_VAE(config):
   dim_reduction.inspect_VAE(config)
 
+def scoreVAE_fidelity(config):
+  dim_reduction.scoreVAE_fidelity(config)
+
 def get_manifold_dimension(config, name=None):
   dim_reduction.get_manifold_dimension(config, name)
 

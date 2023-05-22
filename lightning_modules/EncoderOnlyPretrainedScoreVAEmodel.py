@@ -262,7 +262,7 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
         return augmented
 
     def encode_n_decode(self, x, show_evolution=False, predictor='default', corrector='default', p_steps='default', \
-                     c_steps='default', snr='default', denoise='default', use_pretrained=True, encoder_only=False, t_dependent=True):
+                     c_steps='default', snr='default', denoise='default', use_pretrained=True, encoder_only=False, t_dependent=True, gamma=1.):
 
         if self.config.training.variational:
             if self.config.training.encoder_only:
@@ -293,7 +293,7 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
                                                               predictor=predictor, corrector=corrector, 
                                                               p_steps=p_steps, c_steps=c_steps, snr=snr, 
                                                               denoise=denoise, use_path=False, 
-                                                              use_pretrained=use_pretrained, encoder_only=encoder_only, t_dependent=t_dependent)
+                                                              use_pretrained=use_pretrained, encoder_only=encoder_only, t_dependent=t_dependent, gamma=gamma)
         if encoder_only:
             model = {'unconditional_score_model':self.unconditional_score_model,
                      'encoder': self.encoder}
