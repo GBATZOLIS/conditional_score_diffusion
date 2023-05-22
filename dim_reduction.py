@@ -154,10 +154,11 @@ def scoreVAE_fidelity(config):
       if gamma not in gamma_to_rec:
         gamma_to_rec[gamma] = {'LPIPS': 0, 'L2': 0}
 
-      reconstruction = pl_module.encode_n_decode(batch, use_pretrained=config.training.use_pretrained,
-                                                          encoder_only=config.training.encoder_only,
-                                                          t_dependent=config.training.t_dependent, 
-                                                          gamma=gamma)
+      reconstruction = pl_module.encode_n_decode(batch, p_steps=256,
+                                                  use_pretrained=config.training.use_pretrained,
+                                                  encoder_only=config.training.encoder_only,
+                                                  t_dependent=config.training.t_dependent, 
+                                                  gamma=gamma)
 
       grid_reconstruction = torchvision.utils.make_grid(reconstruction, nrow=int(np.sqrt(reconstruction.size(0))), normalize=True, scale_each=True)
       torchvision.utils.save_image(grid_reconstruction, os.path.join(images_save_path,'%.1f.png' % gamma))

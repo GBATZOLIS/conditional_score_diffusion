@@ -5,6 +5,26 @@ import numpy as np
 
 _PREDICTORS = {}
 
+def get_inverse_step_fn(discretisation):
+    #discretisation sequence is ordered from biggest time to smallest time
+    map_t_to_negative_dt = {}
+    steps = len(discretisation)
+    for i in range(steps):
+        if i <= steps-2:
+            map_t_to_negative_dt[discretisation[i]] = discretisation[i+1] - discretisation[i]
+        elif i==steps-1:
+            map_t_to_negative_dt[discretisation[i]] = map_t_to_negative_dt[discretisation[i-1]]
+
+    def inverse_step_fn(t):
+        if t in map_t_to_negative_dt.keys():
+            return map_t_to_negative_dt[t]
+        else:
+            closest_t_key = discretisation[np.argmin(np.abs(discretisation-t))]
+            #print('closest_t_key: ', closest_t_key)
+            #print('t: ', t)
+            return map_t_to_negative_dt[closest_t_key]
+    
+    return inverse_step_fn
 
 def register_predictor(cls=None, *, name=None):
   """A decorator for registering predictor classes."""
@@ -30,12 +50,15 @@ def get_predictor(name):
 class Predictor(abc.ABC):
   """The abstract class for a predictor algorithm."""
 
-  def __init__(self, sde, score_fn, probability_flow=False):
+  def __init__(self, sde, score_fn, probability_flow=False, discretisation=None):
     super().__init__()
     self.sde = sde
     # Compute the reverse SDE/ODE
     self.rsde = sde.reverse(score_fn, probability_flow)
     self.score_fn = score_fn
+
+    if discretisation is not None:
+      self.inverse_step_fn = get_inverse_step_fn(discretisation.cpu().numpy())
 
   @abc.abstractmethod
   def update_fn(self, x, t):
@@ -51,16 +74,72 @@ class Predictor(abc.ABC):
 
 @register_predictor(name='euler_maruyama')
 class EulerMaruyamaPredictor(Predictor):
-  def __init__(self, sde, score_fn, probability_flow=False):
-    super().__init__(sde, score_fn, probability_flow)
+  def __init__(self, sde, score_fn, probability_flow=False, discretisation=None):
+    super().__init__(sde, score_fn, probability_flow, discretisation)
+    self.probability_flow=probability_flow
 
   def update_fn(self, x, t):
-    dt = -(1-self.sde.sampling_eps) / self.rsde.N
-    z = torch.randn_like(x)
+    dt = torch.tensor(self.inverse_step_fn(t[0].cpu().item())).type_as(t) #dt = -(1-self.sde.sampling_eps) / self.rsde.N
     drift, diffusion = self.rsde.sde(x, t)
+    x_mean = x + drift * dt
+      
+    if self.probability_flow:
+      return x_mean, x_mean
+    else:
+      z = torch.randn_like(x)
+      x = x_mean + diffusion[(...,) + (None,) * len(x.shape[1:])] * torch.sqrt(-dt) * z
+      return x, x_mean
+
+@register_predictor(name='conditional_euler_maruyama')
+class conditionalEulerMaruyamaPredictor(Predictor):
+  def __init__(self, sde, score_fn, probability_flow=False, discretisation=None):
+    super().__init__(sde, score_fn, probability_flow, discretisation)
+    self.probability_flow=probability_flow
+
+  def update_fn(self, x, y, t):
+    dt = torch.tensor(self.inverse_step_fn(t[0].cpu().item())).type_as(t) #dt = -(1-self.sde.sampling_eps) / self.rsde.N
+    z = torch.randn_like(x)
+    drift, diffusion = self.rsde.sde(x, y, t)
     x_mean = x + drift * dt
     x = x_mean + diffusion[(...,) + (None,) * len(x.shape[1:])] * np.sqrt(-dt) * z
     return x, x_mean
+
+@register_predictor(name='ddim')
+class DDIMPredictor(Predictor):
+  def __init__(self, sde, score_fn, probability_flow=False, discretisation=None):
+    super().__init__(sde, score_fn, probability_flow, discretisation)
+    #assert isinstance(sde, sde_lib.VPSDE), 'ddim sampler is supported only for the VPSDE currently.'
+
+  def update_fn(self, z_t, t):
+    #compute the negative timestep
+    dt = torch.tensor(self.inverse_step_fn(t[0].cpu().item())).type_as(t) #-1. / self.rsde.N 
+    s = t + dt
+    #compute the coefficients
+    a_t, sigma_t = self.sde.perturbation_coefficients(t[0])
+    a_s, sigma_s = self.sde.perturbation_coefficients(s[0])
+
+    denoising_value = (sigma_t**2 * self.score_fn(z_t, t) + z_t)/a_t
+    z_s = sigma_s/sigma_t * z_t + (a_s - sigma_s/sigma_t*a_t)*denoising_value
+    return z_s, z_s
+
+@register_predictor(name='conditional_ddim')
+class DDIMPredictor(Predictor):
+  def __init__(self, sde, score_fn, probability_flow=False, discretisation=None):
+    super().__init__(sde, score_fn, probability_flow, discretisation)
+    #assert isinstance(sde, sde_lib.VPSDE), 'ddim sampler is supported only for the VPSDE currently.'
+
+  def update_fn(self, z_t, y, t):
+    #compute the negative timestep
+    dt = torch.tensor(self.inverse_step_fn(t[0].cpu().item())).type_as(t) #-1. / self.rsde.N 
+    s = t + dt
+    #compute the coefficients
+    a_t, sigma_t = self.sde.perturbation_coefficients(t[0])
+    a_s, sigma_s = self.sde.perturbation_coefficients(s[0])
+
+    denoising_value = (sigma_t**2 * self.score_fn(z_t, y, t) + z_t)/a_t
+    z_s = sigma_s/sigma_t * z_t + (a_s - sigma_s/sigma_t*a_t)*denoising_value
+    return z_s, z_s
+
 
 @register_predictor(name='heun') #Heun's method (pc-Adams-11-pece)
 class PC_Adams_11_Predictor(Predictor):
@@ -116,19 +195,6 @@ class PC_Adams_11_Predictor(Predictor):
       x_2 = self.correct(x, f_1, f_0, h)
 
       return x_2, x_2
-
-@register_predictor(name='conditional_euler_maruyama')
-class conditionalEulerMaruyamaPredictor(Predictor):
-  def __init__(self, sde, score_fn, probability_flow=False):
-    super().__init__(sde, score_fn, probability_flow)
-
-  def update_fn(self, x, y, t):
-    dt = -(1-self.sde.sampling_eps) / self.rsde.N
-    z = torch.randn_like(x)
-    drift, diffusion = self.rsde.sde(x, y, t)
-    x_mean = x + drift * dt
-    x = x_mean + diffusion[(...,) + (None,) * len(x.shape[1:])] * np.sqrt(-dt) * z
-    return x, x_mean
 
 
 @register_predictor(name='reverse_diffusion')
