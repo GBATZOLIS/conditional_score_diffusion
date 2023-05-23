@@ -157,8 +157,11 @@ def load_prior_model(base_config):
   if checkpoint_path is None:
     checkpoint_path = os.path.join(base_config.logging.log_path, 'prior', 'checkpoints', 'best', 'last.ckpt')
 
+  print('----')
   LightningModule = create_lightning_module(prior_config)
+  print('----')
   priorLightningModule = LightningModule.load_from_checkpoint(checkpoint_path, config=prior_config)
+  print('----')
   return priorLightningModule.score_model
 
 
