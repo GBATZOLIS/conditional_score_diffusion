@@ -138,7 +138,7 @@ def load_encoder(base_config):
     checkpoint_path = os.path.join(base_config.logging.log_path, encoder_log_name, 'checkpoints', 'best', 'last.ckpt')
   
   LightningModule = create_lightning_module(encoder_config)
-  EncoderLightningModule = LightningModule.load_from_checkpoint(checkpoint_path)
+  EncoderLightningModule = LightningModule.load_from_checkpoint(checkpoint_path, config=encoder_config)
   return EncoderLightningModule.encoder
 
 
@@ -158,7 +158,7 @@ def load_prior_model(base_config):
     checkpoint_path = os.path.join(base_config.logging.log_path, 'prior', 'checkpoints', 'best', 'last.ckpt')
 
   LightningModule = create_lightning_module(prior_config)
-  priorLightningModule = LightningModule.load_from_checkpoint(checkpoint_path)
+  priorLightningModule = LightningModule.load_from_checkpoint(checkpoint_path, config=prior_config)
   return priorLightningModule.score_model
 
 
