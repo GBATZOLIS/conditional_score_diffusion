@@ -35,7 +35,7 @@ def get_config():
   training.encoder_checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/FFHQ_128/only_encoder_ddpm_plus_smld_VAE_KLweight_0.01/checkpoints/best/epoch=465--eval_loss_epoch=153.939.ckpt' 
 
   training.conditioning_approach = 'sr3'
-  training.batch_size = 8 #64 
+  training.batch_size = 64 
   training.t_batch_size = 1
   training.num_nodes = 1
   training.gpus = 1
