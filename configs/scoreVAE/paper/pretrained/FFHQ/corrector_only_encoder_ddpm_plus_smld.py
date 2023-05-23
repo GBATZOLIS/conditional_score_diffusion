@@ -124,7 +124,7 @@ def get_config():
   model.embedding_type = 'fourier'
 
   model.unconditional_score_model_name = 'BeatGANsUNetModel'
-  model.name = 'ddpm_mirror_decoder'
+  model.name = 'BeatGANsLatentScoreModel'
   model.input_channels = data.num_channels
   model.output_channels = data.num_channels
   model.scale_by_sigma = True
