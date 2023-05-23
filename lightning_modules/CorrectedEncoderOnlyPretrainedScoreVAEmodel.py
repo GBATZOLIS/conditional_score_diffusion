@@ -26,9 +26,6 @@ class CorrectedEncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
         # Initialize the score model
         self.config = config
         
-        #latent correction model
-        self.latent_correction_model = mutils.create_model(config)
-        
         #unconditional score model
         if config.training.use_pretrained:
             self.unconditional_score_model = mutils.load_prior_model(config)
@@ -41,6 +38,9 @@ class CorrectedEncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
         #encoder
         self.encoder = mutils.load_encoder(config)
         self.encoder.freeze()
+
+        #latent correction model
+        self.latent_correction_model = mutils.create_model(config)
 
     def configure_sde(self, config):
         if config.training.sde.lower() == 'vpsde':
