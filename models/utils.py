@@ -127,6 +127,7 @@ def create_model(config):
 def load_encoder(base_config):
   encoder_log_name = base_config.logging.encoder_log_name
   encoder_config_path = os.path.join(base_config.logging.log_path, encoder_log_name, 'config.pkl')
+  print(encoder_config_path)
   if os.path.exists(encoder_config_path):
     with open(encoder_config_path, 'rb') as file:
       encoder_config = pickle.load(file)
@@ -157,11 +158,11 @@ def load_prior_model(base_config):
   if checkpoint_path is None:
     checkpoint_path = os.path.join(base_config.logging.log_path, 'prior', 'checkpoints', 'best', 'last.ckpt')
 
-  print('----')
+  #print('----')
   LightningModule = create_lightning_module(prior_config)
-  print('----')
+  #print('----')
   priorLightningModule = LightningModule.load_from_checkpoint(checkpoint_path, config=prior_config)
-  print('----')
+  #print('----')
   return priorLightningModule.score_model
 
 
