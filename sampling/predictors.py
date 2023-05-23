@@ -58,7 +58,7 @@ class Predictor(abc.ABC):
     self.score_fn = score_fn
 
     if discretisation is not None:
-      self.inverse_step_fn = get_inverse_step_fn(discretisation) #.cpu().numpy()
+      self.inverse_step_fn = get_inverse_step_fn(discretisation.cpu().numpy())
 
   @abc.abstractmethod
   def update_fn(self, x, t):
@@ -97,12 +97,11 @@ class conditionalEulerMaruyamaPredictor(Predictor):
     self.probability_flow=probability_flow
 
   def update_fn(self, x, y, t):
-    #.cpu().item()
-    dt = torch.tensor(self.inverse_step_fn(t[0])).type_as(t) #dt = -(1-self.sde.sampling_eps) / self.rsde.N
+    dt = torch.tensor(self.inverse_step_fn(t[0].cpu().item())).type_as(t) #dt = -(1-self.sde.sampling_eps) / self.rsde.N
     z = torch.randn_like(x)
     drift, diffusion = self.rsde.sde(x, y, t)
     x_mean = x + drift * dt
-    x = x_mean + diffusion[(...,) + (None,) * len(x.shape[1:])] * np.sqrt(-dt) * z
+    x = x_mean + diffusion[(...,) + (None,) * len(x.shape[1:])] * torch.sqrt(-dt) * z
     return x, x_mean
 
 @register_predictor(name='ddim')
