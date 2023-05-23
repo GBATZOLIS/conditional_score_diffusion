@@ -15,7 +15,6 @@ def get_config():
   logging.encoder_log_name = 'only_encoder_ddpm_plus_smld_VAE_KLweight_0.01'
   logging.log_name = 'corrected' + '_' + logging.encoder_log_name
 
-  logging.log_name = 'only_encoder_ddpm_plus_smld_VAE_KLweight_0.01'
   logging.top_k = 3
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
