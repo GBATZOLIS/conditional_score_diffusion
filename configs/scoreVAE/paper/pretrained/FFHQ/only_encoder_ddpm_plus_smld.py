@@ -60,7 +60,7 @@ def get_config():
   # sampling
   config.sampling = sampling = ml_collections.ConfigDict()
   sampling.method = 'pc'
-  sampling.predictor = 'conditional_euler_maruyama'
+  sampling.predictor = 'conditional_ddim'
   sampling.corrector = 'conditional_none'
   sampling.n_steps_each = 1
   sampling.noise_removal = True
