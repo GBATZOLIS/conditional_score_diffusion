@@ -150,11 +150,11 @@ def scoreVAE_fidelity(config):
     batch = batch.to(device)
 
 
-    for gamma in [0.5, 1., 1.5, 2., 3., 5.]:
+    for gamma in [0.8, 0.9, 1., 1.1, 1.2]:
       if gamma not in gamma_to_rec:
         gamma_to_rec[gamma] = {'LPIPS': 0, 'L2': 0}
 
-      reconstruction = pl_module.encode_n_decode(batch, p_steps=256,
+      reconstruction = pl_module.encode_n_decode(batch, p_steps=512,
                                                   use_pretrained=config.training.use_pretrained,
                                                   encoder_only=config.training.encoder_only,
                                                   t_dependent=config.training.t_dependent, 
