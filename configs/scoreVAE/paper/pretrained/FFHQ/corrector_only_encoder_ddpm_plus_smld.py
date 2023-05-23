@@ -125,6 +125,61 @@ def get_config():
 
   model.unconditional_score_model_name = 'BeatGANsUNetModel'
   model.name = 'BeatGANsLatentScoreModel'
+  model.ema_rate = 0.9999
+  model.image_size = data.image_size
+  model.in_channels = data.num_channels
+  # base channels, will be multiplied
+  model.model_channels: int = 128
+  # output of the unet
+  # suggest: 3
+  # you only need 6 if you also model the variance of the noise prediction (usually we use an analytical variance hence 3)
+  model.out_channels = data.num_channels
+  # how many repeating resblocks per resolution
+  # the decoding side would have "one more" resblock
+  # default: 2
+  model.num_res_blocks: int = 2
+  # you can also set the number of resblocks specifically for the input blocks
+  # default: None = above
+  model.num_input_res_blocks: int = None
+  # number of time embed channels and style channels
+  model.embed_channels = data.latent_dim 
+  # at what resolutions you want to do self-attention of the feature maps
+  # attentions generally improve performance
+  # default: [16]
+  # beatgans: [32, 16, 8]
+  model.attention_resolutions = (16, )
+  # number of time embed channels
+  model.time_embed_channels: int = None
+  # dropout applies to the resblocks (on feature maps)
+  model.dropout: float = 0.
+  model.channel_mult = (1, 1, 2, 3, 4)
+  model.input_channel_mult = None
+  model.conv_resample: bool = True
+  # always 2 = 2d conv
+  model.dims: int = 2
+  # don't use this, legacy from BeatGANs
+  model.num_classes: int = None
+  model.use_checkpoint: bool = False
+  # number of attention heads
+  model.num_heads: int = 1
+  # or specify the number of channels per attention head
+  model.num_head_channels: int = -1
+  # what's this?
+  model.num_heads_upsample: int = -1
+  # use resblock for upscale/downscale blocks (expensive)
+  # default: True (BeatGANs)
+  model.resblock_updown: bool = True
+  # never tried
+  model.use_new_attention_order: bool = False
+  model.resnet_two_cond: bool = False
+  model.resnet_cond_channels: int = None
+  # init the decoding conv layers with zero weights, this speeds up training
+  # default: True (BeattGANs)
+  model.resnet_use_zero_module: bool = True
+  # gradient checkpoint the attention operation
+  model.attn_checkpoint: bool = False
+
+  '''
   model.input_channels = data.num_channels
   model.output_channels = data.num_channels
   model.scale_by_sigma = True
@@ -148,6 +203,7 @@ def get_config():
   model.init_scale = 0.
   model.fourier_scale = 16
   model.conv_size = 3
+  '''
 
   model.encoder_name = 'time_dependent_DDPM_encoder'
   model.encoder_input_channels = data.num_channels
