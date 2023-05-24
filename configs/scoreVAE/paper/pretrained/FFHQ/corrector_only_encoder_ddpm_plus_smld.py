@@ -9,7 +9,7 @@ def get_config():
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/FFHQ_128/'
+  logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/FFHQ_128/' #'/Users/gbatz97/Desktop/score-based-modelling/projects/scoreVAE/experiments/pretrained/FFHQ_128' 
   
   #additional correction settings
   logging.encoder_log_name = 'only_encoder_ddpm_plus_smld_VAE_KLweight_0.01'
@@ -24,17 +24,17 @@ def get_config():
   config.training.lightning_module = 'corrected_encoder_only_pretrained_score_vae'
   training.use_pretrained = True
   #if set to None, we should the last checkpoint.
-  training.prior_checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/FFHQ_128/prior/checkpoints/best/epoch=510--eval_loss_epoch=0.008.ckpt' 
+  training.prior_checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/FFHQ_128/prior/checkpoints/best/epoch=510--eval_loss_epoch=0.008.ckpt'  #'/Users/gbatz97/Desktop/score-based-modelling/projects/scoreVAE/experiments/pretrained/FFHQ_128/prior/checkpoints/epoch=510--eval_loss_epoch=0.008.ckpt' 
   training.encoder_only = True
   training.t_dependent = True
 
   #correction settings
   training.latent_correction = True
   #if set to None, we use the last checkpoint
-  training.encoder_checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/FFHQ_128/only_encoder_ddpm_plus_smld_VAE_KLweight_0.01/checkpoints/best/epoch=465--eval_loss_epoch=153.939.ckpt' 
+  training.encoder_checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/FFHQ_128/only_encoder_ddpm_plus_smld_VAE_KLweight_0.01/checkpoints/best/epoch=465--eval_loss_epoch=153.939.ckpt'  #'/Users/gbatz97/Desktop/score-based-modelling/projects/scoreVAE/experiments/pretrained/FFHQ_128/only_encoder_ddpm_plus_smld_VAE_KLweight_0.01/checkpoints/epoch=465--eval_loss_epoch=153.939.ckpt' 
 
   training.conditioning_approach = 'sr3'
-  training.batch_size = 64 
+  training.batch_size = 8 #64 
   training.t_batch_size = 1
   training.num_nodes = 1
   training.gpus = 1

@@ -127,10 +127,11 @@ def create_model(config):
 def load_encoder(base_config):
   encoder_log_name = base_config.logging.encoder_log_name
   encoder_config_path = os.path.join(base_config.logging.log_path, encoder_log_name, 'config.pkl')
-  print(encoder_config_path)
   if os.path.exists(encoder_config_path):
     with open(encoder_config_path, 'rb') as file:
       encoder_config = pickle.load(file)
+    encoder_config.training.prior_checkpoint_path = base_config.training.prior_checkpoint_path
+    encoder_config.training.prior_config_path = os.path.join(base_config.logging.log_path, 'prior', 'config.pkl')
   else:
     raise NotADirectoryError('The prior config is not found in the specified directory.')
 
@@ -140,29 +141,31 @@ def load_encoder(base_config):
   
   LightningModule = create_lightning_module(encoder_config)
   EncoderLightningModule = LightningModule.load_from_checkpoint(checkpoint_path, config=encoder_config)
+  print('loaded')
   return EncoderLightningModule.encoder
 
 
 def load_prior_model(base_config):
   #load a prior score model
+  if not hasattr(base_config.training, 'prior_config_path'):
+    prior_config_path = os.path.join(base_config.logging.log_path, 'prior', 'config.pkl')
+  else:
+    prior_config_path = base_config.training.prior_config_path
   
-  prior_config_path = os.path.join(base_config.logging.log_path, 'prior', 'config.pkl')
-  print(prior_config_path)
+  if not hasattr(base_config.training, 'prior_checkpoint_path') or base_config.training.prior_checkpoint_path == None:
+    checkpoint_path = os.path.join(base_config.logging.log_path, 'prior', 'checkpoints', 'best', 'last.ckpt')
+  else:
+    checkpoint_path = base_config.training.prior_checkpoint_path
+
   if os.path.exists(prior_config_path):
     with open(prior_config_path, 'rb') as file:
       prior_config = pickle.load(file)
   else:
     raise NotADirectoryError('The prior config is not found in the specified directory.')
-  
-  checkpoint_path = base_config.training.prior_checkpoint_path
-  if checkpoint_path is None:
-    checkpoint_path = os.path.join(base_config.logging.log_path, 'prior', 'checkpoints', 'best', 'last.ckpt')
-
-  #print('----')
+    
   LightningModule = create_lightning_module(prior_config)
-  #print('----')
   priorLightningModule = LightningModule.load_from_checkpoint(checkpoint_path, config=prior_config)
-  #print('----')
+  print('loaded')
   return priorLightningModule.score_model
 
 
