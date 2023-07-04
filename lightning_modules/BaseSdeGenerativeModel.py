@@ -33,7 +33,7 @@ class BaseSdeGenerativeModel(pl.LightningModule):
         if discrete_checkpoint_path and not checkpoint_path:
             # Load the pretrained diffusion model trained in discrete time
             if self.trainer.global_rank == 0:
-                print(f"Loading pretrained score model from checkpoint: {self.diffusion_model_checkpoint}...")
+                print(f"Loading pretrained score model from checkpoint: {discrete_checkpoint_path}...")
                 
                 # load the whole checkpoint
                 checkpoint = torch.load(discrete_checkpoint_path, map_location=self.device)
