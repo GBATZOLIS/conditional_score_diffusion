@@ -35,7 +35,7 @@ def get_config():
   #------              --------
   
   training.visualisation_freq = 1
-  training.visualization_callback = None
+  training.visualization_callback = 'base'
   training.show_evolution = False
 
   training.likelihood_weighting = False
@@ -99,7 +99,7 @@ def get_config():
 
   model.name = 'ImprovedDiffusionUNetModel'
   model.use_fp16 = False
-  model.ema_rate = 0.9999
+  model.ema_rate = 0.999
   model.image_size = data.image_size
   model.in_channels = data.num_channels
   # base channels, will be multiplied
