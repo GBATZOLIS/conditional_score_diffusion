@@ -53,30 +53,18 @@ def train(config, log_path, checkpoint_path, log_name=None):
       if config.model.checkpoint_path is not None and checkpoint_path is None:
         checkpoint_path = config.model.checkpoint_path
 
-      trainer = pl.Trainer(gpus=config.training.gpus,
+    trainer = pl.Trainer(accelerator = 'gpu' if config.training.gpus > 0 else 'cpu',
+                          devices = config.training.gpus,
                           num_nodes = config.training.num_nodes,
-                          accelerator = config.training.accelerator, #plugins = DDPPlugin(find_unused_parameters=False) if config.training.accelerator=='ddp' else None,
                           accumulate_grad_batches = config.training.accumulate_grad_batches,
                           gradient_clip_val = config.optim.grad_clip,
                           max_steps=config.training.n_iters, 
                           max_epochs =config.training.num_epochs,
                           callbacks=callbacks, 
-                          logger = logger,
-                          resume_from_checkpoint=checkpoint_path
-                          )
-    else:  
-      trainer = pl.Trainer(gpus=config.training.gpus,
-                          num_nodes = config.training.num_nodes,
-                          accelerator = config.training.accelerator,
-                          accumulate_grad_batches = config.training.accumulate_grad_batches,
-                          gradient_clip_val = config.optim.grad_clip,
-                          max_steps=config.training.n_iters,
-                          max_epochs =config.training.num_epochs,
-                          callbacks=callbacks,
-                          logger = logger                          
+                          logger = logger
                           )
 
-    trainer.fit(LightningModule, datamodule=DataModule)
+    trainer.fit(LightningModule, datamodule=DataModule, ckpt_path=checkpoint_path)
 
 def test(config, log_path, checkpoint_path):
     if config.data.create_dataset:
@@ -101,18 +89,18 @@ def test(config, log_path, checkpoint_path):
     #print(config.logging.log_path)
     print('------')
 
-    trainer = pl.Trainer(gpus=config.training.gpus,
+    trainer = pl.Trainer(accelerator = 'gpu' if config.training.gpus > 0 else 'cpu',
+                          devices = config.training.gpus,
                           num_nodes = config.training.num_nodes,
-                          accelerator = config.training.accelerator,
                           accumulate_grad_batches = config.training.accumulate_grad_batches,
                           gradient_clip_val = config.optim.grad_clip,
-                          max_steps=config.training.n_iters,
+                          max_steps=config.training.n_iters, 
                           max_epochs =config.training.num_epochs,
-                          callbacks=callbacks,
-                          logger = logger                          
+                          callbacks=callbacks, 
+                          logger = logger                   
                           )
     
-    trainer.test(pl_module, test_dataloaders = DataModule.test_dataloader())
+    trainer.test(pl_module, datamodule=DataModule, ckpt_path=checkpoint_path)
 
 
 def multi_scale_test(master_config, log_path):
