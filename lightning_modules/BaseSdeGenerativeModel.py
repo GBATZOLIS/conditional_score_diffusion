@@ -81,13 +81,13 @@ class BaseSdeGenerativeModel(pl.LightningModule):
 
                 def logsnr(t):
                     device = t.device
-                    snr_val = torch.from_numpy(snr(t.cpu().numpy())).to(device)
+                    snr_val = torch.from_numpy(snr(t.cpu().numpy())).float().to(device)
                     return torch.log(snr_val)
 
                 def d_logsnr(t):
                     device = t.device
-                    dsnr_val = torch.from_numpy(d_snr(t.cpu().numpy())).to(device)
-                    snr_val = torch.from_numpy(snr(t.cpu().numpy())).to(device)
+                    dsnr_val = torch.from_numpy(d_snr(t.cpu().numpy())).float().to(device)
+                    snr_val = torch.from_numpy(snr(t.cpu().numpy())).float().to(device)
                     return dsnr_val/snr_val
 
                 self.sde = sde_lib.SNRSDE(N=1000, gamma=logsnr, dgamma=d_logsnr)
