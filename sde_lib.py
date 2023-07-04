@@ -151,19 +151,21 @@ class cSDE(SDE): #conditional setting. Allow for conditional time-dependent scor
 
 
 class SNRSDE(SDE):
-  def __init__(self, N, gamma=None, a=2, b=3, c=6, minus_log_SNR_0 = -10, minus_log_SNR_1 = 5):
+  def __init__(self, N, gamma=None, dgamma=None, a=2, b=3, c=6, minus_log_SNR_0 = -10, minus_log_SNR_1 = 5):
     super().__init__(N)
     if gamma is None:
       gamma = lambda t: a * t + b * t**c
       d_gamma = lambda t: a + b*c * t**(c-1)
+      
+      # Gamma has to be normalized to have correct start and end points (cf. Appendix D of VDM paper)
+      normalizing_consant = (minus_log_SNR_1 - minus_log_SNR_0)/(gamma(1)-gamma(0))
+      log_SNR = lambda t: - (minus_log_SNR_0 +  normalizing_consant * (gamma(t) - gamma(0)))
+      self.d_log_SNR = lambda t: -normalizing_consant * d_gamma(t)
+      self.log_SNR = log_SNR
+
     else:
-      #Use atuograd
-      pass
-    # Gamma has to be normalized to have correct start and end points (cf. Appendix D of VDM paper)
-    normalizing_consant = (minus_log_SNR_1 - minus_log_SNR_0)/(gamma(1)-gamma(0))
-    log_SNR = lambda t: - (minus_log_SNR_0 +  normalizing_consant * (gamma(t) - gamma(0)))
-    self.d_log_SNR = lambda t: -normalizing_consant * d_gamma(t)
-    self.log_SNR = log_SNR
+        self.log_SNR = gamma
+        self.d_log_SNR = d_gamma
   
   @property
   def T(self):

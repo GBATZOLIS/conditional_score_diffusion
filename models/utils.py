@@ -273,7 +273,7 @@ def get_score_fn(sde, model, conditional=False, train=False, continuous=False):
 
   else:
     """COVERS THE BASIC UNCONDITIONAL CASE"""
-    if isinstance(sde, (sde_lib.VPSDE, sde_lib.cVPSDE, sde_lib.subVPSDE, sde_lib.csubVPSDE)):
+    if not isinstance(sde, (sde_lib.VESDE, sde_lib.cVESDE)):
       def score_fn(x, t):
         # Scale neural network output by standard deviation and flip sign
         if continuous or isinstance(sde, sde_lib.subVPSDE):
@@ -291,32 +291,12 @@ def get_score_fn(sde, model, conditional=False, train=False, continuous=False):
 
         score = - score / std[(...,)+(None,)*len(x.shape[1:])] #-> why do they scale the output of the network by std ??
         return score
-
-    elif isinstance(sde, sde_lib.VESDE) or isinstance(sde, sde_lib.cVESDE):
+    
+    else:
       def score_fn(x, t):
         assert continuous
         score = model_fn(x, t)
-        # IMPORTANT BELOW:
-        #raise NotImplementedError('Continuous training for VE SDE is not checked. Division by std should be included. Not completed yet.')
-        #std = labels = sde.marginal_prob(torch.zeros_like(x), t)[1]
-        #time_embedding = torch.log(labels) if model.embedding_type == 'fourier' else labels  # For NCNN++
-        #time_embedding = t * (sde.N - 1) # For DDPM
-        #score = model_fn(x, time_embedding)
-        #score = score / std[(...,)+(None,)*len(x.shape[1:])]
-        #score = divide_by_sigmas(score, t, sde, continuous)
         return score
-
-    elif isinstance(sde, sde_lib.SNRSDE):
-        assert continuous
-        def score_fn(x, t):
-          #labels = t * (sde.N - 1)
-          score = model_fn(x, t)
-          #std = sde.marginal_prob(torch.zeros_like(x), t)[1]
-          #score = score / std[(...,)+(None,)*len(x.shape[1:])] #-> why do they scale the output of the network by std ??
-          return score
-
-    else:
-      raise NotImplementedError(f"SDE class {sde.__class__.__name__} not yet supported.")
 
   return score_fn
 

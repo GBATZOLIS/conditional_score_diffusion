@@ -8,6 +8,9 @@ from . import utils
 import torch.optim as optim
 import os
 import torch
+from utils import get_named_beta_schedule
+from scipy.interpolate import PchipInterpolator
+import numpy as np
 
 @utils.register_lightning_module(name='base')
 class BaseSdeGenerativeModel(pl.LightningModule):
@@ -40,8 +43,31 @@ class BaseSdeGenerativeModel(pl.LightningModule):
             self.sde = sde_lib.VESDE(sigma_min=config.model.sigma_min, sigma_max=config.model.sigma_max, N=config.model.num_scales, data_mean=data_mean)
             self.sampling_eps = 1e-5
         elif config.training.sde.lower() == 'snrsde':
-            self.sde = sde_lib.SNRSDE(N=config.model.num_scales)
             self.sampling_eps = 1e-3
+
+            if hasattr(config.training, 'beta_schedule'):
+                #DISCRETE QUANTITIES
+                N = config.model.num_scales
+                betas = get_named_beta_schedule('linear', N)
+                alphas = 1.0 - betas
+                alphas_cumprod = np.cumprod(alphas, axis=0)
+                discrete_snrs = alphas_cumprod/(1.0 - alphas_cumprod)
+
+                #Monotonic Bicubic Interpolation
+                snr = PchipInterpolator(np.linspace(self.sampling_eps, 1, len(discrete_snrs)), discrete_snrs)
+                d_snr = snr.derivative(nu=1)
+
+                def logsnr(t):
+                    return torch.log(torch.tensor(snr(t.item())))
+
+                def d_logsnr(t):
+                    return torch.tensor(d_snr(t.item()))/torch.tensor(snr(t.item()))
+
+                self.sde = sde_lib.SNRSDE(N=1000, gamma=logsnr, dgamma=d_logsnr)
+
+            else:
+                self.sde = sde_lib.SNRSDE(N=config.model.num_scales)
+            
         else:
             raise NotImplementedError(f"SDE {config.training.sde} unknown.")
         
