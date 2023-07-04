@@ -4,6 +4,7 @@ import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
 from abc import abstractmethod
+from . import utils
 
 # PyTorch 1.7 has SiLU, but we support PyTorch 1.5.
 class SiLU(nn.Module):
