@@ -189,7 +189,7 @@ def get_pc_sampler(sde, shape, predictor, corrector, snr,
         t = timesteps[i]
         vec_t = torch.ones(shape[0], device=t.device) * t
         x, x_mean = corrector_update_fn(x, vec_t, model=model)
-        x, x_mean = predictor_update_fn(x, vec_t, model=model)
+        x, x_mean = predictor_update_fn(x, vec_t, model=model, discretisation=timesteps)
         
         if show_evolution:
           evolution.append(x.cpu())
@@ -323,7 +323,7 @@ def get_pc_inpainter(sde, predictor, corrector, snr,
 
   return pc_inpainter
 
-def shared_predictor_update_fn(x, t, sde, model, predictor, probability_flow, continuous):
+def shared_predictor_update_fn(x, t, sde, model, predictor, probability_flow, continuous, discretisation):
   """A wrapper that configures and returns the update function of predictors."""
   score_fn = mutils.get_score_fn(sde, model, conditional=False, train=False, continuous=continuous)
 
@@ -331,7 +331,7 @@ def shared_predictor_update_fn(x, t, sde, model, predictor, probability_flow, co
     # Corrector-only sampler
     predictor_obj = NonePredictor(sde, score_fn, probability_flow)
   else:
-    predictor_obj = predictor(sde, score_fn, probability_flow)
+    predictor_obj = predictor(sde, score_fn, probability_flow, discretisation)
   return predictor_obj.update_fn(x, t)
 
 def shared_corrector_update_fn(x, t, sde, model, corrector, continuous, snr, n_steps):
