@@ -18,7 +18,7 @@ class CIFAR10Dataset(datasets.CIFAR10):
     
     def __getitem__(self, index):
         x, y = super().__getitem__(index)
-        x = self.transform_my(x)
+        x = self.transform_my(x).float()
         if self.return_labels:
             return x, y
         else:
