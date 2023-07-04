@@ -61,7 +61,8 @@ def train(config, log_path, checkpoint_path, log_name=None):
                           max_steps=config.training.n_iters, 
                           max_epochs =config.training.num_epochs,
                           callbacks=callbacks, 
-                          logger = logger
+                          logger = logger,
+                          num_sanity_val_steps=1
                           )
 
     trainer.fit(LightningModule, datamodule=DataModule, ckpt_path=checkpoint_path)

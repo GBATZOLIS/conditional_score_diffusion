@@ -188,7 +188,7 @@ class ImageVisualizationCallback(Callback):
                 evolution = sampling_info['evolution']
                 self.visualise_evolution(evolution, pl_module)
             else:
-                samples, _ = pl_module.sample(show_evolution=False)
+                samples, _ = pl_module.sample(show_evolution=False, p_steps=250)
 
             self.visualise_samples(samples, pl_module)
 
