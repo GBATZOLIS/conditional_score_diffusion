@@ -6,6 +6,26 @@ import torch.nn.functional as F
 from abc import abstractmethod
 from . import utils
 
+def convert_module_to_f16(l):
+    """
+    Convert primitive modules to float16.
+    """
+    if isinstance(l, (nn.Conv1d, nn.Conv2d, nn.Conv3d)):
+        l.weight.data = l.weight.data.half()
+        if l.bias is not None:
+            l.bias.data = l.bias.data.half()
+
+
+def convert_module_to_f32(l):
+    """
+    Convert primitive modules to float32, undoing convert_module_to_f16().
+    """
+    if isinstance(l, (nn.Conv1d, nn.Conv2d, nn.Conv3d)):
+        l.weight.data = l.weight.data.float()
+        if l.bias is not None:
+            l.bias.data = l.bias.data.float()
+
+
 # PyTorch 1.7 has SiLU, but we support PyTorch 1.5.
 class SiLU(nn.Module):
     def forward(self, x):
@@ -574,20 +594,21 @@ class UNetModel(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.image_size = config.model.image_size
-        self.in_channels = config.model.in_channels
-        self.model_channels = config.model.model_channels
-        self.out_channels = config.model.out_channels
-        self.num_res_blocks = config.model.num_res_blocks
-        self.attention_resolutions = config.model.attention_resolutions
-        self.dropout = config.model.dropout
-        self.channel_mult = config.model.channel_mult
-        self.conv_resample = config.model.conv_resample
-        self.num_classes = config.model.num_classes
-        self.use_checkpoint = config.model.use_checkpoint
+        self.in_channels = in_channels = config.model.in_channels
+        self.model_channels = model_channels = config.model.model_channels
+        self.out_channels = out_channels = config.model.out_channels
+        self.num_res_blocks = num_res_blocks = config.model.num_res_blocks
+        self.attention_resolutions = attention_resolutions = config.model.attention_resolutions
+        self.dropout = dropout = config.model.dropout
+        self.channel_mult = channel_mult = config.model.channel_mult
+        self.conv_resample = conv_resample = config.model.conv_resample
+        self.dims = dims = config.model.dims
+        self.num_classes = num_classes = config.model.num_classes
+        self.use_checkpoint = use_checkpoint = config.model.use_checkpoint
         self.dtype = th.float16 if config.model.use_fp16 else th.float32
-        self.num_heads = config.model.num_heads
-        self.num_head_channels = config.model.num_head_channels
-        self.num_heads_upsample = config.model.num_heads_upsample
+        self.num_heads = num_heads = config.model.num_heads
+        self.num_head_channels = num_head_channels = config.model.num_head_channels
+        self.num_heads_upsample = num_heads_upsample = config.model.num_heads_upsample
         self.use_new_attention_order = use_new_attention_order = config.model.use_new_attention_order
         self.resblock_updown = resblock_updown = config.model.resblock_updown
         self.use_scale_shift_norm = use_scale_shift_norm = config.model.use_scale_shift_norm
