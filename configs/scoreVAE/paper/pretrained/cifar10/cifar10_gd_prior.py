@@ -94,7 +94,8 @@ def get_config():
   # model
   config.model = model = ml_collections.ConfigDict()
   model.num_scales = 1000
-  model.checkpoint_path = '/home/gb511/projects/scoreVAE/experiments/cifar10/prior_linear/checkpoints/epoch=799-step=281600.ckpt'
+  model.discrete_checkpoint_path = '/home/gb511/projects/scoreVAE/experiments/cifar10/prior_linear/checkpoints/epoch=799-step=281600.ckpt'
+  model.checkpoint_path = None
 
   model.name = 'ImprovedDiffusionUNetModel'
   model.use_fp16 = False

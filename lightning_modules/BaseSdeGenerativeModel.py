@@ -26,6 +26,28 @@ class BaseSdeGenerativeModel(pl.LightningModule):
         # Placeholder to store samples
         self.samples = None
 
+    def on_train_start(self):
+        discrete_checkpoint_path = self.config.model.discrete_checkpoint_path
+        checkpoint_path = self.config.model.checkpoint_path
+        
+        if discrete_checkpoint_path and not checkpoint_path:
+            # Load the pretrained diffusion model trained in discrete time
+            if self.trainer.global_rank == 0:
+                print(f"Loading pretrained score model from checkpoint: {self.diffusion_model_checkpoint}...")
+                
+                # load the whole checkpoint
+                checkpoint = torch.load(discrete_checkpoint_path, map_location=self.device)
+                
+                # Create a new state_dict with corrected key names if necessary
+                if any(k.startswith("diffusion_model.") for k in checkpoint['state_dict'].keys()):
+                    corrected_state_dict = {k.replace("diffusion_model.", ""): v for k, v in checkpoint['state_dict'].items()}
+                else:
+                    corrected_state_dict = checkpoint['state_dict']
+
+                # Load only the diffusion_model parameters
+                self.score_model.load_state_dict(corrected_state_dict)
+
+
     def configure_sde(self, config):
         # Setup SDEs
         if config.training.sde.lower() == 'vpsde':
