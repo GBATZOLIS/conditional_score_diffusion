@@ -165,7 +165,7 @@ class SNRSDE(SDE):
 
     else:
         self.log_SNR = gamma
-        self.d_log_SNR = d_gamma
+        self.d_log_SNR = dgamma
   
   @property
   def T(self):
