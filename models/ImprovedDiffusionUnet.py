@@ -5,6 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from abc import abstractmethod
 from . import utils
+import pytorch_lightning as pl
 
 def convert_module_to_f16(l):
     """
@@ -560,7 +561,7 @@ class QKVAttention(nn.Module):
         return count_flops_attn(model, _x, y)
 
 @utils.register_model(name='ImprovedDiffusionUNetModel')
-class UNetModel(nn.Module):
+class UNetModel(pl.LightningModule):
     """
     The full UNet model with attention and timestep embedding.
 
