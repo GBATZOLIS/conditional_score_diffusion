@@ -606,7 +606,7 @@ class UNetModel(pl.LightningModule):
         self.dims = dims = config.model.dims
         self.num_classes = num_classes = config.model.num_classes
         self.use_checkpoint = use_checkpoint = config.model.use_checkpoint
-        self.dtype = th.float16 if config.model.use_fp16 else th.float32
+        #self.dtype = th.float16 if config.model.use_fp16 else th.float32
         self.num_heads = num_heads = config.model.num_heads
         self.num_head_channels = num_head_channels = config.model.num_head_channels
         self.num_heads_upsample = num_heads_upsample = config.model.num_heads_upsample
