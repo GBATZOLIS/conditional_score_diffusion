@@ -80,10 +80,10 @@ class BaseSdeGenerativeModel(pl.LightningModule):
                 d_snr = snr.derivative(nu=1)
 
                 def logsnr(t):
-                    return torch.log(torch.tensor(snr(t.item())))
+                    return torch.log(torch.tensor(snr(t.numpy())))
 
                 def d_logsnr(t):
-                    return torch.tensor(d_snr(t.item()))/torch.tensor(snr(t.item()))
+                    return torch.tensor(d_snr(t.numpy()))/torch.tensor(snr(t.numpy()))
 
                 self.sde = sde_lib.SNRSDE(N=1000, gamma=logsnr, dgamma=d_logsnr)
 
