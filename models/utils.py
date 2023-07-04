@@ -191,9 +191,7 @@ def get_model_fn(model, train=False):
     Returns:
       A tuple of (model output, new mutable states)
     """
-    print(x.dtype)
-    print(labels.dtype)
-    
+
     if not train:
       model.eval()
       return model(x, labels)

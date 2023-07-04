@@ -598,7 +598,7 @@ class UNetModel(nn.Module):
         self.model_channels = model_channels = config.model.model_channels
         self.out_channels = out_channels = config.model.out_channels
         self.num_res_blocks = num_res_blocks = config.model.num_res_blocks
-        self.attention_resolutions = attention_resolutions = config.model.attention_resolutions
+        self.attention_resolutions = attention_resolutions = self._process_attention_resolutions(config.model.image_size, config.model.attention_resolutions)
         self.dropout = dropout = config.model.dropout
         self.channel_mult = channel_mult = config.model.channel_mult
         self.conv_resample = conv_resample = config.model.conv_resample
@@ -763,6 +763,12 @@ class UNetModel(nn.Module):
             nn.SiLU(),
             zero_module(conv_nd(dims, input_ch, out_channels, 3, padding=1)),
         )
+
+    def _process_attention_resolutions(self, image_size, attention_resolutions):
+        attention_ds = []
+        for res in attention_resolutions:
+            attention_ds.append(image_size // res)
+        return tuple(attention_ds)
 
     def convert_to_fp16(self):
         """
