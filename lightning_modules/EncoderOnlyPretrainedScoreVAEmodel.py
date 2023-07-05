@@ -174,10 +174,17 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
             loss = self.eval_loss_fn[1](self.unconditional_score_model, batch)
             self.logger.experiment.add_scalars('val_loss', {'unconditional': loss}, self.global_step)
 
+        if self.current_epoch+1 == 1:
+            sample, _ = self.unconditional_sample(p_steps=250)
+            sample = sample.cpu()
+            grid_batch = torchvision.utils.make_grid(sample, nrow=int(np.sqrt(sample.size(0))), normalize=True, scale_each=True)
+            self.logger.experiment.add_image('unconditional_sample', grid_batch, self.current_epoch)
+
         if batch_idx == 2 and (self.current_epoch+1) % self.config.training.visualisation_freq == 0:
-            reconstruction = self.encode_n_decode(batch, use_pretrained=self.config.training.use_pretrained,
-                                                          encoder_only=self.config.training.encoder_only,
-                                                          t_dependent=self.config.training.t_dependent)
+            reconstruction = self.encode_n_decode(batch, p_steps=250,
+                                                         use_pretrained=self.config.training.use_pretrained,
+                                                         encoder_only=self.config.training.encoder_only,
+                                                         t_dependent=self.config.training.t_dependent)
 
             reconstruction =  reconstruction.cpu()
             grid_reconstruction = torchvision.utils.make_grid(reconstruction, nrow=int(np.sqrt(batch.size(0))), normalize=True, scale_each=True)
@@ -192,11 +199,6 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
             avg_L2norm = torch.mean(L2norm)
             self.log('reconstruction_loss', avg_L2norm, logger=True)
 
-            sample, _ = self.unconditional_sample()
-            sample = sample.cpu()
-            grid_batch = torchvision.utils.make_grid(sample, nrow=int(np.sqrt(sample.size(0))), normalize=True, scale_each=True)
-            self.logger.experiment.add_image('unconditional_sample', grid_batch, self.current_epoch)
-            
         return loss
 
     def test_step(self, batch, batch_idx):
@@ -244,12 +246,12 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
         return output
 
 
-    def unconditional_sample(self, num_samples=None):
+    def unconditional_sample(self, num_samples=None, p_steps='default'):
         if num_samples is None:
             sampling_shape = [self.config.training.batch_size] +  self.config.data.shape
         else:
             sampling_shape = [num_samples] +  self.config.data.shape
-        sampling_fn = get_sampling_fn(self.config, self.usde, sampling_shape, self.sampling_eps)
+        sampling_fn = get_sampling_fn(self.config, self.usde, sampling_shape, self.sampling_eps, p_steps)
         return sampling_fn(self.unconditional_score_model)
     
     def interpolate(self, x, num_points):
