@@ -9,7 +9,7 @@ def get_config():
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = '/home/gb511/projects/scoreVAE/experiments/FFHQ' #'/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/cifar10/'
+  logging.log_path = '/home/gb511/projects/scoreVAE/experiments/ffhq' #'/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/cifar10/'
   logging.log_name = 'continuous_conversion'
   logging.top_k = 5
   logging.every_n_epochs = 1000
@@ -94,7 +94,7 @@ def get_config():
   # model
   config.model = model = ml_collections.ConfigDict()
   model.num_scales = 1000
-  model.discrete_checkpoint_path = '/home/gb511/projects/scoreVAE/experiments/cifar10/prior_linear/checkpoints/epoch=799-step=281600.ckpt'
+  model.discrete_checkpoint_path = '/home/gb511/projects/scoreVAE/experiments/ffhq/discrete_prior/checkpoints/diffusion_decoder_ddpm.ckpt'
   model.checkpoint_path = None
 
   model.name = 'BeatGANsUNetModel'
