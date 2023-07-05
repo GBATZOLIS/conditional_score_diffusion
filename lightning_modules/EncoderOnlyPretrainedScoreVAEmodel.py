@@ -16,6 +16,9 @@ import losses
 import torch
 import lpips
 from pathlib import Path
+from utils import get_named_beta_schedule
+from scipy.interpolate import PchipInterpolator
+import numpy as np
 
 @utils.register_lightning_module(name='encoder_only_pretrained_score_vae')
 class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
@@ -55,7 +58,37 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
         elif config.training.sde.lower() == 'vesde':            
             self.sde = sde_lib.cVESDE(sigma_min=config.model.sigma_min_x, sigma_max=config.model.sigma_max_x, N=config.model.num_scales)
             self.usde = sde_lib.VESDE(sigma_min=config.model.sigma_min_x, sigma_max=config.model.sigma_max_x, N=config.model.num_scales)
-            self.sampling_eps = 1e-5           
+            self.sampling_eps = 1e-5   
+        elif config.training.sde.lower() == 'snrsde':
+            self.sampling_eps = 1e-3
+
+            if hasattr(config.training, 'beta_schedule'):
+                #DISCRETE QUANTITIES
+                N = config.model.num_scales
+                betas = get_named_beta_schedule('linear', N)
+                alphas = 1.0 - betas
+                alphas_cumprod = np.cumprod(alphas, axis=0)
+                discrete_snrs = alphas_cumprod/(1.0 - alphas_cumprod)
+
+                #Monotonic Bicubic Interpolation
+                snr = PchipInterpolator(np.linspace(self.sampling_eps, 1, len(discrete_snrs)), discrete_snrs)
+                d_snr = snr.derivative(nu=1)
+
+                def logsnr(t):
+                    device = t.device
+                    snr_val = torch.from_numpy(snr(t.cpu().numpy())).float().to(device)
+                    return torch.log(snr_val)
+
+                def d_logsnr(t):
+                    device = t.device
+                    dsnr_val = torch.from_numpy(d_snr(t.cpu().numpy())).float().to(device)
+                    snr_val = torch.from_numpy(snr(t.cpu().numpy())).float().to(device)
+                    return dsnr_val/snr_val
+
+                self.sde = sde_lib.SNRSDE(N=1000, gamma=logsnr, dgamma=d_logsnr)
+            else:
+                self.sde = sde_lib.SNRSDE(N=config.model.num_scales)
+
         else:
             raise NotImplementedError(f"SDE {config.training.sde} unknown.")
 
