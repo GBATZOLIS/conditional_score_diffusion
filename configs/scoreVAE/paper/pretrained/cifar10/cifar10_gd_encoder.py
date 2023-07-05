@@ -104,6 +104,7 @@ def get_config():
   # model
   config.model = model = ml_collections.ConfigDict()
   model.ema_rate = 0.999
+  model.num_scales = 1000
   model.checkpoint_path = None
   model.encoder_name = 'time_dependent_simple_encoder'
   model.encoder_input_channels = data.num_channels
