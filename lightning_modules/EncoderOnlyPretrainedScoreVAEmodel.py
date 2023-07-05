@@ -174,7 +174,7 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
             loss = self.eval_loss_fn[1](self.unconditional_score_model, batch)
             self.logger.experiment.add_scalars('val_loss', {'unconditional': loss}, self.global_step)
 
-        if self.current_epoch+1 == 1:
+        if batch_idx == 2 and self.current_epoch+1 == 1:
             sample, _ = self.unconditional_sample(p_steps=250)
             sample = sample.cpu()
             grid_batch = torchvision.utils.make_grid(sample, nrow=int(np.sqrt(sample.size(0))), normalize=True, scale_each=True)
