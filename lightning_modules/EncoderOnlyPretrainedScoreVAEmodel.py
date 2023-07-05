@@ -85,9 +85,11 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
                     snr_val = torch.from_numpy(snr(t.cpu().numpy())).float().to(device)
                     return dsnr_val/snr_val
 
-                self.sde = sde_lib.SNRSDE(N=1000, gamma=logsnr, dgamma=d_logsnr)
+                self.sde = sde_lib.cSNRSDE(N=N, gamma=logsnr, dgamma=d_logsnr)
+                self.usde = sde_lib.SNRSDE(N=N, gamma=logsnr, dgamma=d_logsnr)
             else:
-                self.sde = sde_lib.SNRSDE(N=config.model.num_scales)
+                self.sde = sde_lib.cSNRSDE(N=config.model.num_scales)
+                self.usde = sde_lib.SNRSDE(N=config.model.num_scales)
 
         else:
             raise NotImplementedError(f"SDE {config.training.sde} unknown.")

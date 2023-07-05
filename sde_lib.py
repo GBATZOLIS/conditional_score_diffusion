@@ -197,6 +197,53 @@ class SNRSDE(SDE):
     logps = -N / 2. * np.log(2 * np.pi) - torch.sum(z ** 2, dim=dims_to_reduce) / 2.
     return logps
 
+class cSNRSDE(cSDE):
+  def __init__(self, N, gamma=None, dgamma=None, a=2, b=3, c=6, minus_log_SNR_0 = -10, minus_log_SNR_1 = 5):
+    super().__init__(N)
+    if gamma is None:
+      gamma = lambda t: a * t + b * t**c
+      d_gamma = lambda t: a + b*c * t**(c-1)
+      
+      # Gamma has to be normalized to have correct start and end points (cf. Appendix D of VDM paper)
+      normalizing_consant = (minus_log_SNR_1 - minus_log_SNR_0)/(gamma(1)-gamma(0))
+      log_SNR = lambda t: - (minus_log_SNR_0 +  normalizing_consant * (gamma(t) - gamma(0)))
+      self.d_log_SNR = lambda t: -normalizing_consant * d_gamma(t)
+      self.log_SNR = log_SNR
+
+    else:
+        self.log_SNR = gamma
+        self.d_log_SNR = dgamma
+  
+  @property
+  def T(self):
+    return 1
+
+  def sde(self, x, t):
+    SNR = lambda t: torch.exp(self.log_SNR(t))
+    d_log_SNR = self.d_log_SNR
+    std = torch.sqrt(1 / (1 + SNR(t)))
+    drift = 0.5 * std[(...,)+(None,)*len(x.shape[1:])]**2 * d_log_SNR(t)[(...,)+(None,)*len(x.shape[1:])] * x
+    diffusion_squared = - std**2 * d_log_SNR(t)
+    diffusion = torch.sqrt(diffusion_squared)
+    return drift, diffusion
+
+  def marginal_prob(self, x, t): 
+    SNR = lambda t: torch.exp(self.log_SNR(t))
+    alpha = torch.sqrt(SNR(t) / (1 + SNR(t)))[(...,)+(None,)*len(x.shape[1:])]
+    mean = alpha * x
+    std = torch.sqrt(1 / (1 + SNR(t)))
+    return mean, std
+
+  def prior_sampling(self, shape):
+    return torch.randn(*shape)
+
+  def prior_logp(self, z):
+    shape = z.shape
+    N = np.prod(shape[1:])
+    dims_to_reduce=tuple(range(len(z.shape))[1:])
+    logps = -N / 2. * np.log(2 * np.pi) - torch.sum(z ** 2, dim=dims_to_reduce) / 2.
+    return logps
+
 class VVSDE(SDE):
   """Construct a Variance Vanishing SDE.
   Args:
