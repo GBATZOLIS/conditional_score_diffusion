@@ -70,7 +70,7 @@ class BaseSdeGenerativeModel(pl.LightningModule):
             if hasattr(config.training, 'beta_schedule'):
                 #DISCRETE QUANTITIES
                 N = config.model.num_scales
-                betas = get_named_beta_schedule('linear', N)
+                betas = get_named_beta_schedule(config.training.beta_schedule, N)
                 alphas = 1.0 - betas
                 alphas_cumprod = np.cumprod(alphas, axis=0)
                 discrete_snrs = alphas_cumprod/(1.0 - alphas_cumprod)
