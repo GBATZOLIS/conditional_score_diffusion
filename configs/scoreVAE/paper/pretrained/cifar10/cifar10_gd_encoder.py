@@ -103,6 +103,7 @@ def get_config():
 
   # model
   config.model = model = ml_collections.ConfigDict()
+  model.ema_rate = 0.999
   model.checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/cifar10/only_encoder_VAE_KLweight_0.01/checkpoints/best/last.ckpt'
   model.encoder_name = 'time_dependent_simple_encoder'
   model.encoder_input_channels = data.num_channels
