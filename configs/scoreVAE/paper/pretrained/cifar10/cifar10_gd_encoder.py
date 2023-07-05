@@ -39,7 +39,7 @@ def get_config():
   training.eval_freq = 2500
   #------              --------
   
-  training.visualisation_freq = 1
+  training.visualisation_freq = 20
   training.visualization_callback = None
   training.show_evolution = False
 
