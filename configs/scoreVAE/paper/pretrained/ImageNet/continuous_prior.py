@@ -98,7 +98,7 @@ def get_config():
   model.discrete_checkpoint_path = '/home/gb511/projects/scoreVAE/experiments/ffhq/discrete_prior/checkpoints/epoch=265-step=116508.ckpt'
   model.checkpoint_path = None
 
-  model.name = 'BeatGANsUNetModel'
+  model.name = 'ImprovedDiffusionUNetModel'
   model.ema_rate = 0.999
   model.image_size = data.image_size
   model.in_channels = data.num_channels
@@ -137,7 +137,7 @@ def get_config():
   # number of attention heads
   model.num_heads: int = 1
   # or specify the number of channels per attention head
-  model.num_head_channels: int = -1
+  model.num_head_channels: int = 64
   # what's this?
   model.num_heads_upsample: int = -1
   # use resblock for upscale/downscale blocks (expensive)
