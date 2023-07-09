@@ -99,6 +99,7 @@ def get_config():
   model.checkpoint_path = None
 
   model.name = 'ImprovedDiffusionUNetModel'
+  model.use_fp16 = False
   model.ema_rate = 0.999
   model.image_size = data.image_size
   model.in_channels = data.num_channels
@@ -123,7 +124,7 @@ def get_config():
   # beatgans: [32, 16, 8]
   model.attention_resolutions = (32, 16, 8)
   # number of time embed channels
-  model.time_embed_channels: int = None 
+  model.time_embed_channels: int = None
   # dropout applies to the resblocks (on feature maps)
   model.dropout: float = 0.1
   model.channel_mult = (1, 1, 2, 3, 4)
@@ -145,13 +146,14 @@ def get_config():
   model.resblock_updown: bool = True
   # never tried
   model.use_new_attention_order: bool = False
-  model.resnet_two_cond: bool = False
-  model.resnet_cond_channels: int = None
+  #model.resnet_two_cond: bool = False
+  #model.resnet_cond_channels: int = None
   # init the decoding conv layers with zero weights, this speeds up training
   # default: True (BeattGANs)
-  model.resnet_use_zero_module: bool = True
+  #model.resnet_use_zero_module: bool = True
   # gradient checkpoint the attention operation
-  model.attn_checkpoint: bool = False
+  #model.attn_checkpoint: bool = False
+  model.use_scale_shift_norm = True
 
   # optimization
   config.optim = optim = ml_collections.ConfigDict()
