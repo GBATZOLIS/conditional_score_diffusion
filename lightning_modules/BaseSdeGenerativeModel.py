@@ -106,17 +106,26 @@ class BaseSdeGenerativeModel(pl.LightningModule):
                                     continuous=True, likelihood_weighting=config.training.likelihood_weighting)
         return loss_fn
 
+    def _handle_batch(self, batch):
+        if type(batch) == list:
+            x = batch[0]
+        else:
+            x = batch
+        return x
+
     def configure_default_sampling_shape(self, config):
         #Sampling settings
         self.data_shape = config.data.shape
         self.default_sampling_shape = [config.training.batch_size] +  self.data_shape
 
     def training_step(self, batch, batch_idx):
+        batch = self._handle_batch(batch)
         loss = self.train_loss_fn(self.score_model, batch)
         self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         return loss
     
     def validation_step(self, batch, batch_idx):
+        batch = self._handle_batch(batch)
         loss = self.eval_loss_fn(self.score_model, batch)
         self.log('eval_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         return loss
