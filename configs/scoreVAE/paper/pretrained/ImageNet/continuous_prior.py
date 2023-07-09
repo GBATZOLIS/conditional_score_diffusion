@@ -19,7 +19,7 @@ def get_config():
   config.training = training = ml_collections.ConfigDict()
   config.training.lightning_module = 'base'
   training.conditioning_approach = 'sr3'
-  training.batch_size = 64
+  training.batch_size = 2
   training.t_batch_size = 1
   training.num_nodes = 1
   training.gpus = 1
