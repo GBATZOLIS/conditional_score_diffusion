@@ -291,12 +291,22 @@ def get_score_fn(sde, model, conditional=False, train=False, continuous=False):
           std = sde.sqrt_1m_alphas_cumprod.type_as(labels)[labels.long()]
 
         score = - score / std[(...,)+(None,)*len(x.shape[1:])] #-> why do they scale the output of the network by std ??
-        return score
+        
+        if score.size(1) == 6:
+          return score[:,:3,::]
+        else:
+          return score
     
     else:
       def score_fn(x, t):
         assert continuous
         score = model_fn(x, t)
+
+        if score.size(1) == 6:
+          return score[:,:3,::]
+        else:
+          return score
+
         return score
 
   return score_fn
