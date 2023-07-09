@@ -107,7 +107,7 @@ def get_config():
   # output of the unet
   # suggest: 3
   # you only need 6 if you also model the variance of the noise prediction (usually we use an analytical variance hence 3)
-  model.out_channels = data.num_channels
+  model.out_channels = 2*data.num_channels
   # how many repeating resblocks per resolution
   # the decoding side would have "one more" resblock
   # default: 2
