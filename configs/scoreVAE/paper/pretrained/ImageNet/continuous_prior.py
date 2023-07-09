@@ -112,7 +112,7 @@ def get_config():
   # how many repeating resblocks per resolution
   # the decoding side would have "one more" resblock
   # default: 2
-  model.num_res_blocks: int = 2
+  model.num_res_blocks: int = 3
   # you can also set the number of resblocks specifically for the input blocks
   # default: None = above
   model.num_input_res_blocks: int = None
