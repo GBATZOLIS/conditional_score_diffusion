@@ -9,7 +9,7 @@ def get_config():
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = '/home/gb511/projects/scoreVAE/experiments/ffhq' #'/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/cifar10/'
+  logging.log_path = '/home/gb511/projects/scoreVAE/experiments/ImageNet' #'/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/cifar10/'
   logging.log_name = 'continuous_conversion'
   logging.top_k = 5
   logging.every_n_epochs = 1000
@@ -75,14 +75,14 @@ def get_config():
   # data
   config.data = data = ml_collections.ConfigDict()
   data.base_dir = '/home/gb511/datasets' #'/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/datasets'
-  data.dataset = 'ffhq'
+  data.dataset = 'ImageNet'
   data.datamodule = 'guided_diffusion_dataset'
   data.return_labels = False
   data.use_data_mean = False
   data.create_dataset = False
   data.split = [0.9, 0.05, 0.05]
   data.image_size = 128
-  data.percentage_use = 100
+  data.percentage_use = 10 #default:100
   data.effective_image_size = data.image_size
   data.shape = [3, data.image_size, data.image_size]
   data.latent_dim = 512

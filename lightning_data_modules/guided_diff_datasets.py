@@ -65,13 +65,13 @@ class Cifar10DataModule(pl.LightningDataModule):
 
 
 # ... existing functions and classes (load_data, ImageDataset, etc.) ...
-@utils.register_lightning_datamodule(name='guided_diff_dataset')
+@utils.register_lightning_datamodule(name='guided_diffusion_dataset')
 class ImageDataModule(LightningDataModule):
     def __init__(self, config):
         super().__init__()
         self.data_dir = config.data.base_dir
         self.dataset = config.data.dataset
-        self.percentage_use = 100 #percentage of the original dataset to be used
+        self.percentage_use = config.data.percentage_use #percentage of the original dataset to be used
         self.batch_size = config.training.batch_size
         self.image_size = config.data.image_size
         self.class_cond = config.data.class_cond
