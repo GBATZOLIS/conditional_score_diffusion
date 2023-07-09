@@ -41,6 +41,8 @@ class BaseSdeGenerativeModel(pl.LightningModule):
                 # Create a new state_dict with corrected key names if necessary
                 if any(k.startswith("diffusion_model.") for k in checkpoint['state_dict'].keys()):
                     corrected_state_dict = {k.replace("diffusion_model.", ""): v for k, v in checkpoint['state_dict'].items()}
+                elif any(k.startswith("ema_model.") for k in checkpoint['state_dict'].keys()):
+                    corrected_state_dict = {k.replace("ema_model.", ""): v for k, v in checkpoint['state_dict'].items()}
                 else:
                     corrected_state_dict = checkpoint['state_dict']
 
