@@ -14,6 +14,7 @@ def register_callback(cls=None, *, name=None):
 
   if cls is None:
     return _register
+  
   else:
     return _register(cls)
 

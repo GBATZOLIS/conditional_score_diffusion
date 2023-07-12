@@ -332,7 +332,7 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
                                                               denoise=denoise, use_path=False, 
                                                               use_pretrained=use_pretrained, encoder_only=encoder_only, 
                                                               t_dependent=t_dependent, gamma=gamma)
-        if encoder_only:
+        if self.config.training.encoder_only:
             model = {'unconditional_score_model':self.unconditional_score_model,
                      'encoder': self.encoder}
         else:

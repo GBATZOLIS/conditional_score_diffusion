@@ -57,6 +57,7 @@ def config_translator(config, mode):
         config.model.conv_size = config.encoder.conv_size
         config.model.input_channels = config.encoder.input_channels
         config.model.output_channels = config.encoder.output_channels
+        config.model.encoder_input_channels = config.encoder.input_channels
         config.data.latent_dim = config.model.latent_dim
         config.training.variational = config.model.variational
     return config

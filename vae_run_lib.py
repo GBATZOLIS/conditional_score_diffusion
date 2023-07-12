@@ -1,5 +1,6 @@
 import os
 import sys
+import pickle
 from pathlib import Path
 repo_path=Path('.').absolute()
 sys.path.append(f'{repo_path}/janutils')
@@ -23,26 +24,34 @@ def train(config):
     kl_weight = config.model.kl_weight
 
     data_module = get_datamodule(config)
-        
+    
+    # create dataloaders
     data_module.setup()
     train_dataloader = data_module.train_dataloader()
     val_dataloader = data_module.val_dataloader()
 
+    # create log name
     dataset_name = config.data.dataset #f'{config.data.dataset}_{data_module.digit}' if config.data.dataset == 'MNIST' else config.data.dataset
     kl_weight = f'kl_{kl_weight}'
     tb_name = os.path.join('VAE', dataset_name, kl_weight)
     
+    # create new version
     i = 0
     tb_version = f'latent_dim_{config.model.latent_dim}'
     while os.path.exists(os.path.join('logs', tb_name, tb_version)):
         i +=1
         tb_version = f'latent_dim_{config.model.latent_dim}_v{i}'
-        
+
+    # pickle config
+    with open(os.path.join('logs', tb_name, tb_version, 'config.pkl'), 'wb') as f:
+        pickle.dump(config, f)
+    
+    # logger
     tb_logger = pl_loggers.TensorBoardLogger(save_dir="logs/", 
                                              name=tb_name, 
                                              version=tb_version
                                              )
-    
+    # callbacks
     checkpoint_callback =  ModelCheckpoint(dirpath=os.path.join('logs', 
                                                                 tb_name,
                                                                 tb_version,
@@ -58,6 +67,7 @@ def train(config):
                                         patience=10)
     lr_monitor = LearningRateMonitor()
 
+    # trainer
     trainer = pl.Trainer(gpus=1, 
                         max_epochs=100000,
                         logger=tb_logger,

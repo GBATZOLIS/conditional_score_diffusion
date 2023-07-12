@@ -51,7 +51,9 @@ def get_config():
   model.nonlinearity = 'swish'
   model.latent_dim = 512
   data.latent_dim = model.latent_dim
+  model.variational = True
   model.kl_weight = 0.01
+  model.use_config_translator = True
 
   # encoder model
   config.encoder = encoder = ml_collections.ConfigDict()
@@ -92,7 +94,7 @@ def get_config():
   decoder.init_scale = 0.
   decoder.embedding_type = 'positional'
   decoder.conv_size = 3
-  decoder.input_channels = model.ch_mult[-1] * model.nf
+  decoder.input_channels = encoder.ch_mult[-1] * encoder.nf
   decoder.output_channels = data.num_channels
   decoder.latent_dim = model.latent_dim
 

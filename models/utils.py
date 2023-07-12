@@ -151,11 +151,23 @@ def load_prior_model(base_config):
     prior_config_path = os.path.join(base_config.logging.log_path, 'prior', 'config.pkl')
   else:
     prior_config_path = base_config.training.prior_config_path
+
+  # fix rds paths
+  # check if prior config starts with '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511' and replace with ~/rds_work
+  if prior_config_path.startswith('/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511'):
+    home_path = os.path.expanduser('~')
+    prior_config_path = prior_config_path.replace('/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/', f'{home_path}/rds_work/')
   
   if not hasattr(base_config.training, 'prior_checkpoint_path') or base_config.training.prior_checkpoint_path == None:
     checkpoint_path = os.path.join(base_config.logging.log_path, 'prior', 'checkpoints', 'best', 'last.ckpt')
   else:
     checkpoint_path = base_config.training.prior_checkpoint_path
+
+  # fix rds paths
+  # check if checkpoint path starts with '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511' and replace with ~/rds_work
+  if checkpoint_path.startswith('/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511'):
+    home_path = os.path.expanduser('~')
+    checkpoint_path = checkpoint_path.replace('/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/', f'{home_path}/rds_work/')
 
   if os.path.exists(prior_config_path):
     with open(prior_config_path, 'rb') as file:
