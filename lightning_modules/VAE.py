@@ -7,6 +7,11 @@ from models.encoder import DDPMEncoder, Encoder
 from models.decoder import MirrorDecoder
 import lpips
 
+# for loading old models
+#def fix_config(config):
+
+
+
 class VAE(pl.LightningModule):
 
     def __init__(self, config):
@@ -44,6 +49,16 @@ class VAE(pl.LightningModule):
         # Normalization of output. Only makes sense for image data.
         mean_x = self.decoder_sigmoid(mean_x)
         return mean_x, None
+
+    def reconstruct(self, x, use_latent_mean=True):
+        mean_z, log_var_z = self.encode(x)
+        if use_latent_mean:
+            z = mean_z
+        else:
+            z = torch.randn_like(mean_z, device=self.device) * torch.sqrt(log_var_z.exp()) + mean_z
+        mean_x, _ = self.decode(z)
+        return mean_x
+
 
     def compute_loss(self, batch):
         B = batch.shape[0]
