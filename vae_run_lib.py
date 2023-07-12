@@ -20,7 +20,10 @@ def train(config):
     #config.model.latent_dim = args.latent_dim
 
     model = VAE(config)
-    kl_weight = config.model.kl_weight
+    if config.model.variational:
+        kl_weight = config.model.kl_weight
+    else:
+        kl_weight = -1
 
     data_module = get_datamodule(config)
         

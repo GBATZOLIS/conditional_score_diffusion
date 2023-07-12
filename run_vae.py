@@ -9,13 +9,40 @@ configs = [
             #'configs/VAE/celebA.py',
             #'configs/VAE/cifar.py',
             #'configs/VAE/celebA_no_conv.py'
-            'configs/VAE/cifar_simple.py'
+            'configs/VAE/mnist.py'
         ]
            
 
 repo_path=Path('.').absolute()
 
-for config_path in configs:
+# for config_path in configs:
+
+#     config = read_config(config_path)
+#     output_path = os.path.join(repo_path, 'slurm_files')
+#     main_sh_path = os.path.join(output_path ,f'main_{config.data.dataset}.sh')
+#     if not os.path.exists(output_path):
+#         os.makedirs(output_path)
+
+#     create_mainsh(main_sh_path = main_sh_path,
+#                   file_path='vae_main.py',
+#                   args_dict={'config': config_path},
+#                   job_name=f'VAE_{config.data.dataset}_kl_{config.model.kl_weight}',
+#                   partition='pascal',
+#                   account='CIA-DAMTP-SL2-GPU',
+#                   repo_path=repo_path,
+#                   mail='js2164@cam.ac.uk',
+#                   time='36:00:00'
+#                   )
+
+#     cmds = [f'cd {output_path}; sbatch main_{config.data.dataset}.sh']
+#     result = subprocess.run(cmds, capture_output=True, text=True, shell=True, executable='/bin/bash')
+#     out = result.stdout
+#     id = re.findall("\d+", out)[0]
+#     print(f'Job submitted as {id}')
+#     #os.remove(main_sh_path)
+
+config_path = configs[0]
+for latent_dim in [5 , 10, 25, 50 ,75, 100, 150, 200, 350, 500]:
 
     config = read_config(config_path)
     output_path = os.path.join(repo_path, 'slurm_files')
@@ -25,9 +52,9 @@ for config_path in configs:
 
     create_mainsh(main_sh_path = main_sh_path,
                   file_path='vae_main.py',
-                  args_dict={'config': config_path},
+                  args_dict={'config': config_path, 'latent_dim': latent_dim},
                   job_name=f'VAE_{config.data.dataset}_kl_{config.model.kl_weight}',
-                  partition='ampere',
+                  partition='pascal',
                   account='CIA-DAMTP-SL2-GPU',
                   repo_path=repo_path,
                   mail='js2164@cam.ac.uk',
@@ -39,4 +66,4 @@ for config_path in configs:
     out = result.stdout
     id = re.findall("\d+", out)[0]
     print(f'Job submitted as {id}')
-    #os.remove(main_sh_path)
+    #os.remove(main_sh_path)    
