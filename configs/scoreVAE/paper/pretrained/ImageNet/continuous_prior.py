@@ -9,8 +9,8 @@ def get_config():
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = '/home/gb511/projects/scoreVAE/experiments/ImageNet' 
-  logging.log_name = 'continuous_conversion'
+  logging.log_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ImageNet' 
+  logging.log_name = 'continuous_prior'
   logging.top_k = 5
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
@@ -74,7 +74,7 @@ def get_config():
 
   # data
   config.data = data = ml_collections.ConfigDict()
-  data.base_dir = '/home/gb511/datasets' #'/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/datasets'
+  data.base_dir = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/datasets' #'/home/gb511/datasets'
   data.dataset = 'ImageNet'
   data.datamodule = 'guided_diffusion_dataset'
   data.return_labels = False
@@ -82,7 +82,7 @@ def get_config():
   data.create_dataset = False
   data.split = [0.9, 0.05, 0.05]
   data.image_size = 128
-  data.percentage_use = 1 #default:100
+  data.percentage_use = 100 #default:100
   data.effective_image_size = data.image_size
   data.shape = [3, data.image_size, data.image_size]
   data.latent_dim = 512
@@ -95,7 +95,7 @@ def get_config():
   # model
   config.model = model = ml_collections.ConfigDict()
   model.num_scales = 1000
-  model.discrete_checkpoint_path = '/home/gb511/projects/scoreVAE/experiments/ffhq/discrete_prior/checkpoints/epoch=265-step=116508.ckpt'
+  model.discrete_checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/ImageNet/256/prior/checkpoints/256x256_diffusion_uncond.pt'
   model.checkpoint_path = None
 
   model.name = 'ImprovedDiffusionUNetModel'
@@ -104,7 +104,7 @@ def get_config():
   model.image_size = data.image_size
   model.in_channels = data.num_channels
   # base channels, will be multiplied
-  model.model_channels: int = 128
+  model.model_channels: int = 256
   # output of the unet
   # suggest: 3
   # you only need 6 if you also model the variance of the noise prediction (usually we use an analytical variance hence 3)
@@ -112,12 +112,12 @@ def get_config():
   # how many repeating resblocks per resolution
   # the decoding side would have "one more" resblock
   # default: 2
-  model.num_res_blocks: int = 3
+  model.num_res_blocks: int = 2
   # you can also set the number of resblocks specifically for the input blocks
   # default: None = above
   model.num_input_res_blocks: int = None
   # number of time embed channels and style channels
-  model.embed_channels = data.latent_dim 
+  model.embed_channels = 512
   # at what resolutions you want to do self-attention of the feature maps
   # attentions generally improve performance
   # default: [16]
@@ -127,7 +127,7 @@ def get_config():
   model.time_embed_channels: int = None
   # dropout applies to the resblocks (on feature maps)
   model.dropout: float = 0.1
-  model.channel_mult = (1, 1, 2, 3, 4)
+  model.channel_mult = (1, 1, 2, 2, 4, 4)
   model.input_channel_mult = None
   model.conv_resample: bool = True
   # always 2 = 2d conv
