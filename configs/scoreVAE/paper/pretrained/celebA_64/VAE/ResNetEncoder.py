@@ -23,7 +23,7 @@ def get_config():
   training.encoder_only = True
   training.t_dependent = True
   training.conditioning_approach = 'sr3'
-  training.batch_size = 16
+  training.batch_size = 16 #256
   training.t_batch_size = 1
   training.num_nodes = 1
   training.gpus = 1

@@ -86,6 +86,8 @@ class PKLDataset(data.Dataset):
             x2 = h//2-mask_len//2
             img[:, x1: x1+mask_len, x2:x2+mask_len]=0.5
         '''
+        
+        
 
         return img
 

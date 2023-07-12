@@ -151,19 +151,68 @@ class cSDE(SDE): #conditional setting. Allow for conditional time-dependent scor
 
 
 class SNRSDE(SDE):
-  def __init__(self, N, gamma=None, a=2, b=3, c=6, minus_log_SNR_0 = -10, minus_log_SNR_1 = 5):
+  def __init__(self, N, gamma=None, dgamma=None, a=2, b=3, c=6, minus_log_SNR_0 = -10, minus_log_SNR_1 = 5):
     super().__init__(N)
     if gamma is None:
       gamma = lambda t: a * t + b * t**c
       d_gamma = lambda t: a + b*c * t**(c-1)
+      
+      # Gamma has to be normalized to have correct start and end points (cf. Appendix D of VDM paper)
+      normalizing_consant = (minus_log_SNR_1 - minus_log_SNR_0)/(gamma(1)-gamma(0))
+      log_SNR = lambda t: - (minus_log_SNR_0 +  normalizing_consant * (gamma(t) - gamma(0)))
+      self.d_log_SNR = lambda t: -normalizing_consant * d_gamma(t)
+      self.log_SNR = log_SNR
+
     else:
-      #Use atuograd
-      pass
-    # Gamma has to be normalized to have correct start and end points (cf. Appendix D of VDM paper)
-    normalizing_consant = (minus_log_SNR_1 - minus_log_SNR_0)/(gamma(1)-gamma(0))
-    log_SNR = lambda t: - (minus_log_SNR_0 +  normalizing_consant * (gamma(t) - gamma(0)))
-    self.d_log_SNR = lambda t: -normalizing_consant * d_gamma(t)
-    self.log_SNR = log_SNR
+        self.log_SNR = gamma
+        self.d_log_SNR = dgamma
+  
+  @property
+  def T(self):
+    return 1
+
+  def sde(self, x, t):
+    SNR = lambda t: torch.exp(self.log_SNR(t))
+    d_log_SNR = self.d_log_SNR
+    std = torch.sqrt(1 / (1 + SNR(t)))
+    drift = 0.5 * std[(...,)+(None,)*len(x.shape[1:])]**2 * d_log_SNR(t)[(...,)+(None,)*len(x.shape[1:])] * x
+    diffusion_squared = - std**2 * d_log_SNR(t)
+    diffusion = torch.sqrt(diffusion_squared)
+    return drift, diffusion
+
+  def marginal_prob(self, x, t): 
+    SNR = lambda t: torch.exp(self.log_SNR(t))
+    alpha = torch.sqrt(SNR(t) / (1 + SNR(t)))[(...,)+(None,)*len(x.shape[1:])]
+    mean = alpha * x
+    std = torch.sqrt(1 / (1 + SNR(t)))
+    return mean, std
+
+  def prior_sampling(self, shape):
+    return torch.randn(*shape)
+
+  def prior_logp(self, z):
+    shape = z.shape
+    N = np.prod(shape[1:])
+    dims_to_reduce=tuple(range(len(z.shape))[1:])
+    logps = -N / 2. * np.log(2 * np.pi) - torch.sum(z ** 2, dim=dims_to_reduce) / 2.
+    return logps
+
+class cSNRSDE(cSDE):
+  def __init__(self, N, gamma=None, dgamma=None, a=2, b=3, c=6, minus_log_SNR_0 = -10, minus_log_SNR_1 = 5):
+    super().__init__(N)
+    if gamma is None:
+      gamma = lambda t: a * t + b * t**c
+      d_gamma = lambda t: a + b*c * t**(c-1)
+      
+      # Gamma has to be normalized to have correct start and end points (cf. Appendix D of VDM paper)
+      normalizing_consant = (minus_log_SNR_1 - minus_log_SNR_0)/(gamma(1)-gamma(0))
+      log_SNR = lambda t: - (minus_log_SNR_0 +  normalizing_consant * (gamma(t) - gamma(0)))
+      self.d_log_SNR = lambda t: -normalizing_consant * d_gamma(t)
+      self.log_SNR = log_SNR
+
+    else:
+        self.log_SNR = gamma
+        self.d_log_SNR = dgamma
   
   @property
   def T(self):
@@ -240,6 +289,12 @@ class VPSDE(SDE):
   @property
   def T(self):
     return 1
+
+  def perturbation_coefficients(self, t):
+    log_mean_coeff = -0.25 * t ** 2 * (self.beta_1 - self.beta_0) - 0.5 * t * self.beta_0
+    a_t = torch.exp(log_mean_coeff)
+    sigma_t = torch.sqrt(1. - torch.exp(2. * log_mean_coeff))
+    return a_t, sigma_t 
 
   def snr(self, t):
     log_mean_coeff = -0.25 * t ** 2 * (self.beta_1 - self.beta_0) - 0.5 * t * self.beta_0
@@ -476,6 +531,12 @@ class cVPSDE(cSDE):
   def T(self):
     return 1
 
+  def perturbation_coefficients(self, t):
+    log_mean_coeff = -0.25 * t ** 2 * (self.beta_1 - self.beta_0) - 0.5 * t * self.beta_0
+    a_t = torch.exp(log_mean_coeff)
+    sigma_t = torch.sqrt(1. - torch.exp(2. * log_mean_coeff))
+    return a_t, sigma_t
+    
   def sde(self, x, t, return_f=False):
     beta_t = self.beta_0 + t * (self.beta_1 - self.beta_0)
     drift = -0.5 * beta_t[(...,)+(None,)*len(x.shape[1:])] * x

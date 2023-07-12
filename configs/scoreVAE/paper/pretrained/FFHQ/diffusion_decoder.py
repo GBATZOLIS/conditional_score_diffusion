@@ -155,14 +155,13 @@ def get_config():
   model.resblock_updown: bool = True
   # never tried
   model.use_new_attention_order: bool = False
-  model.resnet_two_cond: bool = False
+  model.resnet_two_cond: bool = True
   model.resnet_cond_channels: int = None
   # init the decoding conv layers with zero weights, this speeds up training
   # default: True (BeattGANs)
   model.resnet_use_zero_module: bool = True
   # gradient checkpoint the attention operation
   model.attn_checkpoint: bool = False
-  model.resnet_two_cond = True
 
 
   #extra encoder settings

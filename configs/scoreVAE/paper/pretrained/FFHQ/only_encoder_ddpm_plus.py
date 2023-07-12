@@ -9,26 +9,26 @@ def get_config():
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/celebA_64/'
-  logging.log_name = 'ablation_VAE_KLweight_0'
+  logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/FFHQ_128/'
+  logging.log_name = 'only_encoder_ddpm_plus_VAE_KLweight_0.01'
   logging.top_k = 3
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
 
   # training
   config.training = training = ml_collections.ConfigDict()
-  config.training.lightning_module = 'score_vae'
-  training.use_pretrained = False
-  training.prior_checkpoint_path = None
+  config.training.lightning_module = 'encoder_only_pretrained_score_vae'
+  training.use_pretrained = True
+  training.prior_checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/FFHQ_128/prior/checkpoints/best/epoch=510--eval_loss_epoch=0.008.ckpt' #if set to None, we should the last checkpoint.
   training.encoder_only = True
   training.t_dependent = True
   training.conditioning_approach = 'sr3'
-  training.batch_size = 256
+  training.batch_size = 64
   training.t_batch_size = 1
   training.num_nodes = 1
   training.gpus = 1
   training.accelerator = None if training.gpus == 1 else 'ddp'
-  training.accumulate_grad_batches = 1
+  training.accumulate_grad_batches = 2
   training.workers = 4*training.gpus
   #----- to be removed -----
   training.num_epochs = 10000
@@ -38,19 +38,19 @@ def get_config():
   training.eval_freq = 2500
   #------              --------
   
-  training.visualisation_freq = 25
+  training.visualisation_freq = 10
   training.visualization_callback = None
   training.show_evolution = False
 
-  training.likelihood_weighting = False
+  training.likelihood_weighting = True
   training.continuous = True
   training.reduce_mean = True 
   training.sde = 'vpsde'
 
   ##new related to the training of Score VAE
-  training.variational = False
-  training.cde_loss = True
-  training.kl_weight = 0.
+  training.variational = True
+  training.cde_loss = False
+  training.kl_weight = 0.01
 
   # validation
   config.validation = validation = ml_collections.ConfigDict()
@@ -83,13 +83,13 @@ def get_config():
   # data
   config.data = data = ml_collections.ConfigDict()
   data.base_dir = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/datasets'
-  data.dataset = 'celebA-HQ-160'
-  data.datamodule = 'unpaired_PKLDataset'
+  data.dataset = 'ffhq'
+  data.datamodule = 'image'
   data.return_labels = False
   data.use_data_mean = False
   data.create_dataset = False
-  data.split = [0.8, 0.1, 0.1]
-  data.image_size = 64
+  data.split = [0.9, 0.05, 0.05]
+  data.image_size = 128
   data.effective_image_size = data.image_size
   data.shape = [3, data.image_size, data.image_size]
   data.latent_dim = 512
@@ -98,11 +98,10 @@ def get_config():
   data.crop = False
   data.uniform_dequantization = False
   data.num_channels = data.shape[0] #the number of channels the model sees as input.
-  data.mask = None
 
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/celebA_64/ablation_VAE_KLweight_0/checkpoints/best/last.ckpt'
+  model.checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/FFHQ_128/only_encoder_ddpm_plus_VAE_KLweight_0.01/checkpoints/best/last.ckpt'
   model.sigma_min = 0.01
   model.sigma_max = 50
   model.num_scales = 1000
@@ -111,18 +110,18 @@ def get_config():
   model.dropout = 0.
   model.embedding_type = 'fourier'
 
-  model.unconditional_score_model_name = 'ddpm'
+  model.unconditional_score_model_name = 'BeatGANsUNetModel'
   model.name = 'ddpm_mirror_decoder'
-  model.input_channels = 2*data.num_channels
+  model.input_channels = data.num_channels
   model.output_channels = data.num_channels
   model.scale_by_sigma = True
   model.ema_rate = 0.9999
   model.normalization = 'GroupNorm'
   model.nonlinearity = 'swish'
   model.nf = 128
-  model.ch_mult = (1, 1, 2, 2, 3)
+  model.ch_mult = (1, 1, 2, 3, 4, 4)
   model.num_res_blocks = 2
-  model.attn_resolutions = (16,)
+  model.attn_resolutions = ()
   model.resamp_with_conv = True
   model.time_conditional = True
   model.fir = True
@@ -140,9 +139,10 @@ def get_config():
   model.encoder_name = 'time_dependent_DDPM_encoder'
   model.encoder_input_channels = data.num_channels
   model.encoder_latent_dim = data.latent_dim
-  model.encoder_split_output=False
-  model.encoder_time_conditional = False
   model.encoder_base_channel_size = 64
+  model.encoder_split_output=False
+
+
 
   # optimization
   config.optim = optim = ml_collections.ConfigDict()

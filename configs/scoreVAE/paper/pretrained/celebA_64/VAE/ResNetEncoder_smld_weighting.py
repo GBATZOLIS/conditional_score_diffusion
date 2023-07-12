@@ -9,16 +9,16 @@ def get_config():
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/celebA_64/'
-  logging.log_name = 'ablation_VAE_KLweight_0'
+  logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/celebA_64/' #'/Users/gbatz97/Desktop/score-based-modelling/projects/scoreVAE/debug/experiments/celebA_64'
+  logging.log_name = 'only_ResNetEncoder_smld_weight_VAE_KLweight_0.01'
   logging.top_k = 3
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
 
   # training
   config.training = training = ml_collections.ConfigDict()
-  config.training.lightning_module = 'score_vae'
-  training.use_pretrained = False
+  config.training.lightning_module = 'encoder_only_pretrained_score_vae'
+  training.use_pretrained = True
   training.prior_checkpoint_path = None
   training.encoder_only = True
   training.t_dependent = True
@@ -48,9 +48,9 @@ def get_config():
   training.sde = 'vpsde'
 
   ##new related to the training of Score VAE
-  training.variational = False
-  training.cde_loss = True
-  training.kl_weight = 0.
+  training.variational = True
+  training.cde_loss = False
+  training.kl_weight = 0.01
 
   # validation
   config.validation = validation = ml_collections.ConfigDict()
@@ -82,7 +82,7 @@ def get_config():
 
   # data
   config.data = data = ml_collections.ConfigDict()
-  data.base_dir = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/datasets'
+  data.base_dir = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/datasets' #'/Users/gbatz97/Desktop/score-based-modelling/projects/scoreVAE/debug/datasets' 
   data.dataset = 'celebA-HQ-160'
   data.datamodule = 'unpaired_PKLDataset'
   data.return_labels = False
@@ -98,11 +98,14 @@ def get_config():
   data.crop = False
   data.uniform_dequantization = False
   data.num_channels = data.shape[0] #the number of channels the model sees as input.
-  data.mask = None
+
+  #test if we can do inpainting
+  data.mask = None #set it to None for no masking
+
 
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/celebA_64/ablation_VAE_KLweight_0/checkpoints/best/last.ckpt'
+  model.checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/celebA_64/only_ResNetEncoder_smld_weight_VAE_KLweight_0.01/checkpoints/best/last.ckpt'
   model.sigma_min = 0.01
   model.sigma_max = 50
   model.num_scales = 1000
@@ -113,7 +116,7 @@ def get_config():
 
   model.unconditional_score_model_name = 'ddpm'
   model.name = 'ddpm_mirror_decoder'
-  model.input_channels = 2*data.num_channels
+  model.input_channels = data.num_channels
   model.output_channels = data.num_channels
   model.scale_by_sigma = True
   model.ema_rate = 0.9999
@@ -140,9 +143,8 @@ def get_config():
   model.encoder_name = 'time_dependent_DDPM_encoder'
   model.encoder_input_channels = data.num_channels
   model.encoder_latent_dim = data.latent_dim
-  model.encoder_split_output=False
-  model.encoder_time_conditional = False
   model.encoder_base_channel_size = 64
+  model.encoder_split_output=False
 
   # optimization
   config.optim = optim = ml_collections.ConfigDict()

@@ -16,6 +16,9 @@ import losses
 import torch
 import lpips
 from pathlib import Path
+from utils import get_named_beta_schedule
+from scipy.interpolate import PchipInterpolator
+import numpy as np
 
 @utils.register_lightning_module(name='encoder_only_pretrained_score_vae')
 class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
@@ -55,7 +58,39 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
         elif config.training.sde.lower() == 'vesde':            
             self.sde = sde_lib.cVESDE(sigma_min=config.model.sigma_min_x, sigma_max=config.model.sigma_max_x, N=config.model.num_scales)
             self.usde = sde_lib.VESDE(sigma_min=config.model.sigma_min_x, sigma_max=config.model.sigma_max_x, N=config.model.num_scales)
-            self.sampling_eps = 1e-5           
+            self.sampling_eps = 1e-5   
+        elif config.training.sde.lower() == 'snrsde':
+            self.sampling_eps = 1e-3
+
+            if hasattr(config.training, 'beta_schedule'):
+                #DISCRETE QUANTITIES
+                N = config.model.num_scales
+                betas = get_named_beta_schedule('linear', N)
+                alphas = 1.0 - betas
+                alphas_cumprod = np.cumprod(alphas, axis=0)
+                discrete_snrs = alphas_cumprod/(1.0 - alphas_cumprod)
+
+                #Monotonic Bicubic Interpolation
+                snr = PchipInterpolator(np.linspace(self.sampling_eps, 1, len(discrete_snrs)), discrete_snrs)
+                d_snr = snr.derivative(nu=1)
+
+                def logsnr(t):
+                    device = t.device
+                    snr_val = torch.from_numpy(snr(t.cpu().numpy())).float().to(device)
+                    return torch.log(snr_val)
+
+                def d_logsnr(t):
+                    device = t.device
+                    dsnr_val = torch.from_numpy(d_snr(t.cpu().numpy())).float().to(device)
+                    snr_val = torch.from_numpy(snr(t.cpu().numpy())).float().to(device)
+                    return dsnr_val/snr_val
+
+                self.sde = sde_lib.cSNRSDE(N=N, gamma=logsnr, dgamma=d_logsnr)
+                self.usde = sde_lib.SNRSDE(N=N, gamma=logsnr, dgamma=d_logsnr)
+            else:
+                self.sde = sde_lib.cSNRSDE(N=config.model.num_scales)
+                self.usde = sde_lib.SNRSDE(N=config.model.num_scales)
+
         else:
             raise NotImplementedError(f"SDE {config.training.sde} unknown.")
 
@@ -139,10 +174,17 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
             loss = self.eval_loss_fn[1](self.unconditional_score_model, batch)
             self.logger.experiment.add_scalars('val_loss', {'unconditional': loss}, self.global_step)
 
+        if batch_idx == 2 and self.current_epoch+1 == 10:
+            sample, _ = self.unconditional_sample(p_steps=250)
+            sample = sample.cpu()
+            grid_batch = torchvision.utils.make_grid(sample, nrow=int(np.sqrt(sample.size(0))), normalize=True, scale_each=True)
+            self.logger.experiment.add_image('unconditional_sample', grid_batch, self.current_epoch)
+
         if batch_idx == 2 and (self.current_epoch+1) % self.config.training.visualisation_freq == 0:
-            reconstruction = self.encode_n_decode(batch, use_pretrained=self.config.training.use_pretrained,
-                                                          encoder_only=self.config.training.encoder_only,
-                                                          t_dependent=self.config.training.t_dependent)
+            reconstruction = self.encode_n_decode(batch, p_steps=250,
+                                                         use_pretrained=self.config.training.use_pretrained,
+                                                         encoder_only=self.config.training.encoder_only,
+                                                         t_dependent=self.config.training.t_dependent)
 
             reconstruction =  reconstruction.cpu()
             grid_reconstruction = torchvision.utils.make_grid(reconstruction, nrow=int(np.sqrt(batch.size(0))), normalize=True, scale_each=True)
@@ -157,11 +199,6 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
             avg_L2norm = torch.mean(L2norm)
             self.log('reconstruction_loss', avg_L2norm, logger=True)
 
-            sample, _ = self.unconditional_sample()
-            sample = sample.cpu()
-            grid_batch = torchvision.utils.make_grid(sample, nrow=int(np.sqrt(sample.size(0))), normalize=True, scale_each=True)
-            self.logger.experiment.add_image('unconditional_sample', grid_batch, self.current_epoch)
-            
         return loss
 
     def test_step(self, batch, batch_idx):
@@ -209,15 +246,23 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
         return output
 
 
-    def unconditional_sample(self, num_samples=None):
+    def unconditional_sample(self, num_samples=None, p_steps='default'):
         if num_samples is None:
             sampling_shape = [self.config.training.batch_size] +  self.config.data.shape
         else:
             sampling_shape = [num_samples] +  self.config.data.shape
-        sampling_fn = get_sampling_fn(self.config, self.usde, sampling_shape, self.sampling_eps)
+        sampling_fn = get_sampling_fn(self.config, self.usde, sampling_shape, self.sampling_eps, p_steps)
         return sampling_fn(self.unconditional_score_model)
     
     def interpolate(self, x, num_points):
+        def slerp(low, high, val):
+            low_norm = low/torch.linalg.norm(low, ord=2)
+            high_norm = high/torch.linalg.norm(high, ord=2)
+            omega = torch.acos((low_norm*high_norm).sum())
+            so = torch.sin(omega)
+            res = (torch.sin((1.0-val)*omega)/so)*low + (torch.sin(val*omega)/so) * high
+            return res
+
         assert x.size(0) == 2
 
         t0 = torch.zeros(x.shape[0]).type_as(x)
@@ -227,10 +272,10 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
         log_var_y = latent_distribution_parameters[:, latent_dim:]
         y = mean_y + torch.sqrt(log_var_y.exp()) * torch.randn_like(mean_y)
 
-        weights = torch.linspace(0, 1, steps=num_points+2)
-        z = torch.zeros(size=(num_points, y.size(1))).type_as(x)
+        weights = torch.linspace(0, 1, steps=num_points+2).to(self.device)
+        z = torch.zeros(size=(num_points, y.size(1))).type_as(x)    
         for i in range(weights.size(0)-2):
-            z[i] = torch.lerp(y[0], y[1], weights[i+1])
+            z[i] = slerp(y[0], y[1], weights[i+1])
         
         sampling_shape = [z.size(0)]+self.config.data.shape
         conditional_sampling_fn = get_conditional_sampling_fn(config=self.config, sde=self.sde, 
@@ -238,7 +283,9 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
                                                               predictor='default', corrector='default', 
                                                               p_steps='default', c_steps='default', snr='default', 
                                                               denoise='default', use_path=False, 
-                                                              use_pretrained=True, encoder_only=False, t_dependent=True)
+                                                              use_pretrained=self.config.training.use_pretrained, 
+                                                              encoder_only=self.config.training.encoder_only, 
+                                                              t_dependent=self.config.training.t_dependent)
 
         model = {'unconditional_score_model':self.unconditional_score_model,
                  'encoder': self.encoder}
@@ -252,7 +299,7 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
         return augmented
 
     def encode_n_decode(self, x, show_evolution=False, predictor='default', corrector='default', p_steps='default', \
-                     c_steps='default', snr='default', denoise='default', use_pretrained=True, encoder_only=False, t_dependent=True):
+                     c_steps='default', snr='default', denoise='default', use_pretrained=True, encoder_only=False, t_dependent=True, gamma=1.):
 
         if self.config.training.variational:
             if self.config.training.encoder_only:
@@ -266,11 +313,16 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
                 mean_y = latent_distribution_parameters[:, :latent_dim]
                 log_var_y = latent_distribution_parameters[:, latent_dim:]
                 y = mean_y + torch.sqrt(log_var_y.exp()) * torch.randn_like(mean_y)
+
+                #y = torch.sqrt(torch.tensor(latent_dim)) * (y / torch.linalg.norm(y, dim=1, keepdim=True)) #this must be removed.
             else:
                 mean_y, log_var_y = self.encoder(x)
                 y = mean_y + torch.sqrt(log_var_y.exp()) * torch.randn_like(mean_y)
         else:
             y = self.encoder(x)
+        
+
+        
 
         sampling_shape = [x.size(0)]+self.config.data.shape
         conditional_sampling_fn = get_conditional_sampling_fn(config=self.config, sde=self.sde, 
@@ -278,8 +330,9 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
                                                               predictor=predictor, corrector=corrector, 
                                                               p_steps=p_steps, c_steps=c_steps, snr=snr, 
                                                               denoise=denoise, use_path=False, 
-                                                              use_pretrained=use_pretrained, encoder_only=encoder_only, t_dependent=t_dependent)
-        if encoder_only:
+                                                              use_pretrained=use_pretrained, encoder_only=encoder_only, 
+                                                              t_dependent=t_dependent, gamma=gamma)
+        if self.config.training.encoder_only:
             model = {'unconditional_score_model':self.unconditional_score_model,
                      'encoder': self.encoder}
         else:

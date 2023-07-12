@@ -9,21 +9,32 @@ def get_config():
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/FFHQ_128/'
-  logging.log_name = 'only_encoder_VAE_KLweight_0.01'
+  logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/FFHQ_128/' #'/Users/gbatz97/Desktop/score-based-modelling/projects/scoreVAE/experiments/pretrained/FFHQ_128' 
+  
+  #additional correction settings
+  logging.encoder_log_name = 'only_encoder_ddpm_plus_smld_VAE_KLweight_0.01'
+  logging.log_name = 'corrected' + '_' + logging.encoder_log_name
+
   logging.top_k = 3
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
 
   # training
   config.training = training = ml_collections.ConfigDict()
-  config.training.lightning_module = 'encoder_only_pretrained_score_vae'
+  config.training.lightning_module = 'corrected_encoder_only_pretrained_score_vae'
   training.use_pretrained = True
-  training.prior_checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/FFHQ_128/prior/checkpoints/best/epoch=504--eval_loss_epoch=0.007.ckpt' #if set to None, we should the last checkpoint.
+  #if set to None, we should the last checkpoint.
+  training.prior_checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/FFHQ_128/prior/checkpoints/best/epoch=510--eval_loss_epoch=0.008.ckpt'  #'/Users/gbatz97/Desktop/score-based-modelling/projects/scoreVAE/experiments/pretrained/FFHQ_128/prior/checkpoints/epoch=510--eval_loss_epoch=0.008.ckpt' 
   training.encoder_only = True
   training.t_dependent = True
+
+  #correction settings
+  training.latent_correction = True
+  #if set to None, we use the last checkpoint
+  training.encoder_checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/FFHQ_128/only_encoder_ddpm_plus_smld_VAE_KLweight_0.01/checkpoints/best/epoch=465--eval_loss_epoch=153.939.ckpt'  #'/Users/gbatz97/Desktop/score-based-modelling/projects/scoreVAE/experiments/pretrained/FFHQ_128/only_encoder_ddpm_plus_smld_VAE_KLweight_0.01/checkpoints/epoch=465--eval_loss_epoch=153.939.ckpt' 
+
   training.conditioning_approach = 'sr3'
-  training.batch_size = 64
+  training.batch_size = 32
   training.t_batch_size = 1
   training.num_nodes = 1
   training.gpus = 1
@@ -38,11 +49,11 @@ def get_config():
   training.eval_freq = 2500
   #------              --------
   
-  training.visualisation_freq = 15
+  training.visualisation_freq = 10
   training.visualization_callback = None
   training.show_evolution = False
 
-  training.likelihood_weighting = True
+  training.likelihood_weighting = False
   training.continuous = True
   training.reduce_mean = True 
   training.sde = 'vpsde'
@@ -60,8 +71,9 @@ def get_config():
   # sampling
   config.sampling = sampling = ml_collections.ConfigDict()
   sampling.method = 'pc'
-  sampling.predictor = 'conditional_euler_maruyama'
+  sampling.predictor = 'conditional_ddim'
   sampling.corrector = 'conditional_none'
+  sampling.p_steps = 512
   sampling.n_steps_each = 1
   sampling.noise_removal = True
   sampling.probability_flow = False
@@ -101,13 +113,16 @@ def get_config():
 
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/FFHQ_128/only_encoder_VAE_KLweight_0.01/checkpoints/best/last.ckpt'
+  model.checkpoint_path = None
   model.sigma_min = 0.01
   model.sigma_max = 50
   model.num_scales = 1000
   model.beta_min = 0.1
   model.beta_max = 20.
+  model.dropout = 0.
+  model.embedding_type = 'fourier'
 
+  model.unconditional_score_model_name = 'BeatGANsUNetModel'
   model.name = 'BeatGANsLatentScoreModel'
   model.ema_rate = 0.9999
   model.image_size = data.image_size
@@ -135,7 +150,7 @@ def get_config():
   # number of time embed channels
   model.time_embed_channels: int = None
   # dropout applies to the resblocks (on feature maps)
-  model.dropout: float = 0.1
+  model.dropout: float = 0.
   model.channel_mult = (1, 1, 2, 3, 4)
   model.input_channel_mult = None
   model.conv_resample: bool = True
@@ -155,27 +170,45 @@ def get_config():
   model.resblock_updown: bool = True
   # never tried
   model.use_new_attention_order: bool = False
-  model.resnet_two_cond: bool = False
+  model.resnet_two_cond: bool = True
   model.resnet_cond_channels: int = None
   # init the decoding conv layers with zero weights, this speeds up training
   # default: True (BeattGANs)
   model.resnet_use_zero_module: bool = True
   # gradient checkpoint the attention operation
   model.attn_checkpoint: bool = False
-  model.resnet_two_cond = True
 
+  '''
+  model.input_channels = data.num_channels
+  model.output_channels = data.num_channels
+  model.scale_by_sigma = True
+  model.ema_rate = 0.9999
+  model.normalization = 'GroupNorm'
+  model.nonlinearity = 'swish'
+  model.nf = 128
+  model.ch_mult = (1, 1, 2, 3, 4, 4)
+  model.num_res_blocks = 2
+  model.attn_resolutions = ()
+  model.resamp_with_conv = True
+  model.time_conditional = True
+  model.fir = True
+  model.fir_kernel = [1, 3, 3, 1]
+  model.skip_rescale = True
+  model.resblock_type = 'biggan'
+  model.progressive = 'none'
+  model.progressive_input = 'residual'
+  model.progressive_combine = 'sum'
+  model.attention_type = 'ddpm'
+  model.init_scale = 0.
+  model.fourier_scale = 16
+  model.conv_size = 3
+  '''
 
-  #extra encoder settings
-  model.encoder_name = 'BeatGANsEncoderModel'
-  model.enc_out_channels = 2*data.latent_dim
-  model.enc_attn_resolutions = []
-  model.enc_pool = 'adaptivenonzero'
-  model.enc_num_res_blocks = 2
-  model.enc_channel_mult = (1, 1, 2, 3, 4, 4)
-  model.enc_grad_checkpoint = False
-  model.encoder_split_output = False
-  model.latent_dim = data.latent_dim
-  model.enc_use_time_condition = True
+  model.encoder_name = 'time_dependent_DDPM_encoder'
+  model.encoder_input_channels = data.num_channels
+  model.encoder_latent_dim = data.latent_dim
+  model.encoder_base_channel_size = 64
+  model.encoder_split_output=False
 
 
 
@@ -183,7 +216,7 @@ def get_config():
   config.optim = optim = ml_collections.ConfigDict()
   optim.weight_decay = 0
   optim.optimizer = 'Adam'
-  optim.lr = 1e-4
+  optim.lr = 5e-5
   optim.beta1 = 0.9
   optim.eps = 1e-8
   optim.warmup = 5000

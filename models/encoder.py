@@ -33,7 +33,7 @@ class Encoder(pl.LightningModule):
         base_channel_size = config.model.encoder_base_channel_size
         self.latent_dim = latent_dim = config.model.encoder_latent_dim
         act_fn = nn.GELU
-        self.pl = config.training.variational
+        self.variational = config.training.variational
         self.time_conditional = config.model.get('time_conditional', True)
 
         if hasattr(config.model, 'encoder_split_output'):
@@ -155,8 +155,8 @@ class DDPMEncoder(pl.LightningModule):
       modules = []
 
     self.centered = config.data.centered
-    input_channels = config.model.input_channels
-    #output_channels = config.model.output_channels
+
+    input_channels = config.model.encoder_input_channels
 
     # ddpm_conv3x3
     modules.append(conv3x3(input_channels, nf))

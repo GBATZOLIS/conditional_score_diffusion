@@ -13,6 +13,7 @@ import datetime
 import pickle
 from dim_reduction import get_manifold_dimension
 import logging
+from models import utils as mutils
 
 @utils.register_callback(name='configuration')
 class ConfigurationSetterCallback(Callback):
@@ -160,6 +161,18 @@ class EMACallback(Callback):
         pl_module.ema.restore(pl_module.parameters())
 '''
 
+@utils.register_callback(name='load_new_prior')
+class LoadPriorCallback(Callback):
+    def __init__(self, config):
+        super().__init__()
+        self.config=config
+    
+    def on_train_start(self, trainer, pl_module):
+        pl_module.unconditional_score_model = mutils.load_prior_model(self.config)
+        pl_module.unconditional_score_model = pl_module.unconditional_score_model.to(pl_module.device)
+        pl_module.unconditional_score_model.freeze()
+
+
 @utils.register_callback(name='base')
 class ImageVisualizationCallback(Callback):
     def __init__(self, show_evolution=False):
@@ -175,7 +188,7 @@ class ImageVisualizationCallback(Callback):
                 evolution = sampling_info['evolution']
                 self.visualise_evolution(evolution, pl_module)
             else:
-                samples, _ = pl_module.sample(show_evolution=False)
+                samples, _ = pl_module.sample(show_evolution=False, p_steps=250)
 
             self.visualise_samples(samples, pl_module)
 

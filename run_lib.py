@@ -1,5 +1,5 @@
 #from models import ncsnpp, ddpm, ncsnv2, fcn, ddpm3D, fcn_potential, ddpm_potential, csdi #needed for model registration
-from models import BeatGANsEncoderModel, BeatGANsUNET_latent_conditioned, BeatGANsUNET, ddpm, ncsnv2, fcn, ddpm3D, fcn_potential, ddpm_potential, csdi, encoder, decoder, half_U #needed for model registration
+from models import ImprovedDiffusionUnet, BeatGANsEncoderModel, BeatGANsUNET_latent_conditioned, BeatGANsUNET, ddpm, ncsnv2, fcn, ddpm3D, fcn_potential, ddpm_potential, csdi, encoder, decoder, half_U #needed for model registration
 import pytorch_lightning as pl
 #from pytorch_lightning.plugins import DDPPlugin
 import numpy as np
@@ -10,7 +10,7 @@ from lightning_callbacks import callbacks, ema, HaarMultiScaleCallback, PairedCa
 from lightning_callbacks.HaarMultiScaleCallback import normalise_per_image, permute_channels, normalise, normalise_per_band, create_supergrid
 from lightning_callbacks.utils import get_callbacks
 
-from lightning_data_modules import HaarDecomposedDataset, ImageDatasets, PairedDataset, SyntheticDataset, SyntheticPairedDataset, Synthetic1DConditionalDataset, SyntheticTimeSeries, SRDataset, SRFLOWDataset, KSphereDataset, MammothDataset, LineDataset, GanDataset #needed for datamodule registration
+from lightning_data_modules import HaarDecomposedDataset, ImageDatasets, PairedDataset, SyntheticDataset, SyntheticPairedDataset, Synthetic1DConditionalDataset, SyntheticTimeSeries, SRDataset, SRFLOWDataset, KSphereDataset, MammothDataset, LineDataset, GanDataset, guided_diff_datasets #needed for datamodule registration
 from lightning_data_modules.utils import create_lightning_datamodule
 
 from lightning_modules import BaseSdeGenerativeModel, ScoreVAEmodel, PretrainedScoreVAEmodel, EncoderOnlyPretrainedScoreVAEmodel, CorrectedEncoderOnlyPretrainedScoreVAEmodel, HaarMultiScaleSdeGenerativeModel, ConditionalSdeGenerativeModel, ConservativeSdeGenerativeModel, FokkerPlanckModel #need for lightning module registration
@@ -53,30 +53,19 @@ def train(config, log_path, checkpoint_path, log_name=None):
       if config.model.checkpoint_path is not None and checkpoint_path is None:
         checkpoint_path = config.model.checkpoint_path
 
-      trainer = pl.Trainer(gpus=config.training.gpus,
+    trainer = pl.Trainer(accelerator = 'gpu' if config.training.gpus > 0 else 'cpu',
+                          devices = config.training.gpus,
                           num_nodes = config.training.num_nodes,
-                          accelerator = config.training.accelerator, #plugins = DDPPlugin(find_unused_parameters=False) if config.training.accelerator=='ddp' else None,
                           accumulate_grad_batches = config.training.accumulate_grad_batches,
                           gradient_clip_val = config.optim.grad_clip,
                           max_steps=config.training.n_iters, 
                           max_epochs =config.training.num_epochs,
                           callbacks=callbacks, 
                           logger = logger,
-                          resume_from_checkpoint=checkpoint_path
-                          )
-    else:  
-      trainer = pl.Trainer(gpus=config.training.gpus,
-                          num_nodes = config.training.num_nodes,
-                          accelerator = config.training.accelerator,
-                          accumulate_grad_batches = config.training.accumulate_grad_batches,
-                          gradient_clip_val = config.optim.grad_clip,
-                          max_steps=config.training.n_iters,
-                          max_epochs =config.training.num_epochs,
-                          callbacks=callbacks,
-                          logger = logger                          
+                          num_sanity_val_steps=0
                           )
 
-    trainer.fit(LightningModule, datamodule=DataModule)
+    trainer.fit(LightningModule, datamodule=DataModule, ckpt_path=checkpoint_path)
 
 def test(config, log_path, checkpoint_path):
     if config.data.create_dataset:
@@ -101,18 +90,18 @@ def test(config, log_path, checkpoint_path):
     #print(config.logging.log_path)
     print('------')
 
-    trainer = pl.Trainer(gpus=config.training.gpus,
+    trainer = pl.Trainer(accelerator = 'gpu' if config.training.gpus > 0 else 'cpu',
+                          devices = config.training.gpus,
                           num_nodes = config.training.num_nodes,
-                          accelerator = config.training.accelerator,
                           accumulate_grad_batches = config.training.accumulate_grad_batches,
                           gradient_clip_val = config.optim.grad_clip,
-                          max_steps=config.training.n_iters,
+                          max_steps=config.training.n_iters, 
                           max_epochs =config.training.num_epochs,
-                          callbacks=callbacks,
-                          logger = logger                          
+                          callbacks=callbacks, 
+                          logger = logger                   
                           )
     
-    trainer.test(pl_module, test_dataloaders = DataModule.test_dataloader())
+    trainer.test(pl_module, datamodule=DataModule, ckpt_path=checkpoint_path)
 
 
 def multi_scale_test(master_config, log_path):
@@ -341,6 +330,9 @@ def inspect_corrected_VAE(config):
   
 def inspect_VAE(config):
   dim_reduction.inspect_VAE(config)
+
+def scoreVAE_fidelity(config):
+  dim_reduction.scoreVAE_fidelity(config)
 
 def get_manifold_dimension(config, name=None):
   dim_reduction.get_manifold_dimension(config, name)

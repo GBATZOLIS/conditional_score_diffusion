@@ -26,9 +26,6 @@ class CorrectedEncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
         # Initialize the score model
         self.config = config
         
-        #latent correction model
-        self.latent_correction_model = mutils.create_model(config)
-        
         #unconditional score model
         if config.training.use_pretrained:
             self.unconditional_score_model = mutils.load_prior_model(config)
@@ -41,6 +38,9 @@ class CorrectedEncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
         #encoder
         self.encoder = mutils.load_encoder(config)
         self.encoder.freeze()
+
+        #latent correction model
+        self.latent_correction_model = mutils.create_model(config)
 
     def configure_sde(self, config):
         if config.training.sde.lower() == 'vpsde':
@@ -147,11 +147,13 @@ class CorrectedEncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
             loss = self.eval_loss_fn[1](self.unconditional_score_model, batch)
             self.logger.experiment.add_scalars('val_loss', {'unconditional': loss}, self.global_step)
 
-        if batch_idx == 2 and (self.current_epoch) % self.config.training.visualisation_freq == 0:
-            reconstruction = self.encode_n_decode(batch, use_pretrained=self.config.training.use_pretrained,
-                                                          encoder_only=self.config.training.encoder_only,
-                                                          t_dependent=self.config.training.t_dependent,
-                                                          latent_correction=True)
+        if batch_idx == 0 and (self.current_epoch) % self.config.training.visualisation_freq == 0:
+            reconstruction = self.encode_n_decode(batch, 
+                                                p_steps=self.config.sampling.p_steps,
+                                                use_pretrained=self.config.training.use_pretrained,
+                                                encoder_only=self.config.training.encoder_only,
+                                                t_dependent=self.config.training.t_dependent,
+                                                latent_correction=True)
 
             reconstruction =  reconstruction.cpu()
             grid_reconstruction = torchvision.utils.make_grid(reconstruction, nrow=int(np.sqrt(batch.size(0))), normalize=True, scale_each=True)
@@ -166,10 +168,10 @@ class CorrectedEncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
             avg_L2norm = torch.mean(L2norm)
             self.log('reconstruction_loss', avg_L2norm, logger=True)
 
-            sample, _ = self.unconditional_sample()
-            sample = sample.cpu()
-            grid_batch = torchvision.utils.make_grid(sample, nrow=int(np.sqrt(sample.size(0))), normalize=True, scale_each=True)
-            self.logger.experiment.add_image('unconditional_sample', grid_batch, self.current_epoch)
+            #sample, _ = self.unconditional_sample()
+            #sample = sample.cpu()
+            #grid_batch = torchvision.utils.make_grid(sample, nrow=int(np.sqrt(sample.size(0))), normalize=True, scale_each=True)
+            #self.logger.experiment.add_image('unconditional_sample', grid_batch, self.current_epoch)
             
         return loss
 

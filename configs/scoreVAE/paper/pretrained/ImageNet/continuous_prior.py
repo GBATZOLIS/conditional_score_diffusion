@@ -9,26 +9,22 @@ def get_config():
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/FFHQ_128/'
-  logging.log_name = 'only_encoder_VAE_KLweight_0.01'
-  logging.top_k = 3
+  logging.log_path = '/home/gb511/projects/scoreVAE/experiments/ImageNet' 
+  logging.log_name = 'continuous_conversion'
+  logging.top_k = 5
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
 
   # training
   config.training = training = ml_collections.ConfigDict()
-  config.training.lightning_module = 'encoder_only_pretrained_score_vae'
-  training.use_pretrained = True
-  training.prior_checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/FFHQ_128/prior/checkpoints/best/epoch=504--eval_loss_epoch=0.007.ckpt' #if set to None, we should the last checkpoint.
-  training.encoder_only = True
-  training.t_dependent = True
+  config.training.lightning_module = 'base'
   training.conditioning_approach = 'sr3'
-  training.batch_size = 64
+  training.batch_size = 2
   training.t_batch_size = 1
   training.num_nodes = 1
   training.gpus = 1
   training.accelerator = None if training.gpus == 1 else 'ddp'
-  training.accumulate_grad_batches = 2
+  training.accumulate_grad_batches = 1
   training.workers = 4*training.gpus
   #----- to be removed -----
   training.num_epochs = 10000
@@ -38,19 +34,15 @@ def get_config():
   training.eval_freq = 2500
   #------              --------
   
-  training.visualisation_freq = 15
-  training.visualization_callback = None
+  training.visualisation_freq = 10
+  training.visualization_callback = 'base'
   training.show_evolution = False
 
-  training.likelihood_weighting = True
+  training.likelihood_weighting = False
   training.continuous = True
   training.reduce_mean = True 
-  training.sde = 'vpsde'
-
-  ##new related to the training of Score VAE
-  training.variational = True
-  training.cde_loss = False
-  training.kl_weight = 0.01
+  training.sde = 'snrsde'
+  training.beta_schedule = 'linear'
 
   # validation
   config.validation = validation = ml_collections.ConfigDict()
@@ -60,12 +52,12 @@ def get_config():
   # sampling
   config.sampling = sampling = ml_collections.ConfigDict()
   sampling.method = 'pc'
-  sampling.predictor = 'conditional_euler_maruyama'
-  sampling.corrector = 'conditional_none'
+  sampling.predictor = 'euler_maruyama'
+  sampling.corrector = 'none'
   sampling.n_steps_each = 1
   sampling.noise_removal = True
   sampling.probability_flow = False
-  sampling.snr = 0.15 #0.15 in VE sde (you typically need to play with this term - more details in the main paper)
+  sampling.snr = 0.15 
 
   # evaluation (this file is not modified at all - subject to change)
   config.eval = evaluate = ml_collections.ConfigDict()
@@ -82,34 +74,33 @@ def get_config():
 
   # data
   config.data = data = ml_collections.ConfigDict()
-  data.base_dir = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/datasets'
-  data.dataset = 'ffhq'
-  data.datamodule = 'image'
+  data.base_dir = '/home/gb511/datasets' #'/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/datasets'
+  data.dataset = 'ImageNet'
+  data.datamodule = 'guided_diffusion_dataset'
   data.return_labels = False
   data.use_data_mean = False
   data.create_dataset = False
   data.split = [0.9, 0.05, 0.05]
   data.image_size = 128
+  data.percentage_use = 1 #default:100
   data.effective_image_size = data.image_size
   data.shape = [3, data.image_size, data.image_size]
   data.latent_dim = 512
+  data.class_cond = False
   data.centered = False
-  data.use_flip = False
-  data.crop = False
-  data.uniform_dequantization = False
+  data.random_crop = False
+  data.random_flip = False
   data.num_channels = data.shape[0] #the number of channels the model sees as input.
 
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/FFHQ_128/only_encoder_VAE_KLweight_0.01/checkpoints/best/last.ckpt'
-  model.sigma_min = 0.01
-  model.sigma_max = 50
   model.num_scales = 1000
-  model.beta_min = 0.1
-  model.beta_max = 20.
+  model.discrete_checkpoint_path = '/home/gb511/projects/scoreVAE/experiments/ffhq/discrete_prior/checkpoints/epoch=265-step=116508.ckpt'
+  model.checkpoint_path = None
 
-  model.name = 'BeatGANsLatentScoreModel'
-  model.ema_rate = 0.9999
+  model.name = 'ImprovedDiffusionUNetModel'
+  model.use_fp16 = False
+  model.ema_rate = 0.999
   model.image_size = data.image_size
   model.in_channels = data.num_channels
   # base channels, will be multiplied
@@ -117,11 +108,11 @@ def get_config():
   # output of the unet
   # suggest: 3
   # you only need 6 if you also model the variance of the noise prediction (usually we use an analytical variance hence 3)
-  model.out_channels = data.num_channels
+  model.out_channels = 2*data.num_channels
   # how many repeating resblocks per resolution
   # the decoding side would have "one more" resblock
   # default: 2
-  model.num_res_blocks: int = 2
+  model.num_res_blocks: int = 3
   # you can also set the number of resblocks specifically for the input blocks
   # default: None = above
   model.num_input_res_blocks: int = None
@@ -131,7 +122,7 @@ def get_config():
   # attentions generally improve performance
   # default: [16]
   # beatgans: [32, 16, 8]
-  model.attention_resolutions = (16, )
+  model.attention_resolutions = (32, 16, 8)
   # number of time embed channels
   model.time_embed_channels: int = None
   # dropout applies to the resblocks (on feature maps)
@@ -147,7 +138,7 @@ def get_config():
   # number of attention heads
   model.num_heads: int = 1
   # or specify the number of channels per attention head
-  model.num_head_channels: int = -1
+  model.num_head_channels: int = 64
   # what's this?
   model.num_heads_upsample: int = -1
   # use resblock for upscale/downscale blocks (expensive)
@@ -155,39 +146,23 @@ def get_config():
   model.resblock_updown: bool = True
   # never tried
   model.use_new_attention_order: bool = False
-  model.resnet_two_cond: bool = False
-  model.resnet_cond_channels: int = None
+  #model.resnet_two_cond: bool = False
+  #model.resnet_cond_channels: int = None
   # init the decoding conv layers with zero weights, this speeds up training
   # default: True (BeattGANs)
-  model.resnet_use_zero_module: bool = True
+  #model.resnet_use_zero_module: bool = True
   # gradient checkpoint the attention operation
-  model.attn_checkpoint: bool = False
-  model.resnet_two_cond = True
-
-
-  #extra encoder settings
-  model.encoder_name = 'BeatGANsEncoderModel'
-  model.enc_out_channels = 2*data.latent_dim
-  model.enc_attn_resolutions = []
-  model.enc_pool = 'adaptivenonzero'
-  model.enc_num_res_blocks = 2
-  model.enc_channel_mult = (1, 1, 2, 3, 4, 4)
-  model.enc_grad_checkpoint = False
-  model.encoder_split_output = False
-  model.latent_dim = data.latent_dim
-  model.enc_use_time_condition = True
-
-
+  #model.attn_checkpoint: bool = False
+  model.use_scale_shift_norm = True
 
   # optimization
   config.optim = optim = ml_collections.ConfigDict()
   optim.weight_decay = 0
   optim.optimizer = 'Adam'
-  optim.lr = 1e-4
+  optim.lr = 1e-5
   optim.beta1 = 0.9
   optim.eps = 1e-8
   optim.warmup = 5000
-  optim.slowing_factor = 1
   optim.grad_clip = 1.
 
   config.seed = 42

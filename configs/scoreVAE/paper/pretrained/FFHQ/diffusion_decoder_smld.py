@@ -9,8 +9,8 @@ def get_config():
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/celebA_64/'
-  logging.log_name = 'ablation_VAE_KLweight_0'
+  logging.log_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/FFHQ_128/'
+  logging.log_name = 'diffusion_decoder_smld'
   logging.top_k = 3
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
@@ -23,12 +23,12 @@ def get_config():
   training.encoder_only = True
   training.t_dependent = True
   training.conditioning_approach = 'sr3'
-  training.batch_size = 256
+  training.batch_size = 64
   training.t_batch_size = 1
   training.num_nodes = 1
   training.gpus = 1
   training.accelerator = None if training.gpus == 1 else 'ddp'
-  training.accumulate_grad_batches = 1
+  training.accumulate_grad_batches = 2
   training.workers = 4*training.gpus
   #----- to be removed -----
   training.num_epochs = 10000
@@ -38,7 +38,7 @@ def get_config():
   training.eval_freq = 2500
   #------              --------
   
-  training.visualisation_freq = 25
+  training.visualisation_freq = 15
   training.visualization_callback = None
   training.show_evolution = False
 
@@ -83,13 +83,13 @@ def get_config():
   # data
   config.data = data = ml_collections.ConfigDict()
   data.base_dir = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/datasets'
-  data.dataset = 'celebA-HQ-160'
-  data.datamodule = 'unpaired_PKLDataset'
+  data.dataset = 'ffhq'
+  data.datamodule = 'image'
   data.return_labels = False
   data.use_data_mean = False
   data.create_dataset = False
-  data.split = [0.8, 0.1, 0.1]
-  data.image_size = 64
+  data.split = [0.9, 0.05, 0.05]
+  data.image_size = 128
   data.effective_image_size = data.image_size
   data.shape = [3, data.image_size, data.image_size]
   data.latent_dim = 512
@@ -98,51 +98,86 @@ def get_config():
   data.crop = False
   data.uniform_dequantization = False
   data.num_channels = data.shape[0] #the number of channels the model sees as input.
-  data.mask = None
 
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/celebA_64/ablation_VAE_KLweight_0/checkpoints/best/last.ckpt'
+  model.checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/FFHQ_128/diffusion_decoder_smld/checkpoints/best/last.ckpt'
   model.sigma_min = 0.01
   model.sigma_max = 50
   model.num_scales = 1000
   model.beta_min = 0.1
   model.beta_max = 20.
-  model.dropout = 0.
-  model.embedding_type = 'fourier'
 
-  model.unconditional_score_model_name = 'ddpm'
-  model.name = 'ddpm_mirror_decoder'
-  model.input_channels = 2*data.num_channels
-  model.output_channels = data.num_channels
-  model.scale_by_sigma = True
+  model.name = 'BeatGANsLatentScoreModel'
   model.ema_rate = 0.9999
-  model.normalization = 'GroupNorm'
-  model.nonlinearity = 'swish'
-  model.nf = 128
-  model.ch_mult = (1, 1, 2, 2, 3)
-  model.num_res_blocks = 2
-  model.attn_resolutions = (16,)
-  model.resamp_with_conv = True
-  model.time_conditional = True
-  model.fir = True
-  model.fir_kernel = [1, 3, 3, 1]
-  model.skip_rescale = True
-  model.resblock_type = 'biggan'
-  model.progressive = 'none'
-  model.progressive_input = 'residual'
-  model.progressive_combine = 'sum'
-  model.attention_type = 'ddpm'
-  model.init_scale = 0.
-  model.fourier_scale = 16
-  model.conv_size = 3
+  model.image_size = data.image_size
+  model.in_channels = data.num_channels
+  # base channels, will be multiplied
+  model.model_channels: int = 128
+  # output of the unet
+  # suggest: 3
+  # you only need 6 if you also model the variance of the noise prediction (usually we use an analytical variance hence 3)
+  model.out_channels = data.num_channels
+  # how many repeating resblocks per resolution
+  # the decoding side would have "one more" resblock
+  # default: 2
+  model.num_res_blocks: int = 2
+  # you can also set the number of resblocks specifically for the input blocks
+  # default: None = above
+  model.num_input_res_blocks: int = None
+  # number of time embed channels and style channels
+  model.embed_channels = data.latent_dim 
+  # at what resolutions you want to do self-attention of the feature maps
+  # attentions generally improve performance
+  # default: [16]
+  # beatgans: [32, 16, 8]
+  model.attention_resolutions = (16, )
+  # number of time embed channels
+  model.time_embed_channels: int = None
+  # dropout applies to the resblocks (on feature maps)
+  model.dropout: float = 0.1
+  model.channel_mult = (1, 1, 2, 3, 4)
+  model.input_channel_mult = None
+  model.conv_resample: bool = True
+  # always 2 = 2d conv
+  model.dims: int = 2
+  # don't use this, legacy from BeatGANs
+  model.num_classes: int = None
+  model.use_checkpoint: bool = False
+  # number of attention heads
+  model.num_heads: int = 1
+  # or specify the number of channels per attention head
+  model.num_head_channels: int = -1
+  # what's this?
+  model.num_heads_upsample: int = -1
+  # use resblock for upscale/downscale blocks (expensive)
+  # default: True (BeatGANs)
+  model.resblock_updown: bool = True
+  # never tried
+  model.use_new_attention_order: bool = False
+  model.resnet_two_cond: bool = False
+  model.resnet_cond_channels: int = None
+  # init the decoding conv layers with zero weights, this speeds up training
+  # default: True (BeattGANs)
+  model.resnet_use_zero_module: bool = True
+  # gradient checkpoint the attention operation
+  model.attn_checkpoint: bool = False
+  model.resnet_two_cond = True
 
-  model.encoder_name = 'time_dependent_DDPM_encoder'
-  model.encoder_input_channels = data.num_channels
-  model.encoder_latent_dim = data.latent_dim
-  model.encoder_split_output=False
-  model.encoder_time_conditional = False
-  model.encoder_base_channel_size = 64
+
+  #extra encoder settings
+  model.encoder_name = 'BeatGANsEncoderModel'
+  model.enc_out_channels = data.latent_dim #For stochastic encoder: make this 2*data.latent_dim
+  model.enc_attn_resolutions = []
+  model.enc_pool = 'adaptivenonzero'
+  model.enc_num_res_blocks = 2
+  model.enc_channel_mult = (1, 1, 2, 3, 4, 4)
+  model.enc_grad_checkpoint = False
+  model.encoder_split_output = False #For stochastic encoder: make this True
+  model.latent_dim = data.latent_dim
+  model.enc_use_time_condition = False
+
+
 
   # optimization
   config.optim = optim = ml_collections.ConfigDict()

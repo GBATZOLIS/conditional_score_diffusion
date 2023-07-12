@@ -7,7 +7,7 @@ from models import utils as mutils
 
 def get_conditional_sampling_fn(config, sde, shape, eps, 
                           predictor='default', corrector='default', p_steps='default', 
-                          c_steps='default', snr='default', denoise='default', use_path='default', use_pretrained=False, encoder_only=False, t_dependent=True, latent_correction=False):
+                          c_steps='default', snr='default', denoise='default', use_path='default', use_pretrained=False, encoder_only=False, t_dependent=True, latent_correction=False, gamma=1):
 
     if predictor == 'default':
       predictor = get_predictor(config.sampling.predictor.lower())
@@ -45,12 +45,13 @@ def get_conditional_sampling_fn(config, sde, shape, eps,
                                             use_pretrained=use_pretrained,
                                             encoder_only=encoder_only,
                                             t_dependent=t_dependent,
-                                            latent_correction=latent_correction)
+                                            latent_correction=latent_correction,
+                                            gamma=gamma)
     return sampling_fn
 
 def get_pc_conditional_sampler(sde, shape, predictor, corrector, snr, p_steps,
                    c_steps=1, probability_flow=False, continuous=False, 
-                   denoise=True, use_path=False, eps=1e-5, use_pretrained=False, encoder_only=False, t_dependent=True, latent_correction=False):
+                   denoise=True, use_path=False, eps=1e-5, use_pretrained=False, encoder_only=False, t_dependent=True, latent_correction=False, gamma=1.):
 
   """Create a Predictor-Corrector (PC) sampler.
   Args:
@@ -68,19 +69,7 @@ def get_pc_conditional_sampler(sde, shape, predictor, corrector, snr, p_steps,
   Returns:
     A conditional sampling function that returns samples and the number of function evaluations during sampling.
   """
-  # Create predictor & corrector update functions
-  predictor_update_fn = functools.partial(conditional_shared_predictor_update_fn,
-                                          sde=sde,
-                                          predictor=predictor,
-                                          probability_flow=probability_flow,
-                                          continuous=continuous)
-
-  corrector_update_fn = functools.partial(conditional_shared_corrector_update_fn,
-                                          sde=sde,
-                                          corrector=corrector,
-                                          continuous=continuous,
-                                          snr=snr,
-                                          n_steps=c_steps)
+  
 
   def get_conditional_update_fn(update_fn, sampler_type):
     """Modify the update function of predictor & corrector to incorporate data information."""
@@ -121,274 +110,232 @@ def get_pc_conditional_sampler(sde, shape, predictor, corrector, snr, p_steps,
 
     return conditional_update_fn
 
-  predictor_conditional_update_fn = get_conditional_update_fn(predictor_update_fn, sampler_type='predictor')
-  corrector_conditional_update_fn = get_conditional_update_fn(corrector_update_fn, sampler_type='corrector')
+  
+  def pc_conditional_sampler(model, y, show_evolution=False):
+    """ The PC conditional sampler function.
+    Args:
+      model: A score model.
+    Returns:
+      Samples, number of function evaluations.
+    """
 
-  if use_path:
-    def pc_conditional_sampler(model, y, show_evolution=False):
-      """ The PC conditional sampler function.
-      Args:
-        model: A score model.
-      Returns:
-        Samples, number of function evaluations.
-      """
-
-      #this function can be used for the exploration of variable correction schemes
-      #i.e. the num of correction steps is a function of the diffusion time. 
-      #This can possibly increase sampling speed or sampling quality. To be explored.
-      def corrections_steps(i):
-          return 1
-
-      c_sde = sde['x'] if isinstance(sde, dict) else sde
-
-      with torch.no_grad():
-        # Initial sample
-        x = c_sde.prior_sampling(shape).to(model.device)
-
-        timesteps = torch.linspace(c_sde.T, eps, p_steps, device=model.device)
-        tau = timesteps[0]-timesteps[1]
-        T = timesteps[0]
-        y_tplustau_mean, y_tplustau_std  = sde['y'].marginal_prob(y, torch.ones(x.shape[0]).to(model.device) * (T+tau))
-        y_tplustau = y_tplustau_mean + torch.randn_like(y)*y_tplustau_std[(...,) + (None,) * len(y.shape[1:])]
-
-        if show_evolution:
-          evolution = {'x':[], 'y':[]}
-
-        for i in tqdm(range(p_steps)):
-          t = timesteps[i]
+    #SETUP THE SCORE FUNCTION
+    if not use_pretrained:
+      score_fn = mutils.get_score_fn(sde, model, conditional=True, train=False, continuous=continuous)
+      score_fn = mutils.get_conditional_score_fn(score_fn, target_domain='x')
+      device = model.device
+    else:
+      if not encoder_only:
+        unconditional_score_model = model['unconditional_score_model']
+        latent_correction_model = model['latent_correction_model']
+        unconditional_score_fn = mutils.get_score_fn(sde, unconditional_score_model, conditional=False, train=False, continuous=continuous)
+        conditional_correction_fn = mutils.get_score_fn(sde, latent_correction_model, conditional=True, train=False, continuous=continuous)
           
-          x, x_mean, y_tplustau = predictor_conditional_update_fn(x, y, t, model, y_tplustau, tau)
-
-          for _ in range(corrections_steps(i)):
-            x, x_mean = corrector_conditional_update_fn(x, y_tplustau, t, model)
-          
-          if show_evolution:
-            evolution['x'].append(x.cpu())
-            evolution['y'].append(y_tplustau.cpu())
-
-        print('torch.mean(torch.abs(y-y_tplustau)): %.8f' % torch.mean(torch.abs(y-y_tplustau)))
-
-        if show_evolution:
-          #check the effect of denoising
-          #evolution['x'].append(x_mean.cpu())
-          #evolution['y'].append(y_mean.cpu())
-
-          evolution['x'], evolution['y'] = torch.stack(evolution['x']), torch.stack(evolution['y'])
-          sampling_info = {'evolution': evolution}
-          return x_mean if denoise else x, sampling_info
-        else:
-          return x_mean if denoise else x, {}
-          
-    return pc_conditional_sampler
-  else:
-    def pc_conditional_sampler(model, y, show_evolution=False):
-      """ The PC conditional sampler function.
-      Args:
-        model: A score model.
-      Returns:
-        Samples, number of function evaluations.
-      """
-
-      #SETUP THE SCORE FUNCTION
-      if not use_pretrained:
-        score_fn = mutils.get_score_fn(sde, model, conditional=True, train=False, continuous=continuous)
-        score_fn = mutils.get_conditional_score_fn(score_fn, target_domain='x')
-        device = model.device
+        score_fn = mutils.get_conditional_score_fn_with_prior_diffusion_model(unconditional_score_fn, conditional_correction_fn)
+        device = unconditional_score_model.device
       else:
-        if not encoder_only:
-          unconditional_score_model = model['unconditional_score_model']
-          latent_correction_model = model['latent_correction_model']
-          unconditional_score_fn = mutils.get_score_fn(sde, unconditional_score_model, conditional=False, train=False, continuous=continuous)
-          conditional_correction_fn = mutils.get_score_fn(sde, latent_correction_model, conditional=True, train=False, continuous=continuous)
-          
-          score_fn = mutils.get_conditional_score_fn_with_prior_diffusion_model(unconditional_score_fn, conditional_correction_fn)
-          device = unconditional_score_model.device
-        else:
-          if t_dependent:
-            if not latent_correction:
-              def get_latent_correction_fn(encoder):
-                def get_log_density_fn(encoder):
-                  def log_density_fn(x, z, t):
-                    latent_distribution_parameters = encoder(x, t)
-                    latent_dim = latent_distribution_parameters.size(1)//2
-                    mean_z = latent_distribution_parameters[:, :latent_dim]
-                    log_var_z = latent_distribution_parameters[:, latent_dim:]
-                    logdensity = -1/2*torch.sum(torch.square(z - mean_z)/log_var_z.exp(), dim=1)
-                    return logdensity
-                  
-                  return log_density_fn
-
-                def latent_correction_fn(x, z, t):
-                    torch.set_grad_enabled(True)
-                    log_density_fn = get_log_density_fn(encoder)
-                    device = x.device
-                    x.requires_grad=True
-                    ftx = log_density_fn(x, z, t)
-                    grad_log_density = torch.autograd.grad(outputs=ftx, inputs=x,
-                                        grad_outputs=torch.ones(ftx.size()).to(device),
-                                        create_graph=True, retain_graph=True, only_inputs=True)[0]
-                    assert grad_log_density.size() == x.size()
-                    torch.set_grad_enabled(False)
-                    return grad_log_density
-
-                return latent_correction_fn
-              
-
-              unconditional_score_model = model['unconditional_score_model']
-              unconditional_score_fn = mutils.get_score_fn(sde, unconditional_score_model, conditional=False, train=False, continuous=continuous)
-
-              encoder = model['encoder']
-              conditional_correction_fn = get_latent_correction_fn(encoder)
-
-              def get_conditional_score_fn_with_prior(unconditional_score_fn, conditional_correction_fn):
-                def conditional_score_fn(x, y, t):
-                  conditional_score = conditional_correction_fn(x, y, t) + unconditional_score_fn(x, t)
-                  return conditional_score
-                return conditional_score_fn
-
-              score_fn = get_conditional_score_fn_with_prior(unconditional_score_fn, conditional_correction_fn)
-              device = unconditional_score_model.device
-            
-            else:
-              def get_encoder_latent_correction_fn(encoder):
-                def get_log_density_fn(encoder):
-                  def log_density_fn(x, z, t):
-                    latent_distribution_parameters = encoder(x, t)
-                    latent_dim = latent_distribution_parameters.size(1)//2
-                    mean_z = latent_distribution_parameters[:, :latent_dim]
-                    log_var_z = latent_distribution_parameters[:, latent_dim:]
-                    logdensity = -1/2*torch.sum(torch.square(z - mean_z)/log_var_z.exp(), dim=1)
-                    return logdensity
-                  
-                  return log_density_fn
-
-                def latent_correction_fn(x, z, t):
-                    torch.set_grad_enabled(True)
-                    log_density_fn = get_log_density_fn(encoder)
-                    device = x.device
-                    x.requires_grad=True
-                    ftx = log_density_fn(x, z, t)
-                    grad_log_density = torch.autograd.grad(outputs=ftx, inputs=x,
-                                        grad_outputs=torch.ones(ftx.size()).to(device),
-                                        create_graph=True, retain_graph=True, only_inputs=True)[0]
-                    assert grad_log_density.size() == x.size()
-                    torch.set_grad_enabled(False)
-                    return grad_log_density
-
-                return latent_correction_fn
-              
-              unconditional_score_model = model['unconditional_score_model']
-              unconditional_score_fn = mutils.get_score_fn(sde, unconditional_score_model, conditional=False, train=False, continuous=continuous)
-              
-              latent_correction_model = model['latent_correction_model']
-              latent_correction_fn = mutils.get_score_fn(sde, latent_correction_model, conditional=True, train=False, continuous=continuous)
-
-              encoder = model['encoder']
-              encoder_correction_fn = get_encoder_latent_correction_fn(encoder)
-
-              def get_conditional_score_fn_with_prior(unconditional_score_fn, encoder_correction_fn, latent_correction_fn):
-                def conditional_score_fn(x, y, t):
-                  conditional_score = latent_correction_fn({'x':x, 'y':y}, t) + encoder_correction_fn(x, y, t) + unconditional_score_fn(x, t)
-                  return conditional_score
-                return conditional_score_fn
-
-              score_fn = get_conditional_score_fn_with_prior(unconditional_score_fn, encoder_correction_fn, latent_correction_fn)
-              device = unconditional_score_model.device
-
-          else:
-            #t-independent encoder implementation
-            def get_denoiser_fn(unconditional_score_model):
-              score_fn = mutils.get_score_fn(sde, unconditional_score_model, conditional=False, train=False, continuous=True)
-              def denoiser_fn(x, t):
-                score = score_fn(x, t)
-                a_t, sigma_t = sde.kernel_coefficients(x, t)
-                denoised = ((sigma_t**2)[(...,)+(None,)*len(x.shape[1:])]*score + x) / a_t[(...,)+(None,)*len(x.shape[1:])]
-                return denoised
-              return denoiser_fn
-            
-            def get_latent_correction_fn(encoder, unconditional_score_model):
-              denoiser_fn = get_denoiser_fn(unconditional_score_model)
-
-              def get_log_density_fn(encoder, denoiser_fn):
+        if t_dependent:
+          if not latent_correction: #BASIC CONFIG
+            def get_latent_correction_fn(encoder):
+              def get_log_density_fn(encoder):
                 def log_density_fn(x, z, t):
-                  denoised_x = denoiser_fn(x, t)
-                  latent_distribution_parameters = encoder(denoised_x)
+                  latent_distribution_parameters = encoder(x, t)
                   latent_dim = latent_distribution_parameters.size(1)//2
                   mean_z = latent_distribution_parameters[:, :latent_dim]
                   log_var_z = latent_distribution_parameters[:, latent_dim:]
                   logdensity = -1/2*torch.sum(torch.square(z - mean_z)/log_var_z.exp(), dim=1)
                   return logdensity
-                
+                  
                 return log_density_fn
 
               def latent_correction_fn(x, z, t):
                   torch.set_grad_enabled(True)
-                  log_density_fn = get_log_density_fn(encoder, denoiser_fn)
+                  log_density_fn = get_log_density_fn(encoder)
                   device = x.device
                   x.requires_grad=True
                   ftx = log_density_fn(x, z, t)
                   grad_log_density = torch.autograd.grad(outputs=ftx, inputs=x,
-                                      grad_outputs=torch.ones(ftx.size()).to(device),
-                                      create_graph=True, retain_graph=True, only_inputs=True)[0]
+                                        grad_outputs=torch.ones(ftx.size()).to(device),
+                                        create_graph=True, retain_graph=True, only_inputs=True)[0]
                   assert grad_log_density.size() == x.size()
                   torch.set_grad_enabled(False)
                   return grad_log_density
 
               return latent_correction_fn
-            
+              
+
             unconditional_score_model = model['unconditional_score_model']
             unconditional_score_fn = mutils.get_score_fn(sde, unconditional_score_model, conditional=False, train=False, continuous=continuous)
 
             encoder = model['encoder']
-            conditional_correction_fn = get_latent_correction_fn(encoder, unconditional_score_model)
+            conditional_correction_fn = get_latent_correction_fn(encoder)
+
             def get_conditional_score_fn_with_prior(unconditional_score_fn, conditional_correction_fn):
               def conditional_score_fn(x, y, t):
-                conditional_score = conditional_correction_fn(x, y, t) + unconditional_score_fn(x, t)
+                conditional_score = gamma*conditional_correction_fn(x, y, t) + unconditional_score_fn(x, t)
                 return conditional_score
               return conditional_score_fn
 
             score_fn = get_conditional_score_fn_with_prior(unconditional_score_fn, conditional_correction_fn)
             device = unconditional_score_model.device
+            
+          else:
+            def get_encoder_latent_correction_fn(encoder):
+              def get_log_density_fn(encoder):
+                def log_density_fn(x, z, t):
+                  latent_distribution_parameters = encoder(x, t)
+                  latent_dim = latent_distribution_parameters.size(1)//2
+                  mean_z = latent_distribution_parameters[:, :latent_dim]
+                  log_var_z = latent_distribution_parameters[:, latent_dim:]
+                  logdensity = -1/2*torch.sum(torch.square(z - mean_z)/log_var_z.exp(), dim=1)
+                  return logdensity
+                  
+                return log_density_fn
 
-          
-      #this function can be used for the exploration of variable correction schemes
-      #i.e. the num of correction steps is a function of the diffusion time. 
-      #This can possibly increase sampling speed or sampling quality. To be explored.
-      def corrections_steps(i):
-          return 1
+              def latent_correction_fn(x, z, t):
+                  torch.set_grad_enabled(True)
+                  log_density_fn = get_log_density_fn(encoder)
+                  device = x.device
+                  x.requires_grad=True
+                  ftx = log_density_fn(x, z, t)
+                  grad_log_density = torch.autograd.grad(outputs=ftx, inputs=x,
+                                        grad_outputs=torch.ones(ftx.size()).to(device),
+                                        create_graph=True, retain_graph=True, only_inputs=True)[0]
+                  assert grad_log_density.size() == x.size()
+                  torch.set_grad_enabled(False)
+                  return grad_log_density
 
-      c_sde = sde['x'] if isinstance(sde, dict) else sde
+              return latent_correction_fn
+              
+            unconditional_score_model = model['unconditional_score_model']
+            unconditional_score_fn = mutils.get_score_fn(sde, unconditional_score_model, conditional=False, train=False, continuous=continuous)
+              
+            latent_correction_model = model['latent_correction_model']
+            latent_correction_fn = mutils.get_score_fn(sde, latent_correction_model, conditional=True, train=False, continuous=continuous)
 
-      with torch.no_grad():
-        # Initial sample
-        x = c_sde.prior_sampling(shape).to(device)
-        if show_evolution:
-          evolution = {'x':[], 'y':[]}
+            encoder = model['encoder']
+            encoder_correction_fn = get_encoder_latent_correction_fn(encoder)
 
-        timesteps = torch.linspace(c_sde.T, eps, p_steps, device=device)
+            def get_conditional_score_fn_with_prior(unconditional_score_fn, encoder_correction_fn, latent_correction_fn):
+              def conditional_score_fn(x, y, t):
+                conditional_score = latent_correction_fn({'x':x, 'y':y}, t) + encoder_correction_fn(x, y, t) + unconditional_score_fn(x, t)
+                return conditional_score
+              return conditional_score_fn
 
-        for i in tqdm(range(p_steps)):
-          t = timesteps[i]
-          #vec_t = torch.ones(shape[0], device=device) * t
-          x, x_mean, y_perturbed, y_mean = predictor_conditional_update_fn(x, y, t, score_fn)
+            score_fn = get_conditional_score_fn_with_prior(unconditional_score_fn, encoder_correction_fn, latent_correction_fn)
+            device = unconditional_score_model.device
 
-          for _ in range(corrections_steps(i)):
-            x, x_mean, y_perturbed, y_mean = corrector_conditional_update_fn(x, y, t, score_fn)
-          
-          if show_evolution:
-            evolution['x'].append(x.cpu())
-            evolution['y'].append(y_perturbed.cpu())
-
-        if show_evolution:
-          evolution['x'], evolution['y'] = torch.stack(evolution['x']), torch.stack(evolution['y'])
-          sampling_info = {'evolution': evolution}
-          return x_mean if denoise else x
         else:
-          return x_mean if denoise else x
-          
-    return pc_conditional_sampler
+          #t-independent encoder implementation
+          def get_denoiser_fn(unconditional_score_model):
+            score_fn = mutils.get_score_fn(sde, unconditional_score_model, conditional=False, train=False, continuous=True)
+            def denoiser_fn(x, t):
+              score = score_fn(x, t)
+              a_t, sigma_t = sde.kernel_coefficients(x, t)
+              denoised = ((sigma_t**2)[(...,)+(None,)*len(x.shape[1:])]*score + x) / a_t[(...,)+(None,)*len(x.shape[1:])]
+              return denoised
+            return denoiser_fn
+            
+          def get_latent_correction_fn(encoder, unconditional_score_model):
+            denoiser_fn = get_denoiser_fn(unconditional_score_model)
 
-def conditional_shared_predictor_update_fn(x, y, t, sde, score_fn, predictor, probability_flow, continuous):
+            def get_log_density_fn(encoder, denoiser_fn):
+              def log_density_fn(x, z, t):
+                denoised_x = denoiser_fn(x, t)
+                latent_distribution_parameters = encoder(denoised_x)
+                latent_dim = latent_distribution_parameters.size(1)//2
+                mean_z = latent_distribution_parameters[:, :latent_dim]
+                log_var_z = latent_distribution_parameters[:, latent_dim:]
+                logdensity = -1/2*torch.sum(torch.square(z - mean_z)/log_var_z.exp(), dim=1)
+                return logdensity
+                
+              return log_density_fn
+
+            def latent_correction_fn(x, z, t):
+                torch.set_grad_enabled(True)
+                log_density_fn = get_log_density_fn(encoder, denoiser_fn)
+                device = x.device
+                x.requires_grad=True
+                ftx = log_density_fn(x, z, t)
+                grad_log_density = torch.autograd.grad(outputs=ftx, inputs=x,
+                                      grad_outputs=torch.ones(ftx.size()).to(device),
+                                      create_graph=True, retain_graph=True, only_inputs=True)[0]
+                assert grad_log_density.size() == x.size()
+                torch.set_grad_enabled(False)
+                return grad_log_density
+
+            return latent_correction_fn
+            
+          unconditional_score_model = model['unconditional_score_model']
+          unconditional_score_fn = mutils.get_score_fn(sde, unconditional_score_model, conditional=False, train=False, continuous=continuous)
+
+          encoder = model['encoder']
+          conditional_correction_fn = get_latent_correction_fn(encoder, unconditional_score_model)
+          def get_conditional_score_fn_with_prior(unconditional_score_fn, conditional_correction_fn):
+            def conditional_score_fn(x, y, t):
+              conditional_score = conditional_correction_fn(x, y, t) + unconditional_score_fn(x, t)
+              return conditional_score
+            return conditional_score_fn
+
+          score_fn = get_conditional_score_fn_with_prior(unconditional_score_fn, conditional_correction_fn)
+          device = unconditional_score_model.device
+
+
+    c_sde = sde['x'] if isinstance(sde, dict) else sde
+    timesteps = torch.linspace(c_sde.T, eps, p_steps+1, device=device)
+
+    # Create predictor & corrector update functions
+    predictor_update_fn = functools.partial(conditional_shared_predictor_update_fn,
+                                            sde=sde,
+                                            predictor=predictor,
+                                            probability_flow=probability_flow,
+                                            continuous=continuous,
+                                            discretisation=timesteps)
+
+    corrector_update_fn = functools.partial(conditional_shared_corrector_update_fn,
+                                            sde=sde,
+                                            corrector=corrector,
+                                            continuous=continuous,
+                                            snr=snr,
+                                            n_steps=c_steps)
+                                            
+    predictor_conditional_update_fn = get_conditional_update_fn(predictor_update_fn, sampler_type='predictor')
+    corrector_conditional_update_fn = get_conditional_update_fn(corrector_update_fn, sampler_type='corrector')
+      
+    #this function can be used for the exploration of variable correction schemes
+    #i.e. the num of correction steps is a function of the diffusion time. 
+    #This can possibly increase sampling speed or sampling quality. To be explored.
+    def corrections_steps(i):
+        return 1
+
+    with torch.no_grad():
+      # Initial sample
+      x = c_sde.prior_sampling(shape).to(device)
+      if show_evolution:
+        evolution = {'x':[], 'y':[]}
+
+      for i in tqdm(range(p_steps)):
+        t = timesteps[i]
+        #vec_t = torch.ones(shape[0], device=device) * t
+        x, x_mean, y_perturbed, y_mean = predictor_conditional_update_fn(x, y, t, score_fn)
+
+        for _ in range(corrections_steps(i)):
+          x, x_mean, y_perturbed, y_mean = corrector_conditional_update_fn(x, y, t, score_fn)
+          
+        if show_evolution:
+          evolution['x'].append(x.cpu())
+          evolution['y'].append(y_perturbed.cpu())
+
+      if show_evolution:
+        evolution['x'], evolution['y'] = torch.stack(evolution['x']), torch.stack(evolution['y'])
+        sampling_info = {'evolution': evolution}
+        return x_mean if denoise else x
+      else:
+        return x_mean if denoise else x
+          
+  return pc_conditional_sampler
+
+def conditional_shared_predictor_update_fn(x, y, t, sde, score_fn, predictor, probability_flow, continuous, discretisation):
   """A wrapper that configures and returns the update function of predictors."""
 
   c_sde = sde['x'] if isinstance(sde, dict) else sde
@@ -396,7 +343,7 @@ def conditional_shared_predictor_update_fn(x, y, t, sde, score_fn, predictor, pr
     # Corrector-only sampler
     predictor_obj = NonePredictor(c_sde, score_fn, probability_flow)
   else:
-    predictor_obj = predictor(c_sde, score_fn, probability_flow)
+    predictor_obj = predictor(c_sde, score_fn, probability_flow, discretisation)
 
   return predictor_obj.update_fn(x, y, t)
 

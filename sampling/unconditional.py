@@ -10,7 +10,7 @@ from scipy import integrate
 import sde_lib
 from models import utils as mutils
 
-def get_sampling_fn(config, sde, shape, eps):
+def get_sampling_fn(config, sde, shape, eps, p_steps):
   """Create a sampling function.
   Args:
     config: A `ml_collections.ConfigDict` object that contains all configuration information.
@@ -21,6 +21,9 @@ def get_sampling_fn(config, sde, shape, eps):
     A function that takes random states and a replicated training state and outputs samples with the
       trailing dimensions matching `shape`.
   """
+
+  if p_steps == 'default':
+      p_steps = config.model.num_scales
 
   sampler_name = config.sampling.method
   # Probability flow ODE sampling with black-box ODE solvers
@@ -46,6 +49,7 @@ def get_sampling_fn(config, sde, shape, eps):
                                  predictor=predictor,
                                  corrector=corrector,
                                  snr=config.sampling.snr,
+                                 p_steps=p_steps,
                                  n_steps=config.sampling.n_steps_each,
                                  probability_flow=config.sampling.probability_flow,
                                  continuous=config.training.continuous,
@@ -138,7 +142,7 @@ def get_ode_sampler(sde, shape,
 
   return ode_sampler
 
-def get_pc_sampler(sde, shape, predictor, corrector, snr,
+def get_pc_sampler(sde, shape, predictor, corrector, snr, p_steps,
                    n_steps=1, probability_flow=False, continuous=False,
                    denoise=True, eps=1e-3):
   """Create a Predictor-Corrector (PC) sampler.
@@ -183,13 +187,13 @@ def get_pc_sampler(sde, shape, predictor, corrector, snr,
     with torch.no_grad():
       # Initial sample
       x = sde.prior_sampling(shape).to(model.device).type(torch.float32)
-      timesteps = torch.linspace(sde.T, eps, sde.N, device=model.device)
+      timesteps = torch.linspace(sde.T, eps, p_steps+1, device=model.device)
 
-      for i in tqdm(range(sde.N)):
+      for i in tqdm(range(p_steps)):
         t = timesteps[i]
         vec_t = torch.ones(shape[0], device=t.device) * t
         x, x_mean = corrector_update_fn(x, vec_t, model=model)
-        x, x_mean = predictor_update_fn(x, vec_t, model=model)
+        x, x_mean = predictor_update_fn(x, vec_t, model=model, discretisation=timesteps)
         
         if show_evolution:
           evolution.append(x.cpu())
@@ -323,7 +327,7 @@ def get_pc_inpainter(sde, predictor, corrector, snr,
 
   return pc_inpainter
 
-def shared_predictor_update_fn(x, t, sde, model, predictor, probability_flow, continuous):
+def shared_predictor_update_fn(x, t, sde, model, predictor, probability_flow, continuous, discretisation):
   """A wrapper that configures and returns the update function of predictors."""
   score_fn = mutils.get_score_fn(sde, model, conditional=False, train=False, continuous=continuous)
 
@@ -331,7 +335,7 @@ def shared_predictor_update_fn(x, t, sde, model, predictor, probability_flow, co
     # Corrector-only sampler
     predictor_obj = NonePredictor(sde, score_fn, probability_flow)
   else:
-    predictor_obj = predictor(sde, score_fn, probability_flow)
+    predictor_obj = predictor(sde, score_fn, probability_flow, discretisation)
   return predictor_obj.update_fn(x, t)
 
 def shared_corrector_update_fn(x, t, sde, model, corrector, continuous, snr, n_steps):

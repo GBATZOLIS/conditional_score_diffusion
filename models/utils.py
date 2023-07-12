@@ -130,6 +130,8 @@ def load_encoder(base_config):
   if os.path.exists(encoder_config_path):
     with open(encoder_config_path, 'rb') as file:
       encoder_config = pickle.load(file)
+    encoder_config.training.prior_checkpoint_path = base_config.training.prior_checkpoint_path
+    encoder_config.training.prior_config_path = os.path.join(base_config.logging.log_path, 'prior', 'config.pkl')
   else:
     raise NotADirectoryError('The prior config is not found in the specified directory.')
 
@@ -138,27 +140,44 @@ def load_encoder(base_config):
     checkpoint_path = os.path.join(base_config.logging.log_path, encoder_log_name, 'checkpoints', 'best', 'last.ckpt')
   
   LightningModule = create_lightning_module(encoder_config)
-  EncoderLightningModule = LightningModule.load_from_checkpoint(checkpoint_path)
+  EncoderLightningModule = LightningModule.load_from_checkpoint(checkpoint_path, config=encoder_config)
+  print('loaded')
   return EncoderLightningModule.encoder
 
 
 def load_prior_model(base_config):
   #load a prior score model
+  if not hasattr(base_config.training, 'prior_config_path'):
+    prior_config_path = os.path.join(base_config.logging.log_path, 'prior', 'config.pkl')
+  else:
+    prior_config_path = base_config.training.prior_config_path
+
+  # fix rds paths
+  # check if prior config starts with '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511' and replace with ~/rds_work
+  if prior_config_path.startswith('/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511'):
+    home_path = os.path.expanduser('~')
+    prior_config_path = prior_config_path.replace('/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/', f'{home_path}/rds_work/')
   
-  prior_config_path = os.path.join(base_config.logging.log_path, 'prior', 'config.pkl')
-  print(prior_config_path)
+  if not hasattr(base_config.training, 'prior_checkpoint_path') or base_config.training.prior_checkpoint_path == None:
+    checkpoint_path = os.path.join(base_config.logging.log_path, 'prior', 'checkpoints', 'best', 'last.ckpt')
+  else:
+    checkpoint_path = base_config.training.prior_checkpoint_path
+
+  # fix rds paths
+  # check if checkpoint path starts with '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511' and replace with ~/rds_work
+  if checkpoint_path.startswith('/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511'):
+    home_path = os.path.expanduser('~')
+    checkpoint_path = checkpoint_path.replace('/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/', f'{home_path}/rds_work/')
+
   if os.path.exists(prior_config_path):
     with open(prior_config_path, 'rb') as file:
       prior_config = pickle.load(file)
   else:
     raise NotADirectoryError('The prior config is not found in the specified directory.')
-  
-  checkpoint_path = base_config.training.prior_checkpoint_path
-  if checkpoint_path is None:
-    checkpoint_path = os.path.join(base_config.logging.log_path, 'prior', 'checkpoints', 'best', 'last.ckpt')
-
+    
   LightningModule = create_lightning_module(prior_config)
-  priorLightningModule = LightningModule.load_from_checkpoint(checkpoint_path)
+  priorLightningModule = LightningModule.load_from_checkpoint(checkpoint_path, config=prior_config)
+  print('loaded')
   return priorLightningModule.score_model
 
 
@@ -184,6 +203,7 @@ def get_model_fn(model, train=False):
     Returns:
       A tuple of (model output, new mutable states)
     """
+
     if not train:
       model.eval()
       return model(x, labels)
@@ -266,7 +286,7 @@ def get_score_fn(sde, model, conditional=False, train=False, continuous=False):
 
   else:
     """COVERS THE BASIC UNCONDITIONAL CASE"""
-    if isinstance(sde, (sde_lib.VPSDE, sde_lib.cVPSDE, sde_lib.subVPSDE, sde_lib.csubVPSDE)):
+    if not isinstance(sde, (sde_lib.VESDE, sde_lib.cVESDE)):
       def score_fn(x, t):
         # Scale neural network output by standard deviation and flip sign
         if continuous or isinstance(sde, sde_lib.subVPSDE):
@@ -283,33 +303,23 @@ def get_score_fn(sde, model, conditional=False, train=False, continuous=False):
           std = sde.sqrt_1m_alphas_cumprod.type_as(labels)[labels.long()]
 
         score = - score / std[(...,)+(None,)*len(x.shape[1:])] #-> why do they scale the output of the network by std ??
-        return score
-
-    elif isinstance(sde, sde_lib.VESDE) or isinstance(sde, sde_lib.cVESDE):
+        
+        if score.size(1) == 6:
+          return score[:,:3,::]
+        else:
+          return score
+    
+    else:
       def score_fn(x, t):
         assert continuous
         score = model_fn(x, t)
-        # IMPORTANT BELOW:
-        #raise NotImplementedError('Continuous training for VE SDE is not checked. Division by std should be included. Not completed yet.')
-        #std = labels = sde.marginal_prob(torch.zeros_like(x), t)[1]
-        #time_embedding = torch.log(labels) if model.embedding_type == 'fourier' else labels  # For NCNN++
-        #time_embedding = t * (sde.N - 1) # For DDPM
-        #score = model_fn(x, time_embedding)
-        #score = score / std[(...,)+(None,)*len(x.shape[1:])]
-        #score = divide_by_sigmas(score, t, sde, continuous)
-        return score
 
-    elif isinstance(sde, sde_lib.SNRSDE):
-        assert continuous
-        def score_fn(x, t):
-          #labels = t * (sde.N - 1)
-          score = model_fn(x, t)
-          #std = sde.marginal_prob(torch.zeros_like(x), t)[1]
-          #score = score / std[(...,)+(None,)*len(x.shape[1:])] #-> why do they scale the output of the network by std ??
+        if score.size(1) == 6:
+          return score[:,:3,::]
+        else:
           return score
 
-    else:
-      raise NotImplementedError(f"SDE class {sde.__class__.__name__} not yet supported.")
+        return score
 
   return score_fn
 
