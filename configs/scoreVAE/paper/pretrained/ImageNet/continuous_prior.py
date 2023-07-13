@@ -23,7 +23,7 @@ def get_config():
   training.t_batch_size = 1
   training.num_nodes = 1
   training.gpus = 1
-  training.accelerator = 'cpu'
+  training.accelerator = 'gpu'
   training.accumulate_grad_batches = 1
   training.workers = 4*training.gpus
   #----- to be removed -----
