@@ -98,7 +98,7 @@ def get_config():
   model.discrete_checkpoint_path = '/home/gb511/projects/scoreVAE/experiments/ImageNet/prior/256x256_diffusion_uncond.pt' #'/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/ImageNet/256/prior/checkpoints/256x256_diffusion_uncond.pt'
   model.checkpoint_path = None
 
-  model.name = 'ImprovedDiffusionUNetModel'
+  model.name = 'GD_UNetModel'
   model.use_fp16 = False
   model.ema_rate = 0.999
   model.image_size = data.image_size
