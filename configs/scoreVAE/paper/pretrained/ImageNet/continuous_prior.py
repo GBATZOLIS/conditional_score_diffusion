@@ -126,7 +126,7 @@ def get_config():
   # number of time embed channels
   model.time_embed_channels: int = None
   # dropout applies to the resblocks (on feature maps)
-  model.dropout: float = 0.1
+  model.dropout: float = 0.
   model.channel_mult = (1, 1, 2, 2, 4, 4)
   model.input_channel_mult = None
   model.conv_resample: bool = True
