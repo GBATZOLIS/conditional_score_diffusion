@@ -37,6 +37,7 @@ class BaseSdeGenerativeModel(pl.LightningModule):
                 
                 # load the whole checkpoint
                 checkpoint = torch.load(discrete_checkpoint_path, map_location=self.device)
+                print(checkpoint.keys())
                 
                 # Create a new state_dict with corrected key names if necessary
                 if any(k.startswith("diffusion_model.") for k in checkpoint['state_dict'].keys()):
