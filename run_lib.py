@@ -53,7 +53,7 @@ def train(config, log_path, checkpoint_path, log_name=None):
       if config.model.checkpoint_path is not None and checkpoint_path is None:
         checkpoint_path = config.model.checkpoint_path
 
-    trainer = pl.Trainer(accelerator = 'gpu' if config.training.gpus > 0 else 'cpu',
+    trainer = pl.Trainer(accelerator = config.training.accelerator,
                           devices = config.training.gpus,
                           num_nodes = config.training.num_nodes,
                           accumulate_grad_batches = config.training.accumulate_grad_batches,
