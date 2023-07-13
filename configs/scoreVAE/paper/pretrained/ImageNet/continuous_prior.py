@@ -122,7 +122,7 @@ def get_config():
   # attentions generally improve performance
   # default: [16]
   # beatgans: [32, 16, 8]
-  model.attention_resolutions = (32, 16, 8)
+  model.attention_resolutions = (16, )
   # number of time embed channels
   model.time_embed_channels: int = None
   # dropout applies to the resblocks (on feature maps)
