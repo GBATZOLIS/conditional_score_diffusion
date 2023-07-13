@@ -9,8 +9,8 @@ def get_config():
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ImageNet' 
-  logging.log_name = 'continuous_prior'
+  logging.log_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq'
+  logging.log_name = 'DiffDecoders_continuous_prior'
   logging.top_k = 5
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
@@ -19,12 +19,12 @@ def get_config():
   config.training = training = ml_collections.ConfigDict()
   config.training.lightning_module = 'base'
   training.conditioning_approach = 'sr3'
-  training.batch_size = 2
+  training.batch_size = 32
   training.t_batch_size = 1
   training.num_nodes = 1
   training.gpus = 1
   training.accelerator = None if training.gpus == 1 else 'ddp'
-  training.accumulate_grad_batches = 1
+  training.accumulate_grad_batches = 4
   training.workers = 4*training.gpus
   #----- to be removed -----
   training.num_epochs = 10000
@@ -34,7 +34,7 @@ def get_config():
   training.eval_freq = 2500
   #------              --------
   
-  training.visualisation_freq = 10
+  training.visualisation_freq = 1
   training.visualization_callback = 'base'
   training.show_evolution = False
 
@@ -74,8 +74,8 @@ def get_config():
 
   # data
   config.data = data = ml_collections.ConfigDict()
-  data.base_dir = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/datasets' #'/home/gb511/datasets'
-  data.dataset = 'ImageNet'
+  data.base_dir = '/home/gb511/rds_work/datasets/' #'/home/gb511/datasets'
+  data.dataset = 'ffhq'
   data.datamodule = 'guided_diffusion_dataset'
   data.return_labels = False
   data.use_data_mean = False
@@ -95,20 +95,19 @@ def get_config():
   # model
   config.model = model = ml_collections.ConfigDict()
   model.num_scales = 1000
-  model.discrete_checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/ImageNet/256/prior/checkpoints/256x256_diffusion_uncond.pt'
+  model.discrete_checkpoint_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq/prior/checkpoints/epoch=265-step=116508.ckpt' #'/home/gb511/projects/scoreVAE/experiments/ffhq/discrete_prior/checkpoints/epoch=265-step=116508.ckpt'
   model.checkpoint_path = None
 
-  model.name = 'ImprovedDiffusionUNetModel'
-  model.use_fp16 = False
-  model.ema_rate = 0.999
+  model.name = 'BeatGANsUNetModel'
+  model.ema_rate = 0.9999
   model.image_size = data.image_size
   model.in_channels = data.num_channels
   # base channels, will be multiplied
-  model.model_channels: int = 256
+  model.model_channels: int = 128
   # output of the unet
   # suggest: 3
   # you only need 6 if you also model the variance of the noise prediction (usually we use an analytical variance hence 3)
-  model.out_channels = 2*data.num_channels
+  model.out_channels = data.num_channels
   # how many repeating resblocks per resolution
   # the decoding side would have "one more" resblock
   # default: 2
@@ -122,12 +121,12 @@ def get_config():
   # attentions generally improve performance
   # default: [16]
   # beatgans: [32, 16, 8]
-  model.attention_resolutions = (32, 16, 8)
+  model.attention_resolutions = (16, )
   # number of time embed channels
   model.time_embed_channels: int = None
   # dropout applies to the resblocks (on feature maps)
   model.dropout: float = 0.1
-  model.channel_mult = (1, 1, 2, 2, 4, 4)
+  model.channel_mult = (1, 1, 2, 3, 4)
   model.input_channel_mult = None
   model.conv_resample: bool = True
   # always 2 = 2d conv
@@ -138,7 +137,7 @@ def get_config():
   # number of attention heads
   model.num_heads: int = 1
   # or specify the number of channels per attention head
-  model.num_head_channels: int = 64
+  model.num_head_channels: int = -1
   # what's this?
   model.num_heads_upsample: int = -1
   # use resblock for upscale/downscale blocks (expensive)
@@ -146,14 +145,13 @@ def get_config():
   model.resblock_updown: bool = True
   # never tried
   model.use_new_attention_order: bool = False
-  #model.resnet_two_cond: bool = False
-  #model.resnet_cond_channels: int = None
+  model.resnet_two_cond: bool = False
+  model.resnet_cond_channels: int = None
   # init the decoding conv layers with zero weights, this speeds up training
   # default: True (BeattGANs)
-  #model.resnet_use_zero_module: bool = True
+  model.resnet_use_zero_module: bool = True
   # gradient checkpoint the attention operation
-  #model.attn_checkpoint: bool = False
-  model.use_scale_shift_norm = True
+  model.attn_checkpoint: bool = False
 
   # optimization
   config.optim = optim = ml_collections.ConfigDict()
