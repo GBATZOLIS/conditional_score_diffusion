@@ -9,7 +9,7 @@ def get_config():
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ImageNet' 
+  logging.log_path = '/home/gb511/projects/scoreVAE/experiments/ImageNet' #'/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ImageNet' 
   logging.log_name = 'continuous_prior'
   logging.top_k = 5
   logging.every_n_epochs = 1000
@@ -74,7 +74,7 @@ def get_config():
 
   # data
   config.data = data = ml_collections.ConfigDict()
-  data.base_dir = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/datasets' #'/home/gb511/datasets'
+  data.base_dir = '/home/gb511/datasets' #'/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/datasets' 
   data.dataset = 'ImageNet'
   data.datamodule = 'guided_diffusion_dataset'
   data.return_labels = False
@@ -95,7 +95,7 @@ def get_config():
   # model
   config.model = model = ml_collections.ConfigDict()
   model.num_scales = 1000
-  model.discrete_checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/ImageNet/256/prior/checkpoints/256x256_diffusion_uncond.pt'
+  model.discrete_checkpoint_path = '/home/gb511/projects/scoreVAE/experiments/ImageNet/prior/256x256_diffusion_uncond.pt' #'/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/ImageNet/256/prior/checkpoints/256x256_diffusion_uncond.pt'
   model.checkpoint_path = None
 
   model.name = 'ImprovedDiffusionUNetModel'
