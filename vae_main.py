@@ -14,8 +14,13 @@ if __name__ == '__main__':
     parser.add_argument('--mode', type=str, default='train')
     parser.add_argument('--config', type=str)
     parser.add_argument('--eval_path', type=str, default='none')
+    parser.add_argument('--latent_dim', type=str, default='none')
     args = parser.parse_args()
     config = read_config(args.config)
+    if args.latent_dim != 'none':
+        config.model.latent_dim = int(args.latent_dim)
+        config.encoder.latent_dim = int(args.latent_dim)
+        config.decoder.latent_dim = int(args.latent_dim)
     print(f'Latent dim: {config.model.latent_dim}')
     if args.mode == 'train':
         train(config)
