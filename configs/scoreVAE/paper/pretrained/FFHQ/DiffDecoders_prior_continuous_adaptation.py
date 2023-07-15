@@ -9,7 +9,7 @@ def get_config():
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = '/home/gb511/projects/scoreVAE/experiments/ffhq' #'/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq'
+  logging.log_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq' #'/home/gb511/projects/scoreVAE/experiments/ffhq' 
   logging.log_name = 'DiffDecoders_continuous_prior'
   logging.top_k = 5
   logging.every_n_epochs = 1000
@@ -95,7 +95,7 @@ def get_config():
   # model
   config.model = model = ml_collections.ConfigDict()
   model.num_scales = 1000
-  model.discrete_checkpoint_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_prior_discrete/last.ckpt' #'/home/gb511/projects/scoreVAE/experiments/ffhq/discrete_prior_diff_decoders/last.ckpt' #'/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq/prior/checkpoints/epoch=265-step=116508.ckpt' 
+  model.discrete_checkpoint_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_prior_discrete/last.ckpt' #'/home/gb511/projects/scoreVAE/experiments/ffhq/discrete_prior_diff_decoders/last.ckpt' 
   model.checkpoint_path = None
 
   model.name = 'BeatGANsUNetModel'
