@@ -62,6 +62,8 @@ class BaseSdeGenerativeModel(pl.LightningModule):
                     if any(k.startswith("ema_model.") for k in corrected_state_dict.keys()):
                         corrected_state_dict = {k.replace("ema_model.", ""): v for k, v in corrected_state_dict.items() if k.startswith("ema_model.")}
 
+                    print('ema keys replaced')
+                    
                 compare_state_dicts(self.score_model.state_dict(), corrected_state_dict)
 
                 # Load only the diffusion_model parameters
