@@ -170,6 +170,13 @@ class SNRSDE(SDE):
   @property
   def T(self):
     return 1
+  
+  def perturbation_coefficients(self, t):
+    SNR = lambda t: torch.exp(self.log_SNR(t))
+    alpha = torch.sqrt(SNR(t) / (1 + SNR(t)))
+    a_t = alpha
+    sigma_t = torch.sqrt(1 / (1 + SNR(t)))
+    return a_t, sigma_t 
 
   def sde(self, x, t):
     SNR = lambda t: torch.exp(self.log_SNR(t))
@@ -217,6 +224,13 @@ class cSNRSDE(cSDE):
   @property
   def T(self):
     return 1
+
+  def perturbation_coefficients(self, t):
+    SNR = lambda t: torch.exp(self.log_SNR(t))
+    alpha = torch.sqrt(SNR(t) / (1 + SNR(t)))
+    a_t = alpha
+    sigma_t = torch.sqrt(1 / (1 + SNR(t)))
+    return a_t, sigma_t 
 
   def sde(self, x, t):
     SNR = lambda t: torch.exp(self.log_SNR(t))
