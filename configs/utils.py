@@ -30,7 +30,7 @@ def get_path(path_type):
     # Georgios's configuration
     elif user[:5] == 'gb511':
         print(machine)
-        if machine == 'abg-h2ocool':
+        if machine[:11] == 'abg-h2ocool':
             path_dict = {
                 'data_path': '/home/gb511/datasets'
             }
