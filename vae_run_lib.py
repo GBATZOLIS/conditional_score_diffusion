@@ -127,7 +127,7 @@ def train(config):
 def evaluate(config, eval_path = None):
     data_module = get_datamodule(config)
 
-    trainer = pl.Trainer(gpus=1)
+    trainer = pl.Trainer(accelerator='gpu', devices=1)
     if eval_path is None:
         eval_path = config.eval_path
     model = VAE.load_from_checkpoint(eval_path)
