@@ -36,6 +36,12 @@ def train(config):
     # create log name
     dataset_name = config.data.dataset #f'{config.data.dataset}_{data_module.digit}' if config.data.dataset == 'MNIST' else config.data.dataset
     kl_weight = f'kl_{kl_weight}'
+
+    if hasattr(config, 'log_path'):
+        log_path = config.log_path
+    else:
+        log_path = 'logs/'
+    
     tb_name = os.path.join('VAE', dataset_name, kl_weight)
     
     # create new version
@@ -50,7 +56,7 @@ def train(config):
         pickle.dump(config, f)
     
     # logger
-    tb_logger = pl_loggers.TensorBoardLogger(save_dir="logs/", 
+    tb_logger = pl_loggers.TensorBoardLogger(save_dir=log_path, 
                                              name=tb_name, 
                                              version=tb_version
                                              )
