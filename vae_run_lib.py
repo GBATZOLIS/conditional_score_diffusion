@@ -16,6 +16,7 @@ from argparse import ArgumentParser
 from pytorch_lightning.callbacks import Callback
 import torchvision
 import numpy as np
+from pathlib import Path
 
 def train(config):
     #config_path = 'janutils/configs/mnist_mlp_autoencoder.py'
@@ -54,6 +55,7 @@ def train(config):
         tb_version = f'latent_dim_{config.model.latent_dim}_v{i}'
 
     # pickle config
+    Path(os.path.join(log_path, tb_name, tb_version)).mkdir(parents=True, exist_ok=True)
     with open(os.path.join(log_path, tb_name, tb_version, 'config.pkl'), 'wb') as f:
         pickle.dump(config, f)
     

@@ -10,7 +10,7 @@ def get_config():
 
   # logging
   config.logging = logging = ml_collections.ConfigDict()
-  config.log_path = '/home/gb511/projects/scoreVAE/experiments/VAE/'
+  config.log_path = '/home/gb511/projects/scoreVAE/experiments'
   logging.log_freq = 5
 
   # training
