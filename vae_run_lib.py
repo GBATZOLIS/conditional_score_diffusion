@@ -107,7 +107,7 @@ def train(config):
 
                 
 
-    visualization_callback = VisualizationCallback(freq=5)
+    visualization_callback = VisualizationCallback(freq=100)
     early_stop_callback = EarlyStopping(monitor='val_loss',
                                         patience=30)
     lr_monitor = LearningRateMonitor()
