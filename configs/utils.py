@@ -29,6 +29,7 @@ def get_path(path_type):
             raise RuntimeError('Unknown machine. Please define the paths.')
     # Georgios's configuration
     elif user[:5] == 'gb511':
+        print(machine)
         # hpc
         if machine[:5] == 'login':
             path_dict = {
