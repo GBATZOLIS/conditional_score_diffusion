@@ -11,9 +11,11 @@ from lightning_data_modules.ImageDatasets import Cifar10DataModule, ImageDataMod
 from lightning_modules.VAE import VAE
 from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, LearningRateMonitor
-from janutils.callbacks import VisualizationCallback
+#from janutils.callbacks import VisualizationCallback
 from argparse import ArgumentParser
-
+from pytorch_lightning.callbacks import Callback
+import torchvision
+import numpy as np
 
 def train(config):
     #config_path = 'janutils/configs/mnist_mlp_autoencoder.py'
@@ -70,10 +72,39 @@ def train(config):
                                             save_last=True,
                                             save_top_k=5)
     
-    visualization_callback = VisualizationCallback()
+    #visualization_callback = VisualizationCallback()
+    class VisualizationCallback(Callback):
+        def __init__(self, freq):
+            super().__init__()
+            self.freq=freq
 
+        def on_validation_epoch_end(self, trainer, pl_module):
+            current_epoch = pl_module.current_epoch
+            if (current_epoch+1) % self.freq == 0:
+                dataloader = trainer.datamodule.val_dataloader()
+                batch = next(iter(dataloader))
+                
+                grid_batch = torchvision.utils.make_grid(sample, nrow=int(np.sqrt(sample.size(0))), normalize=True, scale_each=True)
+                pl_module.logger.experiment.add_image('original', grid_batch)
+
+                B = batch.shape[0]
+                if pl_module.config.model.variational:
+                    mean_z, log_var_z = pl_module.encode(batch)
+                    z = torch.randn((B, pl_module.latent_dim), device=pl_module.device) * torch.sqrt(log_var_z.exp()) + mean_z
+                    mean_x, _ = pl_module.decode(z)
+                else:
+                    z, _ = pl_module.encode(batch)
+                    mean_x, _ = pl_module.decode(z)
+                
+                sample = mean_x.cpu()
+                grid_batch = torchvision.utils.make_grid(sample, nrow=int(np.sqrt(sample.size(0))), normalize=True, scale_each=True)
+                pl_module.logger.experiment.add_image('reconstruction', grid_batch, current_epoch)
+
+                
+
+    visualization_callback = VisualizationCallback(freq=5)
     early_stop_callback = EarlyStopping(monitor='val_loss',
-                                        patience=10)
+                                        patience=30)
     lr_monitor = LearningRateMonitor()
 
     # trainer
@@ -83,8 +114,8 @@ def train(config):
                         #resume_from_checkpoint=args.checkpoint,
                         callbacks=[checkpoint_callback, 
                                    visualization_callback,
-                                   lr_monitor
-                                   #, early_stop_callback
+                                   lr_monitor,
+                                   early_stop_callback
                                    ]
                         )
 
