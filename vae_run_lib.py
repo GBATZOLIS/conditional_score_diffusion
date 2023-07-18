@@ -54,7 +54,7 @@ def train(config):
         tb_version = f'latent_dim_{config.model.latent_dim}_v{i}'
 
     # pickle config
-    with open(os.path.join('logs', tb_name, tb_version, 'config.pkl'), 'wb') as f:
+    with open(os.path.join(log_path, tb_name, tb_version, 'config.pkl'), 'wb') as f:
         pickle.dump(config, f)
     
     # logger
