@@ -23,7 +23,7 @@ def train(config):
     #config.model.latent_dim = args.latent_dim
 
     model = VAE(config)
-    if config.model.variational:
+    if config.training.variational:
         kl_weight = config.model.kl_weight
     else:
         kl_weight = -1
@@ -88,7 +88,7 @@ def train(config):
                 pl_module.logger.experiment.add_image('original', grid_batch)
 
                 B = batch.shape[0]
-                if pl_module.config.model.variational:
+                if pl_module.config.training.variational:
                     mean_z, log_var_z = pl_module.encode(batch)
                     z = torch.randn((B, pl_module.latent_dim), device=pl_module.device) * torch.sqrt(log_var_z.exp()) + mean_z
                     mean_x, _ = pl_module.decode(z)
