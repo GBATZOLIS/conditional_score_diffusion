@@ -86,7 +86,7 @@ def train(config):
                 dataloader = trainer.val_dataloaders
                 batch = next(iter(dataloader))
                 
-                grid_batch = torchvision.utils.make_grid(sample, nrow=int(np.sqrt(sample.size(0))), normalize=True, scale_each=True)
+                grid_batch = torchvision.utils.make_grid(batch, nrow=int(np.sqrt(batch.size(0))), normalize=True, scale_each=True)
                 pl_module.logger.experiment.add_image('original', grid_batch)
 
                 B = batch.shape[0]
