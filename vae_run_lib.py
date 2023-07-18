@@ -110,7 +110,7 @@ def train(config):
     lr_monitor = LearningRateMonitor()
 
     # trainer
-    trainer = pl.Trainer(gpus=1, 
+    trainer = pl.Trainer(accelerator='gpu', devices=1,
                         max_epochs=100000,
                         logger=tb_logger,
                         #resume_from_checkpoint=args.checkpoint,
