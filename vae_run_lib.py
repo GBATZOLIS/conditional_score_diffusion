@@ -17,6 +17,7 @@ from pytorch_lightning.callbacks import Callback
 import torchvision
 import numpy as np
 from pathlib import Path
+import torch
 
 def train(config):
     #config_path = 'janutils/configs/mnist_mlp_autoencoder.py'
@@ -90,7 +91,7 @@ def train(config):
                 pl_module.logger.experiment.add_image('original', grid_batch)
 
                 batch = batch.to(pl_module.device)
-                
+
                 B = batch.shape[0]
                 if pl_module.config.training.variational:
                     mean_z, log_var_z = pl_module.encode(batch)
