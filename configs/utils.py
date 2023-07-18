@@ -32,7 +32,7 @@ def get_path(path_type):
         # hpc
         if machine[:5] == 'login':
             path_dict = {
-                'data_path': 'georgios_hpc_data_path'
+                'data_path': '/home/gb511/datasets'
             }
         else:
             raise RuntimeError('Unknown machine. Please define the paths.')
