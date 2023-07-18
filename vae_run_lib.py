@@ -83,7 +83,7 @@ def train(config):
         def on_validation_epoch_end(self, trainer, pl_module):
             current_epoch = pl_module.current_epoch
             if (current_epoch+1) % self.freq == 0:
-                dataloader = trainer.val_dataloaders[0]
+                dataloader = trainer.val_dataloaders
                 batch = next(iter(dataloader))
                 
                 grid_batch = torchvision.utils.make_grid(sample, nrow=int(np.sqrt(sample.size(0))), normalize=True, scale_each=True)
