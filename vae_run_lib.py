@@ -89,6 +89,8 @@ def train(config):
                 grid_batch = torchvision.utils.make_grid(batch, nrow=int(np.sqrt(batch.size(0))), normalize=True, scale_each=True)
                 pl_module.logger.experiment.add_image('original', grid_batch)
 
+                batch = batch.to(pl_module.device)
+                
                 B = batch.shape[0]
                 if pl_module.config.training.variational:
                     mean_z, log_var_z = pl_module.encode(batch)
