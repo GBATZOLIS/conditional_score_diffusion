@@ -27,6 +27,18 @@ class BaseSdeGenerativeModel(pl.LightningModule):
         self.samples = None
 
     def on_train_start(self):
+        def compare_state_dicts(dict1, dict2):
+            keys1 = set(dict1.keys())
+            keys2 = set(dict2.keys())
+
+            intersect_keys = keys1.intersection(keys2)
+            unique_to_dict1 = keys1 - keys2
+            unique_to_dict2 = keys2 - keys1
+
+            print(f'Number of keys present in both dicts: {len(intersect_keys)}')
+            print(f'Number of keys unique to dict1: {len(unique_to_dict1)}')
+            print(f'Number of keys unique to dict2: {len(unique_to_dict2)}')
+
         discrete_checkpoint_path = self.config.model.discrete_checkpoint_path
         checkpoint_path = self.config.model.checkpoint_path
         
@@ -38,11 +50,18 @@ class BaseSdeGenerativeModel(pl.LightningModule):
                 # load the whole checkpoint
                 checkpoint = torch.load(discrete_checkpoint_path, map_location=self.device)
                 
-                # Create a new state_dict with corrected key names if necessary
-                if any(k.startswith("diffusion_model.") for k in checkpoint['state_dict'].keys()):
-                    corrected_state_dict = {k.replace("diffusion_model.", ""): v for k, v in checkpoint['state_dict'].items()}
+                if 'state_dict' in checkpoint.keys():
+                    # Create a new state_dict with corrected key names if necessary
+                    if any(k.startswith("diffusion_model.") for k in checkpoint['state_dict'].keys()):
+                        corrected_state_dict = {k.replace("diffusion_model.", ""): v for k, v in checkpoint['state_dict'].items() if k.startswith("diffusion_model.")}
+                    elif any(k.startswith("ema_model.") for k in checkpoint['state_dict'].keys()):
+                        corrected_state_dict = {k.replace("ema_model.", ""): v for k, v in checkpoint['state_dict'].items() if k.startswith("ema_model.")}     
+                    else:
+                        corrected_state_dict = checkpoint['state_dict']
                 else:
-                    corrected_state_dict = checkpoint['state_dict']
+                    corrected_state_dict = checkpoint
+
+                compare_state_dicts(self.score_model.state_dict(), corrected_state_dict)
 
                 # Load only the diffusion_model parameters
                 self.score_model.load_state_dict(corrected_state_dict)

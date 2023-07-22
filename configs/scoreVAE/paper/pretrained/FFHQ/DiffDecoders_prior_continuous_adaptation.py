@@ -9,7 +9,7 @@ def get_config():
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq'
+  logging.log_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq' #'/home/gb511/projects/scoreVAE/experiments/ffhq' 
   logging.log_name = 'DiffDecoders_continuous_prior'
   logging.top_k = 5
   logging.every_n_epochs = 1000
@@ -19,12 +19,12 @@ def get_config():
   config.training = training = ml_collections.ConfigDict()
   config.training.lightning_module = 'base'
   training.conditioning_approach = 'sr3'
-  training.batch_size = 32
+  training.batch_size = 64
   training.t_batch_size = 1
   training.num_nodes = 1
   training.gpus = 1
-  training.accelerator = None if training.gpus == 1 else 'ddp'
-  training.accumulate_grad_batches = 4
+  training.accelerator = 'gpu'
+  training.accumulate_grad_batches = 2
   training.workers = 4*training.gpus
   #----- to be removed -----
   training.num_epochs = 10000
@@ -34,7 +34,7 @@ def get_config():
   training.eval_freq = 2500
   #------              --------
   
-  training.visualisation_freq = 1
+  training.visualisation_freq = 10
   training.visualization_callback = 'base'
   training.show_evolution = False
 
@@ -74,7 +74,7 @@ def get_config():
 
   # data
   config.data = data = ml_collections.ConfigDict()
-  data.base_dir = '/home/gb511/rds_work/datasets/' #'/home/gb511/datasets'
+  data.base_dir = '/home/gb511/rds_work/datasets/'  #'/home/gb511/datasets' 
   data.dataset = 'ffhq'
   data.datamodule = 'guided_diffusion_dataset'
   data.return_labels = False
@@ -95,7 +95,7 @@ def get_config():
   # model
   config.model = model = ml_collections.ConfigDict()
   model.num_scales = 1000
-  model.discrete_checkpoint_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq/prior/checkpoints/epoch=265-step=116508.ckpt' #'/home/gb511/projects/scoreVAE/experiments/ffhq/discrete_prior/checkpoints/epoch=265-step=116508.ckpt'
+  model.discrete_checkpoint_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_prior_discrete/last.ckpt' #'/home/gb511/projects/scoreVAE/experiments/ffhq/discrete_prior_diff_decoders/last.ckpt' 
   model.checkpoint_path = None
 
   model.name = 'BeatGANsUNetModel'

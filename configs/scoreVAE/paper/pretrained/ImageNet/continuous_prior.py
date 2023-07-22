@@ -9,7 +9,7 @@ def get_config():
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ImageNet' 
+  logging.log_path = '/home/gb511/projects/scoreVAE/experiments/ImageNet' #'/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ImageNet' 
   logging.log_name = 'continuous_prior'
   logging.top_k = 5
   logging.every_n_epochs = 1000
@@ -19,11 +19,11 @@ def get_config():
   config.training = training = ml_collections.ConfigDict()
   config.training.lightning_module = 'base'
   training.conditioning_approach = 'sr3'
-  training.batch_size = 2
+  training.batch_size = 1
   training.t_batch_size = 1
   training.num_nodes = 1
   training.gpus = 1
-  training.accelerator = None if training.gpus == 1 else 'ddp'
+  training.accelerator = 'gpu'
   training.accumulate_grad_batches = 1
   training.workers = 4*training.gpus
   #----- to be removed -----
@@ -74,7 +74,7 @@ def get_config():
 
   # data
   config.data = data = ml_collections.ConfigDict()
-  data.base_dir = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/datasets' #'/home/gb511/datasets'
+  data.base_dir = '/home/gb511/datasets' #'/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/datasets' 
   data.dataset = 'ImageNet'
   data.datamodule = 'guided_diffusion_dataset'
   data.return_labels = False
@@ -82,7 +82,7 @@ def get_config():
   data.create_dataset = False
   data.split = [0.9, 0.05, 0.05]
   data.image_size = 128
-  data.percentage_use = 100 #default:100
+  data.percentage_use = 0.1 #default:100
   data.effective_image_size = data.image_size
   data.shape = [3, data.image_size, data.image_size]
   data.latent_dim = 512
@@ -95,10 +95,10 @@ def get_config():
   # model
   config.model = model = ml_collections.ConfigDict()
   model.num_scales = 1000
-  model.discrete_checkpoint_path = '/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/ImageNet/256/prior/checkpoints/256x256_diffusion_uncond.pt'
+  model.discrete_checkpoint_path = '/home/gb511/projects/scoreVAE/experiments/ImageNet/prior/256x256_diffusion_uncond.pt' #'/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/projects/scoreVAE/experiments/paper/pretrained/ImageNet/256/prior/checkpoints/256x256_diffusion_uncond.pt'
   model.checkpoint_path = None
 
-  model.name = 'ImprovedDiffusionUNetModel'
+  model.name = 'GD_UNetModel'
   model.use_fp16 = False
   model.ema_rate = 0.999
   model.image_size = data.image_size
@@ -126,7 +126,7 @@ def get_config():
   # number of time embed channels
   model.time_embed_channels: int = None
   # dropout applies to the resblocks (on feature maps)
-  model.dropout: float = 0.1
+  model.dropout: float = 0.
   model.channel_mult = (1, 1, 2, 2, 4, 4)
   model.input_channel_mult = None
   model.conv_resample: bool = True

@@ -35,7 +35,7 @@ class VAE(pl.LightningModule):
         return x
 
     def encode(self, x):
-        if self.config.model.variational:
+        if self.config.training.variational:
             mean_z, log_var_z = self.encoder(x)
             return mean_z, log_var_z
         else:
@@ -63,7 +63,7 @@ class VAE(pl.LightningModule):
     def compute_loss(self, batch):
         B = batch.shape[0]
         D_Z = self.latent_dim
-        if self.config.model.variational:
+        if self.config.training.variational:
             mean_z, log_var_z = self.encode(batch) # (B, D_Z), (B, D_Z) assuming Sigma_z is diagonal
             z = torch.randn((B, self.latent_dim), device=self.device) * torch.sqrt(log_var_z.exp()) + mean_z
             mean_x, _ = self.decode(z) # (B, D_X), (B, D_X) assuming Sigma_x is the identity matrix. (fine when using the kl weight)

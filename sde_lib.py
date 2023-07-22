@@ -170,15 +170,28 @@ class SNRSDE(SDE):
   @property
   def T(self):
     return 1
-
-  def sde(self, x, t):
+  
+  def perturbation_coefficients(self, t):
+    SNR = lambda t: torch.exp(self.log_SNR(t))
+    alpha = torch.sqrt(SNR(t) / (1 + SNR(t)))
+    a_t = alpha
+    sigma_t = torch.sqrt(1 / (1 + SNR(t)))
+    return a_t, sigma_t 
+  
+  def sde(self, x, t, return_f=False):
     SNR = lambda t: torch.exp(self.log_SNR(t))
     d_log_SNR = self.d_log_SNR
     std = torch.sqrt(1 / (1 + SNR(t)))
-    drift = 0.5 * std[(...,)+(None,)*len(x.shape[1:])]**2 * d_log_SNR(t)[(...,)+(None,)*len(x.shape[1:])] * x
     diffusion_squared = - std**2 * d_log_SNR(t)
     diffusion = torch.sqrt(diffusion_squared)
-    return drift, diffusion
+    f = 0.5 * std[(...,)+(None,)*len(x.shape[1:])]**2 * d_log_SNR(t)[(...,)+(None,)*len(x.shape[1:])]
+
+    if return_f:
+      return f, diffusion
+    else:
+      drift = f * x
+      return drift, diffusion
+    
 
   def marginal_prob(self, x, t): 
     SNR = lambda t: torch.exp(self.log_SNR(t))
@@ -218,14 +231,26 @@ class cSNRSDE(cSDE):
   def T(self):
     return 1
 
-  def sde(self, x, t):
+  def perturbation_coefficients(self, t):
+    SNR = lambda t: torch.exp(self.log_SNR(t))
+    alpha = torch.sqrt(SNR(t) / (1 + SNR(t)))
+    a_t = alpha
+    sigma_t = torch.sqrt(1 / (1 + SNR(t)))
+    return a_t, sigma_t 
+
+  def sde(self, x, t, return_f=False):
     SNR = lambda t: torch.exp(self.log_SNR(t))
     d_log_SNR = self.d_log_SNR
     std = torch.sqrt(1 / (1 + SNR(t)))
-    drift = 0.5 * std[(...,)+(None,)*len(x.shape[1:])]**2 * d_log_SNR(t)[(...,)+(None,)*len(x.shape[1:])] * x
     diffusion_squared = - std**2 * d_log_SNR(t)
     diffusion = torch.sqrt(diffusion_squared)
-    return drift, diffusion
+    f = 0.5 * std[(...,)+(None,)*len(x.shape[1:])]**2 * d_log_SNR(t)[(...,)+(None,)*len(x.shape[1:])]
+
+    if return_f:
+      return f, diffusion
+    else:
+      drift = f * x
+      return drift, diffusion
 
   def marginal_prob(self, x, t): 
     SNR = lambda t: torch.exp(self.log_SNR(t))

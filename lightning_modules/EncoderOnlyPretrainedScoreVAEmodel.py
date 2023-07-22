@@ -97,6 +97,13 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
         self.sde.sampling_eps = self.sampling_eps
         self.usde.sampling_eps = self.sampling_eps
     
+    def _handle_batch(self, batch):
+        if type(batch) == list:
+            x = batch[0]
+        else:
+            x = batch
+        return x
+
     def configure_loss_fn(self, config, train):
         if hasattr(config.training, 'cde_loss'):
             if config.training.cde_loss:
@@ -137,6 +144,7 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
     
     def training_step(self, *args, **kwargs):
         batch, batch_idx = args[0], args[1]
+        batch = self._handle_batch(batch)
 
         if self.config.training.use_pretrained:
             if self.config.training.encoder_only:
@@ -160,6 +168,7 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
         return loss
     
     def validation_step(self, batch, batch_idx):
+        batch = self._handle_batch(batch)
         if self.config.training.use_pretrained:
             if self.config.training.encoder_only:
                 loss = self.eval_loss_fn[0](self.encoder, self.unconditional_score_model, batch)
@@ -174,7 +183,7 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
             loss = self.eval_loss_fn[1](self.unconditional_score_model, batch)
             self.logger.experiment.add_scalars('val_loss', {'unconditional': loss}, self.global_step)
 
-        if batch_idx == 2 and self.current_epoch+1 == 10:
+        if batch_idx == 2 and self.current_epoch+1 == 2:
             sample, _ = self.unconditional_sample(p_steps=250)
             sample = sample.cpu()
             grid_batch = torchvision.utils.make_grid(sample, nrow=int(np.sqrt(sample.size(0))), normalize=True, scale_each=True)
@@ -202,6 +211,7 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
         return loss
 
     def test_step(self, batch, batch_idx):
+        batch = self._handle_batch(batch)
         reconstruction = self.encode_n_decode(batch, use_pretrained=self.config.training.use_pretrained,
                                                           encoder_only=self.config.training.encoder_only,
                                                           t_dependent=self.config.training.t_dependent)

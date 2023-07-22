@@ -117,8 +117,9 @@ class EMA(Callback):
         checkpoint_callback = trainer.checkpoint_callback
 
         # use the connector as NeMo calls the connector directly in the exp_manager when restoring.
-        connector = trainer._checkpoint_connector
-        ckpt_path = connector.resume_checkpoint_path
+        #connector = trainer._checkpoint_connector
+        #ckpt_path = connector.resume_checkpoint_path
+        ckpt_path = checkpoint
 
         if ckpt_path and checkpoint_callback is not None and 'NeMo' in type(checkpoint_callback).__name__:
             ext = checkpoint_callback.FILE_EXTENSION
@@ -137,7 +138,6 @@ class EMA(Callback):
                     "Unable to find the associated EMA weights when re-loading, "
                     f"training will start with new EMA weights. Expected them to be at: {ema_path}",
                 )
-
 
 @torch.no_grad()
 def ema_update(ema_model_tuple, current_model_tuple, decay):

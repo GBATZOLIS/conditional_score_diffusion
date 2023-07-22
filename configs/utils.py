@@ -29,10 +29,14 @@ def get_path(path_type):
             raise RuntimeError('Unknown machine. Please define the paths.')
     # Georgios's configuration
     elif user[:5] == 'gb511':
-        # hpc
-        if machine[:5] == 'login':
+        print(machine)
+        if machine[:11] == 'abg-h2ocool':
             path_dict = {
-                'data_path': 'georgios_hpc_data_path'
+                'data_path': '/home/gb511/datasets'
+            }
+        elif machine[:5] == 'login': # hpc
+            path_dict = {
+                'data_path': '/home/gb511/datasets'
             }
         else:
             raise RuntimeError('Unknown machine. Please define the paths.')
