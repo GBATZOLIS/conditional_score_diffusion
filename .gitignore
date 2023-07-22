@@ -42,3 +42,6 @@ JOB*
 
 #jobmaster jobs
 job_master/
+
+tmp/
+tmp_celeb/

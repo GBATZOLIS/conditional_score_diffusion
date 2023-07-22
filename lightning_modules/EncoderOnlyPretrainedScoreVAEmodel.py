@@ -298,6 +298,39 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
         augmented[-1] = x[1]
         return augmented
 
+    def encode(self, x, use_latent_mean=False):
+        t0 = torch.zeros(x.shape[0]).type_as(x)
+        latent_distribution_parameters = self.encoder(x, t0)
+        latent_dim = latent_distribution_parameters.size(1)//2
+        mean_y = latent_distribution_parameters[:, :latent_dim]
+        log_var_y = latent_distribution_parameters[:, latent_dim:]
+        if use_latent_mean:
+            y = mean_y
+        else:
+            y = mean_y + torch.sqrt(log_var_y.exp()) * torch.randn_like(mean_y)
+        return y
+    
+    def decode(self, z):
+        use_pretrained=self.config.training.use_pretrained,
+        encoder_only=self.config.training.encoder_only,
+        t_dependent=self.config.training.t_dependent
+        show_evolution=False
+        sampling_shape = [z.size(0)]+self.config.data.shape
+        conditional_sampling_fn = get_conditional_sampling_fn(config=self.config, sde=self.sde, 
+                                                              shape=sampling_shape, eps=self.sampling_eps, 
+                                                              use_pretrained=use_pretrained, encoder_only=encoder_only, 
+                                                              use_path=False, 
+                                                              t_dependent=t_dependent)
+        if self.config.training.encoder_only:
+            model = {'unconditional_score_model':self.unconditional_score_model,
+                     'encoder': self.encoder}
+        else:
+            model = {'unconditional_score_model':self.unconditional_score_model,
+                     'latent_correction_model': self.latent_correction_model}
+
+        return conditional_sampling_fn(model, z, show_evolution)
+
+
     def encode_n_decode(self, x, show_evolution=False, predictor='default', corrector='default', p_steps='default', \
                      c_steps='default', snr='default', denoise='default', use_pretrained=True, encoder_only=False, t_dependent=True, gamma=1.):
 
