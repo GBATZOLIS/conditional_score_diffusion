@@ -6,14 +6,169 @@ from models.half_U import HalfUEncoder, HalfUDecoder, HalfUDecoderNoConv
 from models.encoder import DDPMEncoder, Encoder
 from models.decoder import MirrorDecoder
 import lpips
+from models import utils as mutils
+from pytorch_lightning.callbacks import Callback
+from torchvision.utils import make_grid
 
 # for loading old models
 #def fix_config(config):
 
+class MPVisualizationCallback(Callback):
+    def __init__(self):
+        super().__init__()
+        self.lpips_distance_fn = lpips.LPIPS(net='vgg')
+    
+    def setup(self, trainer, pl_module, stage):
+        self.lpips_distance_fn = self.lpips_distance_fn.to(pl_module.device)
 
+    def on_validation_epoch_end(self, trainer, pl_module):
+        current_epoch = trainer.current_epoch
+        if hasattr(pl_module.config, 'visualisation_freq'):
+            freq = pl_module.config.visualisation_freq
+        else:
+            freq = 10
+        
+        if (trainer.current_epoch+1) % freq == 0:
+            dataloader = trainer.datamodule.val_dataloader()
+            batch = next(iter(dataloader))
+            batch = batch.to(pl_module.device)
+            x, x_hat = pl_module.get_pair(batch)
+            x_hat_sb = pl_module.ddpm_sample(x_hat, discretisation=32)
+
+            # Select the first 16 images in the batch
+            x = x[:16]
+            x_hat = x_hat[:16]
+            x_hat_sb = x_hat_sb[:16]
+            
+            # Concatenate tensors along a new dimension
+            img_grid = torch.stack((x, x_hat, x_hat_sb), dim=2)  # shape: [16, 3, H, W]
+            img_grid = img_grid.view(-1, *img_grid.shape[-2:])  # reshape to [48, H, W]
+
+            # Use make_grid to create the grid
+            grid = make_grid(img_grid, nrow=3, normalize=True, scale_each=True)  # Creates a grid with 3 images in each row
+
+            # Log the grid to tensorboard
+            trainer.logger.experiment.add_image('conditional', grid, current_epoch)
+
+
+            avg_lpips_score = torch.mean(self.lpips_distance_fn(x, x_hat_sb))
+            
+            # log the average LPIPS score
+            trainer.logger.experiment.log_metric('avg_lpips_score', avg_lpips_score, step=current_epoch)
+
+            unconditional_sample = pl_module.unconditional_sample(batch.size(0),  discretisation=32)
+            grid = make_grid(img_grid, nrow=int(unconditional_sample.size(0)), normalize=True, scale_each=True)
+            trainer.logger.experiment.add_image('unconditional', grid, current_epoch)
+
+        
+
+
+class MarkovianProjector(pl.LightningModule):
+    def __init__(self, config, vae_model):
+        self.vae = vae_model
+        self.vae.freeze()
+        self.model = mutils.create_model(config)
+
+        self.t0 = torch.tensor(0).to(self.device)
+        self.t1 = torch.tensor(1).to(self.device)
+        self.sigma = config.training.sigma
+    
+    def get_pair(self, batch):
+        B = batch.shape[0]
+        mean_z, log_var_z = self.vae.encode(batch)
+        z = torch.randn((B, mean_z.size(1)), device=self.device) * torch.sqrt(log_var_z.exp()) + mean_z
+
+        mean_x, _ = self.decode(z)
+        x_hat = mean_x + torch.randn_like(mean_x) #we assume unit variance
+        return batch, x_hat
+
+    def _f(self, x, t):
+        return torch.zeros_like(x)
+
+    def _g(self, t):
+        return torch.Tensor([self.sigma]).to(t.device)
+
+    def forward_variance_accumulation(self, t):
+        #int_p.time_t{g_τ^2dτ}
+        g2 = self._g(t)**2
+        delta_t = t - self.t0
+        return g2*delta_t
+    
+    def backward_variance_accumulation(self, t):
+        #int_t_q.time{g_τ^2dτ}
+        g2 = self._g(t)**2
+        delta_t = self.t1 - t
+        return g2*delta_t
+
+    def get_sample_from_posterior_given_pair(self, t, x0, x1):
+        s_t_2 = self.forward_variance_accumulation(t)
+        bar_s_t_2 = self.backward_variance_accumulation(t)
+        var_sum = s_t_2 + bar_s_t_2
+        x0_factor = bar_s_t_2/var_sum
+        x1_factor = s_t_2/var_sum
+        mean_t = x0_factor[(...,) + (None,) * len(x0.shape[1:])] * x0 + x1_factor[(...,) + (None,) * len(x1.shape[1:])] * x1
+        std_t = torch.sqrt(s_t_2 * bar_s_t_2 / var_sum)
+        x_t = mean_t + std_t[(...,) + (None,) * len(x0.shape[1:])] * torch.randn_like(x0).to(self.device)
+        return x_t
+        
+    def training_step(self, batch, batch_idx):
+        x, x_hat = self.get_pair(batch)
+        loss = self.compute_loss(x, x_hat)
+        self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        return loss
+    
+    def validation_step(self, batch, batch_idx):
+        x, x_hat = self.get_pair(batch)
+        loss = self.compute_loss(x, x_hat)
+        self.log('val_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        return loss
+    
+    def compute_loss(self, x0, x1):
+        t0 = self.t0 + torch.tensor(1e-6)
+        t1 = self.t1
+        t = torch.rand(x.size(0)).to(self.device) * (t1 - t0) + t0 
+        xt = self.get_sample_from_posterior_given_pair(t, x0, x1)
+        sigma_t = torch.sqrt(self.forward_variance_accumulation(t))
+        epsilon = self.model(xt, t)
+        loss = epsilon - (xt - x0)/sigma_t[(...,) + (None,) * len(x0.shape[1:])]
+        loss = torch.mean(torch.square(loss))
+        return loss
+    
+    @torch.no_grad()
+    def ddpm_sample(self, x_hat, discretisation): #sample from p(x|x_hat)
+        x1 = x_hat.to(self.device)
+        ts = torch.linspace(self.t1, self.t0, discretisation+1).to(self.device)
+        dt = ts[1]-ts[0] #negative dtimestep
+        for t in ts[:-1]:
+            s_t = torch.sqrt(self.forward_variance_accumulation(t))
+            x0_e = x1 - s_t*self.model(x1, t)
+
+            if torch.abs((t+dt) - self.t0) <= torch.tensor(1e-6):
+                x_t_plus_dt = x0_e
+            else:
+                x_t_plus_dt = self.get_sample_from_posterior_given_pair(t+dt, x0_e, x1)
+            
+            x1 = x_t_plus_dt
+        return x1
+    
+    @torch.no_grad()
+    def unconditional_sample(self, num_samples, discretisation):
+        z = torch.randn((num_samples, self.vae.latent_dim)).to(self.device)
+        x_hat_mean, _ = self.vae.decode(z)
+        x_hat = x_hat_mean + torch.randn_like(x_hat_mean).to(self.device)
+        x = self.ddpm_sample(x_hat, discretisation)
+        return x
+    
+    @torch.no_grad()
+    def encoder_n_decode(self, x, discretisation):
+        mean_z, log_var_z = self.vae.encode(x)
+        z = torch.randn_like(mean_z).to(self.device) * torch.sqrt(log_var_z.exp()) + mean_z
+        x_hat_mean, _ = self.vae.decode(z)
+        x_hat = x_hat_mean + torch.randn_like(x_hat_mean).to(self.device)
+        x = self.ddpm_sample(x_hat, discretisation)
+        return x
 
 class VAE(pl.LightningModule):
-
     def __init__(self, config):
         super().__init__()
         self.config = config
@@ -41,7 +196,6 @@ class VAE(pl.LightningModule):
         else:
             z = self.encoder(x)
             return z, None
-        
 
     def decode(self, z):
         out = self.decoder(z)
@@ -58,7 +212,6 @@ class VAE(pl.LightningModule):
             z = torch.randn_like(mean_z, device=self.device) * torch.sqrt(log_var_z.exp()) + mean_z
         mean_x, _ = self.decode(z)
         return mean_x
-
 
     def compute_loss(self, batch):
         B = batch.shape[0]
@@ -83,7 +236,6 @@ class VAE(pl.LightningModule):
             loss = rec_loss
 
         return loss, rec_loss.detach() , kl_loss.detach()
-
 
     def training_step(self, batch, batch_idx):
         loss, rec_loss, kl_loss = self.compute_loss(batch)
