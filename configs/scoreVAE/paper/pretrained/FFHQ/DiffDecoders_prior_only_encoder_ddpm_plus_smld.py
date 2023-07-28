@@ -40,7 +40,7 @@ def get_config():
   #------              --------
   
   training.visualisation_freq = 10
-  training.visualization_callback = None
+  training.visualization_callback = ['celeba_distribution_shift', 'jan_georgios']
   training.show_evolution = False
 
   training.likelihood_weighting = False

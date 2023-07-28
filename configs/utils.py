@@ -1,4 +1,5 @@
 import importlib
+import os
 import re
 import subprocess
 
@@ -64,5 +65,22 @@ def config_translator(config, mode):
         config.model.encoder_input_channels = config.encoder.input_channels
         config.data.latent_dim = config.model.latent_dim
         config.training.variational = config.model.variational
+    return config
+
+
+def fix_rds_path(path):
+    home_path = os.path.expanduser('~')
+    path = path.replace('/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/', f'{home_path}/rds_work/')
+    path = path.replace('/home/gb511/', f'{home_path}/')
+    return path
+
+
+def fix_config(config):
+    config.data.base_dir = fix_rds_path(config.data.base_dir)
+    config.model.checkpoint_path = fix_rds_path(config.model.checkpoint_path)
+    config.training.prior_checkpoint_path = fix_rds_path(config.training.prior_checkpoint_path)
+    config.training.prior_config_path = fix_rds_path(config.training.prior_config_path)
+    config.logging.log_path = fix_rds_path(config.logging.log_path)
+    config.model.time_conditional = True
     return config
     

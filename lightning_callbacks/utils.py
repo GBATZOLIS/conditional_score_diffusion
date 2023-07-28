@@ -46,7 +46,10 @@ def get_callbacks(config):
     if config.training.visualization_callback is not None:
       if isinstance(config.training.visualization_callback, list):
         for callback in config.training.visualization_callback:
-          callbacks.append(get_callback_by_name(callback)(show_evolution=config.training.show_evolution))
+          if callback in ['celeba_distribution_shift', 'jan_georgios']:
+            callbacks.append(get_callback_by_name(callback)(config))
+          else:
+            callbacks.append(get_callback_by_name(callback)(show_evolution=config.training.show_evolution))
       else:
         callbacks.append(get_callback_by_name(config.training.visualization_callback)(show_evolution=config.training.show_evolution))
     if config.training.lightning_module in ['conditional_decreasing_variance','haar_conditional_decreasing_variance'] :

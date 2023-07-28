@@ -1,5 +1,6 @@
 import sys
 import os
+from configs.utils import fix_rds_path
 currentdir = os.path.dirname(os.path.realpath(__file__))
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
@@ -11,7 +12,7 @@ import pickle
 import os
 from tqdm import tqdm
 from lightning_modules.VAE import VAE
-from utils import fix_rds_path, fix_config
+from configs.utils import fix_config
 from torch.utils.data import DataLoader
 from lightning_data_modules.ImageDatasets import CelebAAnnotatedDataset
 from lightning_modules.utils import create_lightning_module
@@ -42,6 +43,7 @@ def main(args):
     config.data.base_dir = f'{home}/rds_work/datasets/'
     config.data.dataset = 'celebA-HQ-160'
     config.data.attributes = ['Male']
+    config.data.normalization_mode = 'gd'
 
     train_dataset = CelebAAnnotatedDataset(config, phase='train')
     train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=False)

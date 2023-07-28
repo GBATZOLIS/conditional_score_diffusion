@@ -10,12 +10,12 @@ import numpy as np
 import pickle
 import os
 from lightning_modules.VAE import VAE
-from utils import fix_rds_path
+from configs.utils import fix_rds_path
 from torchvision.datasets import CelebA
 from torch.utils.data import DataLoader
 from lightning_data_modules.ImageDatasets import CelebAAnnotatedDataset
 from lightning_modules.utils import create_lightning_module
-from utils import fix_config
+from configs.utils import fix_config
 from sklearn.linear_model import LogisticRegression
 from semantic_manipulation.utils import spherical_to_cartesian, cartesian_to_spherical
 
@@ -32,6 +32,9 @@ with open('tmp/Z_train.pkl', 'rb') as f:
     Z_train = pickle.load(f)
 with open('tmp/Z_test.pkl', 'rb') as f:
     Z_test = pickle.load(f)
+
+def denrmalize(x):
+    return x * 0.5 + 0.5
 
 # load model
 # path = '/store/CIA/js2164/rds/gb511/projects/scoreVAE/experiments/paper/pretrained/celebA_64/only_ResNetEncoder_VAE_KLweight_0.01/config.pkl'
@@ -51,29 +54,32 @@ home = os.path.expanduser('~')
 config.data.base_dir = f'{home}/rds_work/datasets/'
 config.data.dataset = 'celebA-HQ-160'
 config.data.attributes = ['Male']
-
+config.data.normalization_mode = 'gd'
 
 test_data = CelebAAnnotatedDataset(config, phase='val')
-test_loader = DataLoader(test_data, batch_size=128, num_workers=8, shuffle=False)
+bs = 32
+test_loader = DataLoader(test_data, batch_size=32, num_workers=8, shuffle=False)
 X = next(iter(test_loader))[0].to('cuda')
 spherical = cartesian_to_spherical(pl_module.encode(X).detach().cpu().numpy())
 
 # manipulate
 params = cls_spherical.coef_[0]
-ts =np.linspace(0, 0.01, 100)
+n_steps = 25
+ts =np.linspace(0, 0.01, n_steps)
 v = np.concatenate([[0], params[1:]])
 #v = params
 # choose random image with y = 0
-#i = np.random.choice(np.where(y_test[:128] == 0)[0])
+#i = np.random.choice(np.where(y_test[:32] == 0)[0])
 
-for i in range(128):
+for i in range(bs):
     sgn = 1 if y_test[i] == 0 else -1
     mainpulated_spherical = np.stack([spherical[i] + sgn * t * v for t in ts])
     print(np.round(cls_spherical.predict_proba(mainpulated_spherical)[:,1], 2))
     Z_manipulated = torch.tensor(spherical_to_cartesian(mainpulated_spherical))
 
     # decode
-    X_manipulated = pl_module.decode(Z_manipulated.to(pl_module.device))
+    with torch.no_grad():
+        X_manipulated = pl_module.decode(Z_manipulated.to(pl_module.device))
 
     # create dir for images
     if not os.path.exists(f'tmp/{i}'):
@@ -81,6 +87,8 @@ for i in range(128):
 
     # plot X_0
     import matplotlib.pyplot as plt
+    if config.data.normalization_mode == 'gd':
+        X[i] = denrmalize(X[i])
     plt.imshow(X[i].detach().cpu().permute(1,2,0))
     plt.axis('off')
     # no background
@@ -88,7 +96,9 @@ for i in range(128):
     
     # plot X_manipulated as grid
     from torchvision.utils import make_grid
-    grid = make_grid(X_manipulated.detach().cpu(), nrow=10)
+    if config.data.normalization_mode == 'gd':
+        X_manipulated = denrmalize(X_manipulated)
+    grid = make_grid(X_manipulated.detach().cpu(), nrow=int(np.sqrt(n_steps)))
     plt.imshow(grid.permute(1,2,0))
     plt.axis('off')
     plt.savefig(f'tmp/{i}/rec_manipulated_grid.png', dpi=300, bbox_inches='tight', pad_inches=0)

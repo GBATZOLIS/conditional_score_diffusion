@@ -46,6 +46,10 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
         #encoder
         self.encoder = mutils.create_encoder(config)
 
+        # validation batch
+        # register buffer 
+        self.register_buffer('val_batch', None)
+
     def configure_sde(self, config):
         if config.training.sde.lower() == 'vpsde':
             self.sde = sde_lib.cVPSDE(beta_min=config.model.beta_min, beta_max=config.model.beta_max, N=config.model.num_scales)
@@ -144,6 +148,8 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
     
     def training_step(self, *args, **kwargs):
         batch, batch_idx = args[0], args[1]
+        if hasattr(self.config, 'debug') and self.config.debug.skip_training and batch_idx > 1:
+            return None
         batch = self._handle_batch(batch)
 
         if self.config.training.use_pretrained:
@@ -169,6 +175,8 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
     
     def validation_step(self, batch, batch_idx):
         batch = self._handle_batch(batch)
+        if hasattr(self.config, 'debug') and self.config.debug.skip_validation and batch_idx > 1:
+            return None
         if self.config.training.use_pretrained:
             if self.config.training.encoder_only:
                 loss = self.eval_loss_fn[0](self.encoder, self.unconditional_score_model, batch)
@@ -189,7 +197,13 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
             grid_batch = torchvision.utils.make_grid(sample, nrow=int(np.sqrt(sample.size(0))), normalize=True, scale_each=True)
             self.logger.experiment.add_image('unconditional_sample', grid_batch, self.current_epoch)
 
+        # visualize reconstruction
         if batch_idx == 2 and (self.current_epoch+1) % self.config.training.visualisation_freq == 0:
+            if self.val_batch is None:
+                self.val_batch = batch
+            else:
+                batch = self.val_batch
+                
             reconstruction = self.encode_n_decode(batch, p_steps=250,
                                                          use_pretrained=self.config.training.use_pretrained,
                                                          encoder_only=self.config.training.encoder_only,

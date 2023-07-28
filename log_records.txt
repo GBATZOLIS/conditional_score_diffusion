@@ -1667,3 +1667,61 @@ DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/score_sde_pytorc
 DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/score_sde_pytorch/test_logs/8b6ca4b4-da9e-4753-8e0f-4f6da39435ec/hparams.yaml
 DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/score_sde_pytorch/test_logs/0fc0e722-adf8-4775-8a49-0620a9ad647d/hparams.yaml
 DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/score_sde_pytorch/test_logs/7f57541f-d7dd-46f6-802f-04be41c851b2/hparams.yaml
+DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/src/test_logs/20230727-152714_5f69f4ed-6085-4074-acf1-30171b8bd9c6/hparams.yaml
+DEBUG:fsspec.local:open file: /home/js2164/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/checkpoints/best/epoch=141--eval_loss_epoch=0.014.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/src/test_logs/20230727-161601_4254d377-e390-4a41-9198-45441c0969aa/hparams.yaml
+DEBUG:fsspec.local:open file: /home/js2164/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/checkpoints/best/epoch=141--eval_loss_epoch=0.014.ckpt
+DEBUG:matplotlib.pyplot:Loaded backend tkagg version 8.6.
+DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/src/test_logs/20230727-162329_b4496710-8b3a-4105-a609-e4ceb329b356/hparams.yaml
+DEBUG:fsspec.local:open file: /home/js2164/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/checkpoints/best/epoch=141--eval_loss_epoch=0.014.ckpt
+DEBUG:matplotlib.pyplot:Loaded backend tkagg version 8.6.
+DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/src/test_logs/20230727-163026_af8ae546-4305-45f2-9e00-6f71b281b972/hparams.yaml
+DEBUG:fsspec.local:open file: /home/js2164/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/checkpoints/best/epoch=141--eval_loss_epoch=0.014.ckpt
+DEBUG:matplotlib.pyplot:Loaded backend tkagg version 8.6.
+DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/src/test_logs/2023-07-27-16:34_3fb8b259-628a-4098-9386-a356e5d2669e/hparams.yaml
+DEBUG:fsspec.local:open file: /home/js2164/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/checkpoints/best/epoch=141--eval_loss_epoch=0.014.ckpt
+DEBUG:matplotlib.pyplot:Loaded backend tkagg version 8.6.
+DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/src/test_logs/2023-07-27_16:38__4abc80ad-a989-4324-95e3-a62abf98bc3c/hparams.yaml
+DEBUG:fsspec.local:open file: /home/js2164/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/checkpoints/best/epoch=141--eval_loss_epoch=0.014.ckpt
+DEBUG:matplotlib.pyplot:Loaded backend tkagg version 8.6.
+DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/src/test_logs/2023-07-27_16:43__4c0faeab-6220-478c-be82-ea25e4f8d958/hparams.yaml
+DEBUG:fsspec.local:open file: /home/js2164/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/checkpoints/best/epoch=141--eval_loss_epoch=0.014.ckpt
+DEBUG:matplotlib.pyplot:Loaded backend tkagg version 8.6.
+DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/src/test_logs/2023-07-27_16:47__6da68e79-597b-49da-abc8-27600be44e54/hparams.yaml
+DEBUG:fsspec.local:open file: /home/js2164/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/checkpoints/best/epoch=141--eval_loss_epoch=0.014.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/src/test_logs/2023-07-27_16:47__6da68e79-597b-49da-abc8-27600be44e54/checkpoints/best/epoch=511--eval_loss_epoch=382.922.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/src/test_logs/2023-07-27_16:47__6da68e79-597b-49da-abc8-27600be44e54/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/src/test_logs/2023-07-27_16:47__6da68e79-597b-49da-abc8-27600be44e54/checkpoints/time/2023-07-27 16:47.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/src/test_logs/2023-07-27_16:47__6da68e79-597b-49da-abc8-27600be44e54/checkpoints/best/epoch=512--eval_loss_epoch=358.840.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/src/test_logs/2023-07-27_16:47__6da68e79-597b-49da-abc8-27600be44e54/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/src/test_logs/2023-07-27_16:47__6da68e79-597b-49da-abc8-27600be44e54/checkpoints/time/2023-07-27 16:47.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/src/test_logs/2023-07-27_17:21__a08792ce-51f3-44a0-9900-8a265fbab2f4/hparams.yaml
+DEBUG:fsspec.local:open file: /home/js2164/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/checkpoints/best/epoch=141--eval_loss_epoch=0.014.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/src/test_logs/2023-07-27_17:21__a08792ce-51f3-44a0-9900-8a265fbab2f4/checkpoints/best/epoch=511--eval_loss_epoch=320.060.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/src/test_logs/2023-07-27_17:21__a08792ce-51f3-44a0-9900-8a265fbab2f4/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/src/test_logs/2023-07-27_17:21__a08792ce-51f3-44a0-9900-8a265fbab2f4/checkpoints/time/2023-07-27 17:21.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/src/test_logs/2023-07-27_17:21__a08792ce-51f3-44a0-9900-8a265fbab2f4/checkpoints/best/epoch=512--eval_loss_epoch=330.191.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/src/test_logs/2023-07-27_17:21__a08792ce-51f3-44a0-9900-8a265fbab2f4/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/src/test_logs/2023-07-27_17:21__a08792ce-51f3-44a0-9900-8a265fbab2f4/checkpoints/best/epoch=513--eval_loss_epoch=323.472.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/src/test_logs/2023-07-27_17:21__a08792ce-51f3-44a0-9900-8a265fbab2f4/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/src/test_logs/2023-07-28_12:20__c377503d-af79-4afc-a68f-aabd6f66c7a7/hparams.yaml
+DEBUG:fsspec.local:open file: /home/js2164/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/checkpoints/best/epoch=141--eval_loss_epoch=0.014.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/src/test_logs/2023-07-28_15:01__56757083-5a62-4103-b2ed-fe3c1cd1b1f2/hparams.yaml
+DEBUG:fsspec.local:open file: /home/js2164/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/checkpoints/best/epoch=141--eval_loss_epoch=0.014.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/src/test_logs/2023-07-28_15:01__56757083-5a62-4103-b2ed-fe3c1cd1b1f2/checkpoints/best/epoch=511--eval_loss_epoch=313.563.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/src/test_logs/2023-07-28_15:01__56757083-5a62-4103-b2ed-fe3c1cd1b1f2/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/src/test_logs/2023-07-28_15:01__56757083-5a62-4103-b2ed-fe3c1cd1b1f2/checkpoints/time/2023-07-28 15:01.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/src/test_logs/2023-07-28_16:29__4774289b-98a2-4e34-8eeb-b551506a5168/hparams.yaml
+DEBUG:fsspec.local:open file: /home/js2164/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/checkpoints/best/epoch=141--eval_loss_epoch=0.014.ckpt
+DEBUG:matplotlib.pyplot:Loaded backend agg version v2.2.
+DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/src/test_logs/2023-07-28_16:35__76120660-f019-4e12-a181-e85b54fcd43f/hparams.yaml
+DEBUG:fsspec.local:open file: /home/js2164/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/checkpoints/best/epoch=141--eval_loss_epoch=0.014.ckpt
+DEBUG:matplotlib.pyplot:Loaded backend agg version v2.2.
+DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/src/test_logs/2023-07-28_16:35__76120660-f019-4e12-a181-e85b54fcd43f/checkpoints/time/2023-07-28 16:35.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/src/test_logs/2023-07-28_16:40__fed45b22-bad6-4533-884d-0332a58b5b3b/hparams.yaml
+DEBUG:fsspec.local:open file: /home/js2164/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/checkpoints/best/epoch=141--eval_loss_epoch=0.014.ckpt
+DEBUG:matplotlib.pyplot:Loaded backend agg version v2.2.
+DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/src/test_logs/2023-07-28_16:40__fed45b22-bad6-4533-884d-0332a58b5b3b/checkpoints/time/2023-07-28 16:40.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/src/test_logs/2023-07-28_16:46__d8d85726-ef9e-4c5d-991d-a60f696c7abe/hparams.yaml
+DEBUG:fsspec.local:open file: /home/js2164/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/checkpoints/best/epoch=141--eval_loss_epoch=0.014.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/src/test_logs/2023-07-28_16:46__d8d85726-ef9e-4c5d-991d-a60f696c7abe/checkpoints/time/2023-07-28 16:46.ckpt
