@@ -1,6 +1,5 @@
 import numpy as np
 import torch
-import os
 import logging
 from matplotlib import pyplot as plt
 import io
@@ -234,7 +233,3 @@ def betas_for_alpha_bar(num_diffusion_timesteps, alpha_bar, max_beta=0.999):
   return np.array(betas)
 
 
-def fix_rds_path(path):
-    home_path = os.path.expanduser('~')
-    path = path.replace('/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/', f'{home_path}/rds_work/')
-    return path

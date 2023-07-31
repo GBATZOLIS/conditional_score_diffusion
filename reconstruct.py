@@ -1,7 +1,7 @@
 import torch
 import torchvision
 import pickle
-from utils import fix_rds_path
+from configs.utils import fix_rds_path
 from lightning_modules.utils import create_lightning_module
 from matplotlib import pyplot as plt
 import os 

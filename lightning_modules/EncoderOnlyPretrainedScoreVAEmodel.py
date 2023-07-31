@@ -46,6 +46,10 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
         #encoder
         self.encoder = mutils.create_encoder(config)
 
+        # validation batch
+        # register buffer 
+        self.register_buffer('val_batch', None)
+
     def configure_sde(self, config):
         if config.training.sde.lower() == 'vpsde':
             self.sde = sde_lib.cVPSDE(beta_min=config.model.beta_min, beta_max=config.model.beta_max, N=config.model.num_scales)
@@ -144,6 +148,8 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
     
     def training_step(self, *args, **kwargs):
         batch, batch_idx = args[0], args[1]
+        if hasattr(self.config, 'debug') and self.config.debug.skip_training and batch_idx > 1:
+            return None
         batch = self._handle_batch(batch)
 
         if self.config.training.use_pretrained:
@@ -169,6 +175,8 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
     
     def validation_step(self, batch, batch_idx):
         batch = self._handle_batch(batch)
+        if hasattr(self.config, 'debug') and self.config.debug.skip_validation and batch_idx > 1:
+            return None
         if self.config.training.use_pretrained:
             if self.config.training.encoder_only:
                 loss = self.eval_loss_fn[0](self.encoder, self.unconditional_score_model, batch)
@@ -189,7 +197,13 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
             grid_batch = torchvision.utils.make_grid(sample, nrow=int(np.sqrt(sample.size(0))), normalize=True, scale_each=True)
             self.logger.experiment.add_image('unconditional_sample', grid_batch, self.current_epoch)
 
+        # visualize reconstruction
         if batch_idx == 2 and (self.current_epoch+1) % self.config.training.visualisation_freq == 0:
+            if self.val_batch is None:
+                self.val_batch = batch
+            else:
+                batch = self.val_batch
+                
             reconstruction = self.encode_n_decode(batch, p_steps=250,
                                                          use_pretrained=self.config.training.use_pretrained,
                                                          encoder_only=self.config.training.encoder_only,
@@ -307,6 +321,39 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
         augmented[1:-1] = interpolation
         augmented[-1] = x[1]
         return augmented
+
+    def encode(self, x, use_latent_mean=False):
+        t0 = torch.zeros(x.shape[0]).type_as(x)
+        latent_distribution_parameters = self.encoder(x, t0)
+        latent_dim = latent_distribution_parameters.size(1)//2
+        mean_y = latent_distribution_parameters[:, :latent_dim]
+        log_var_y = latent_distribution_parameters[:, latent_dim:]
+        if use_latent_mean:
+            y = mean_y
+        else:
+            y = mean_y + torch.sqrt(log_var_y.exp()) * torch.randn_like(mean_y)
+        return y
+    
+    def decode(self, z):
+        use_pretrained=self.config.training.use_pretrained,
+        encoder_only=self.config.training.encoder_only,
+        t_dependent=self.config.training.t_dependent
+        show_evolution=False
+        sampling_shape = [z.size(0)]+self.config.data.shape
+        conditional_sampling_fn = get_conditional_sampling_fn(config=self.config, sde=self.sde, 
+                                                              shape=sampling_shape, eps=self.sampling_eps, 
+                                                              use_pretrained=use_pretrained, encoder_only=encoder_only, 
+                                                              use_path=False, 
+                                                              t_dependent=t_dependent)
+        if self.config.training.encoder_only:
+            model = {'unconditional_score_model':self.unconditional_score_model,
+                     'encoder': self.encoder}
+        else:
+            model = {'unconditional_score_model':self.unconditional_score_model,
+                     'latent_correction_model': self.latent_correction_model}
+
+        return conditional_sampling_fn(model, z, show_evolution)
+
 
     def encode_n_decode(self, x, show_evolution=False, predictor='default', corrector='default', p_steps='default', \
                      c_steps='default', snr='default', denoise='default', use_pretrained=True, encoder_only=False, t_dependent=True, gamma=1.):

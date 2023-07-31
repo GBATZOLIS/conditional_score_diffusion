@@ -5,13 +5,14 @@ from torch.utils.data import DataLoader
 import numpy as np
 import time
 import torch
-from torchvision.transforms import Resize
+from torchvision.transforms import Resize, ToPILImage, ToTensor
 from torchvision.transforms.functional import InterpolationMode, rgb_to_grayscale
 from iunets.layers import InvertibleDownsampling2D
-
 import pickle
 import pytorch_lightning as pl
 from . import utils
+from PIL import Image
+import PIL
 
 def get_exact_paths(config, phase):
     if config.data.dataset == 'DF2K':  
@@ -50,9 +51,15 @@ def get_exact_paths(config, phase):
 class PKLDataset(data.Dataset):
     def __init__(self, config, phase):
         super(PKLDataset, self).__init__()
+        if hasattr(config.data, 'normalization_mode'):
+            self.normalization_mode = config.data.normalization_mode
+        else:
+            self.normalization_mode = 'srflow'
+
         self.image_size = config.data.image_size #target image size for this scale
         hr_file_path = get_exact_paths(config, phase)['GT']
         self.images = self.load_pkls(hr_file_path, n_max=int(1e9))
+
 
         #self.mask = config.data.mask 
 
@@ -71,13 +78,37 @@ class PKLDataset(data.Dataset):
 
     def __getitem__(self, item):
         img = self.images[item]
-        img = img / 255.0
-        img = torch.Tensor(img)
-        resize = Resize(self.image_size, interpolation=InterpolationMode.BICUBIC)
-        img = resize(img)
-        img -= img.min()
-        img /= img.max()
+        if self.normalization_mode == 'srflow':
+            img = img / 255.0
+            img = torch.Tensor(img)
+            resize = Resize(self.image_size, interpolation=InterpolationMode.BICUBIC)
+            img = resize(img)
+            img -= img.min()
+            img /= img.max()
+        elif self.normalization_mode == 'gd':
+            pil_image = ToPILImage()(img.transpose(1,2,0))
+            while min(*pil_image.size) >= 2 * self.image_size:
+                pil_image = pil_image.resize(
+                    tuple(x // 2 for x in pil_image.size), resample=Image.BOX
+                )
+            scale = self.image_size / min(*pil_image.size)
+            pil_image = pil_image.resize(
+                tuple(round(x * scale) for x in pil_image.size), resample=Image.BICUBIC)
+            
+            arr = np.array(pil_image)
+            crop_y = (arr.shape[0] - self.image_size) // 2
+            crop_x = (arr.shape[1] - self.image_size) // 2
 
+            img = arr[crop_y : crop_y + self.image_size, crop_x : crop_x + self.image_size]
+            img = img.astype(np.float32) / 127.5 - 1
+            img = torch.Tensor(img.transpose(2, 0, 1))
+
+
+            # img = img.resize((self.image_size, self.image_size), resample=PIL.Image.BICUBIC)
+            # img = ToTensor()(img)
+            # #img = img / 127.5 - 1  # Normalization
+            # img = 2 * img - 1
+            
         '''
         if self.mask == 'central':
             w, h = img.size(1), img.size(2)

@@ -7,7 +7,6 @@ import numpy as np
 import copy
 from matplotlib import pyplot as plt
 from models.utils import get_score_fn
-from vector_fields.vector_utils import curl, curl_backprop
 from utils import generate_grid, extract_vector_field, compute_curl
 
 def plot_vector_field(pl_module, title='Stream plot', t=0., lines=False):

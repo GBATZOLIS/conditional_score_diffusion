@@ -1,0 +1,12 @@
+- Use more classes (eg glasses) and improve dir structure
+- Consider training classes jointly (how to pick direction in this case? Check diff decoder github)
+- Automate the step size (to reach prop 1 at the end), normalize the direction vector
+- Check cartesian vs spherical
+- Check the accuracy in data space
+- Use FFHQ model
+- Try to package
+- Double check spherical coordinate converter
+
+- Use whole dataset HPC or GD
+- Train jointly
+- Check normalization
