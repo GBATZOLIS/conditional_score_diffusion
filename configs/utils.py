@@ -69,6 +69,8 @@ def config_translator(config, mode):
 
 
 def fix_rds_path(path):
+    if path is None:
+        return None
     home_path = os.path.expanduser('~')
     path = path.replace('/home/gb511/rds/rds-t2-cs138-LlrDsbHU5UM/gb511/', f'{home_path}/rds_work/')
     path = path.replace('/home/gb511/', f'{home_path}/')
