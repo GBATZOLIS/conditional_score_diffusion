@@ -176,7 +176,7 @@ def load_prior_model(base_config):
     raise NotADirectoryError('The prior config is not found in the specified directory.')
     
   LightningModule = create_lightning_module(prior_config)
-  priorLightningModule = LightningModule.load_from_checkpoint(checkpoint_path, config=prior_config)
+  priorLightningModule = LightningModule.load_from_checkpoint(checkpoint_path, config=prior_config, map_location=torch.device('cpu'))
   print('loaded')
   return priorLightningModule.score_model
 

@@ -66,7 +66,7 @@ def train(config, log_path, checkpoint_path, log_name=None):
                           )
     if checkpoint_path:
       LightningModule = LightningModule.load_from_checkpoint(checkpoint_path, config=config, map_location=torch.device('cpu'))
-
+      
     trainer.fit(LightningModule, datamodule=DataModule, ckpt_path=checkpoint_path)
 
 def test(config, log_path, checkpoint_path):
