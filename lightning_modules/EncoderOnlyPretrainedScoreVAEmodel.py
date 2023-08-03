@@ -49,7 +49,7 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
 
         # validation batch
         # register buffer 
-        self.register_buffer('val_batch', torch.zeros(tuple([config.validation.batchsize]+config.data.shape)))
+        self.register_buffer('val_batch', torch.zeros(tuple([config.validation.batch_size]+config.data.shape)))
 
     def configure_sde(self, config):
         if config.training.sde.lower() == 'vpsde':
