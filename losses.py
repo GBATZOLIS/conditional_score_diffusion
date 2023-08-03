@@ -205,7 +205,7 @@ def get_scoreVAE_loss_fn(sde, train, variational=False, likelihood_weighting=Tru
             return loss
       else:
         assert encoder_only and t_dependent
-        def loss_fn(encoder, unconditional_score_model, batch):
+        def loss_fn(encoder, unconditional_score_model, batch, t_dist):
             def get_latent_correction_fn(encoder, z):
               def get_log_density_fn(encoder):
                 def log_density_fn(z, x, t):
@@ -252,7 +252,7 @@ def get_scoreVAE_loss_fn(sde, train, variational=False, likelihood_weighting=Tru
 
             conditional_correction_fn = get_latent_correction_fn(encoder, latent)
 
-            t = torch.rand(x.shape[0]).type_as(x) * (sde.T - eps) + eps
+            t = t_dist.sample((x.shape[0],)).type_as(x)
             z = torch.randn_like(x)
             mean, std = sde.marginal_prob(x, t)
             perturbed_x = mean + std[(...,) + (None,) * len(x.shape[1:])] * z

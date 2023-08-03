@@ -19,6 +19,7 @@ from pathlib import Path
 from utils import get_named_beta_schedule
 from scipy.interpolate import PchipInterpolator
 import numpy as np
+from torch.distributions import Uniform
 
 @utils.register_lightning_module(name='encoder_only_pretrained_score_vae')
 class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
@@ -49,6 +50,7 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
         # validation batch
         # register buffer 
         self.register_buffer('val_batch', None)
+
 
     def configure_sde(self, config):
         if config.training.sde.lower() == 'vpsde':
@@ -100,6 +102,8 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
 
         self.sde.sampling_eps = self.sampling_eps
         self.usde.sampling_eps = self.sampling_eps
+
+        self.t_dist = Uniform(self.sampling_eps, 1)
     
     def _handle_batch(self, batch):
         if type(batch) == list:
@@ -154,7 +158,7 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
 
         if self.config.training.use_pretrained:
             if self.config.training.encoder_only:
-                loss = self.train_loss_fn[0](self.encoder, self.unconditional_score_model, batch)
+                loss = self.train_loss_fn[0](self.encoder, self.unconditional_score_model, batch, self.t_dist)
             else:
                 loss = self.train_loss_fn[0](self.encoder, self.latent_correction_model, self.unconditional_score_model, batch)
             self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
@@ -179,7 +183,7 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
             return None
         if self.config.training.use_pretrained:
             if self.config.training.encoder_only:
-                loss = self.eval_loss_fn[0](self.encoder, self.unconditional_score_model, batch)
+                loss = self.eval_loss_fn[0](self.encoder, self.unconditional_score_model, batch, self.t_dist)
             else:
                 loss = self.eval_loss_fn[0](self.encoder, self.latent_correction_model, self.unconditional_score_model, batch)
             self.log('eval_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
