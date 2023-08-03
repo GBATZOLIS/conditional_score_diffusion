@@ -17,6 +17,7 @@ from models import utils as mutils
 from configs.utils import fix_config
 import copy
 
+
 @utils.register_callback(name='configuration')
 class ConfigurationSetterCallback(Callback):
     def on_fit_start(self, trainer, pl_module):
@@ -549,6 +550,50 @@ class DistributionShift(Callback):
 
 @utils.register_callback(name='jan_georgios')
 class JanGeorgios(Callback):
+    def __init__(self, config) -> None:
+        im_size = config.data.image_size
+        super().__init__()
+        import torchvision
+        path_jan = 'images_for_manipulation/jan.jpg'
+        jan=torchvision.io.read_image(path_jan)
+        min_dim = min(jan.shape[1], jan.shape[2])
+        offset = 0
+        jan = jan[:, offset:(min_dim+offset), :min_dim]
+        georgios = torchvision.io.read_image('images_for_manipulation/georgios.jpg')[:,25:225,50:250]
+        resize = torchvision.transforms.Resize((im_size,im_size), interpolation=torchvision.transforms.InterpolationMode.BICUBIC, antialias=True)
+        jan=resize(jan)
+        georgios=resize(georgios)
+        # # normalize to 0, 1
+        # jan = jan/255
+        # georgios=resize(georgios)
+        # georgios = georgios/255
+        # normalize to -1, 1
+        self.jan = jan / 127.5 - 1
+        self.georgios = georgios / 127.5 - 1
+
+    def on_validation_epoch_start(self,trainer, pl_module):
+        batch = torch.stack([self.jan, self.georgios]).to(pl_module.device)
+        if (pl_module.current_epoch+1) % pl_module.config.training.visualisation_freq == 0:
+            reconstruction = pl_module.encode_n_decode(batch, p_steps=250,
+                                                         use_pretrained=pl_module.config.training.use_pretrained,
+                                                         encoder_only=pl_module.config.training.encoder_only,
+                                                         t_dependent=pl_module.config.training.t_dependent)
+            
+            reconstruction =  reconstruction.cpu()
+            grid_reconstruction = torchvision.utils.make_grid(reconstruction, nrow=int(np.sqrt(batch.size(0))), normalize=True, scale_each=True)
+            pl_module.logger.experiment.add_image('jan_georgios_reconstruction', grid_reconstruction, pl_module.current_epoch)
+            
+            batch = batch.cpu()
+            grid_batch = torchvision.utils.make_grid(batch, nrow=int(np.sqrt(batch.size(0))), normalize=True, scale_each=True)
+            pl_module.logger.experiment.add_image('jan_georgios_real', grid_batch)
+
+            difference = torch.flatten(reconstruction, start_dim=1)-torch.flatten(batch, start_dim=1)
+            L2norm = torch.linalg.vector_norm(difference, ord=2, dim=1)
+            avg_L2norm = torch.mean(L2norm)
+            pl_module.log('jan_georgios_reconstruction_loss', avg_L2norm, logger=True)
+
+@utils.register_callback(name='encoder_contribution')
+class EncoderContribution(Callback):
     def __init__(self, config) -> None:
         im_size = config.data.image_size
         super().__init__()

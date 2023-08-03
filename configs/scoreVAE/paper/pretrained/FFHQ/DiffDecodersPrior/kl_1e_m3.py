@@ -27,7 +27,7 @@ def get_config():
   training.batch_size = 64 
   training.t_batch_size = 1
   training.num_nodes = 1
-  training.gpus = 1
+  training.gpus = 0
   training.accelerator = 'gpu'
   training.accumulate_grad_batches = 2
   training.workers = 4*training.gpus
