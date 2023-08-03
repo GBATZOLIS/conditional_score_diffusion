@@ -64,7 +64,9 @@ def train(config, log_path, checkpoint_path, log_name=None):
                           logger = logger,
                           num_sanity_val_steps=0
                           )
-
+    if checkpoint_path:
+      LightningModule = LightningModule.load_from_checkpoint(checkpoint_path, config=config)
+      
     trainer.fit(LightningModule, datamodule=DataModule, ckpt_path=checkpoint_path)
 
 def test(config, log_path, checkpoint_path):
