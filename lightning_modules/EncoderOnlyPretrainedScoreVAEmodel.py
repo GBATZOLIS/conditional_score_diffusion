@@ -202,7 +202,7 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
 
         # visualize reconstruction
         if batch_idx == 2 and (self.current_epoch+1) % self.config.training.visualisation_freq == 0:
-            if self.val_batch is None:
+            if torch.all(self.val_batch == 0):
                 self.val_batch = batch
             else:
                 batch = self.val_batch
