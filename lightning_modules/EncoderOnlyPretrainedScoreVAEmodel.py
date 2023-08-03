@@ -49,7 +49,7 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
 
         # validation batch
         # register buffer 
-        self.register_buffer('val_batch', None)
+        #self.register_buffer('val_batch', None)
 
 
     def configure_sde(self, config):

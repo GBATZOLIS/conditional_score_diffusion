@@ -549,7 +549,6 @@ class DistributionShift(Callback):
 
 @utils.register_callback(name='jan_georgios')
 class JanGeorgios(Callback):
-
     def __init__(self, config) -> None:
         im_size = config.data.image_size
         super().__init__()
