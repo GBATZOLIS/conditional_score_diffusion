@@ -51,6 +51,12 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
         # register buffer 
         #self.register_buffer('val_batch', None)
 
+    def pre_configure_ddp(self):
+        # This method is called before setting up the model and restoring the checkpoint
+        # So, register your buffer here
+        self.register_buffer('val_batch', None)
+
+        super().pre_configure_ddp()
 
     def configure_sde(self, config):
         if config.training.sde.lower() == 'vpsde':
