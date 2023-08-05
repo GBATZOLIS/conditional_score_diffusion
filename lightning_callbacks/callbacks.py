@@ -678,6 +678,7 @@ class EncoderContribution(Callback):
         if (pl_module.current_epoch+1) % pl_module.config.training.importance_freq == 0:
             dataloader = trainer.datamodule.val_dataloader()
             x = next(iter(dataloader))
+            x = pl_module._handle_batch(x)
             x = x.to(device)
             z = pl_module.encode(x)
 
