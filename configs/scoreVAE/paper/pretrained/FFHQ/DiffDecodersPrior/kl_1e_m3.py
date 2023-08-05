@@ -10,7 +10,7 @@ def get_config():
   #logging
   config.logging = logging = ml_collections.ConfigDict()
   logging.log_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq'
-  logging.log_name = 'only_encoder_ddpm_plus_smld_VAE_KLweight_1e_m3_DiffDecoders_continuous_prior'
+  logging.log_name = 'only_encoder_ddpm_plus_smld_VAE_KLweight_1e_m3_DiffDecoders_continuous_prior_importance_sampling'
   logging.top_k = 3
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
@@ -39,6 +39,7 @@ def get_config():
   training.eval_freq = 2500
   #------              --------
   
+  training.importance_freq = 1 #we evaluate the contribution profile every importance_freq epochs
   training.visualisation_freq = 10
   training.visualization_callback = ['celeba_distribution_shift' ,'jan_georgios']
   training.show_evolution = False

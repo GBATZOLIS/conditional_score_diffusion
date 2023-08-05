@@ -17,6 +17,12 @@ from models import utils as mutils
 from configs.utils import fix_config
 import copy
 
+from torch.distributions import Distribution
+from scipy.interpolate import PchipInterpolator
+import io
+from PIL import Image
+import matplotlib.pyplot as plt
+from torchvision.transforms import ToTensor
 
 @utils.register_callback(name='configuration')
 class ConfigurationSetterCallback(Callback):
@@ -595,43 +601,141 @@ class JanGeorgios(Callback):
 @utils.register_callback(name='encoder_contribution')
 class EncoderContribution(Callback):
     def __init__(self, config) -> None:
-        im_size = config.data.image_size
         super().__init__()
-        import torchvision
-        path_jan = 'images_for_manipulation/jan.jpg'
-        jan=torchvision.io.read_image(path_jan)
-        min_dim = min(jan.shape[1], jan.shape[2])
-        offset = 0
-        jan = jan[:, offset:(min_dim+offset), :min_dim]
-        georgios = torchvision.io.read_image('images_for_manipulation/georgios.jpg')[:,25:225,50:250]
-        resize = torchvision.transforms.Resize((im_size,im_size), interpolation=torchvision.transforms.InterpolationMode.BICUBIC, antialias=True)
-        jan=resize(jan)
-        georgios=resize(georgios)
-        # # normalize to 0, 1
-        # jan = jan/255
-        # georgios=resize(georgios)
-        # georgios = georgios/255
-        # normalize to -1, 1
-        self.jan = jan / 127.5 - 1
-        self.georgios = georgios / 127.5 - 1
 
-    def on_validation_epoch_start(self,trainer, pl_module):
-        batch = torch.stack([self.jan, self.georgios]).to(pl_module.device)
-        if (pl_module.current_epoch+1) % pl_module.config.training.visualisation_freq == 0:
-            reconstruction = pl_module.encode_n_decode(batch, p_steps=250,
-                                                         use_pretrained=pl_module.config.training.use_pretrained,
-                                                         encoder_only=pl_module.config.training.encoder_only,
-                                                         t_dependent=pl_module.config.training.t_dependent)
-            
-            reconstruction =  reconstruction.cpu()
-            grid_reconstruction = torchvision.utils.make_grid(reconstruction, nrow=int(np.sqrt(batch.size(0))), normalize=True, scale_each=True)
-            pl_module.logger.experiment.add_image('jan_georgios_reconstruction', grid_reconstruction, pl_module.current_epoch)
-            
-            batch = batch.cpu()
-            grid_batch = torchvision.utils.make_grid(batch, nrow=int(np.sqrt(batch.size(0))), normalize=True, scale_each=True)
-            pl_module.logger.experiment.add_image('jan_georgios_real', grid_batch)
+    def get_distribution_class(self, ):
+        class SamplingDistribution(Distribution):
+            def __init__(self, times, vals, device="cpu"):
+                super().__init__()
 
-            difference = torch.flatten(reconstruction, start_dim=1)-torch.flatten(batch, start_dim=1)
-            L2norm = torch.linalg.vector_norm(difference, ord=2, dim=1)
-            avg_L2norm = torch.mean(L2norm)
-            pl_module.log('jan_georgios_reconstruction_loss', avg_L2norm, logger=True)
+                self.device = torch.device(device)
+                self.times = torch.tensor(times, dtype=torch.float32, device=self.device)
+                self.vals = torch.tensor(vals, dtype=torch.float32, device=self.device)
+                self.inverse_cdf, self.cdf, self.density = self.get_interpolations()
+
+            def get_interpolations(self):
+                times = self.times.cpu().numpy()
+                vals = self.vals.cpu().numpy()
+                vals[0] = 0.
+                cdf_y = np.cumsum(vals) 
+                cdf_y = cdf_y / cdf_y.max()
+                inverse_cdf = PchipInterpolator(cdf_y, times)
+                cdf = PchipInterpolator(times, cdf_y)
+                density = cdf.derivative(nu=1)
+                return inverse_cdf, cdf, density
+            
+            def sample(self, shape):
+                u = torch.rand(size=shape, device=self.device)
+                sample = torch.from_numpy(self.inverse_cdf(u.cpu().numpy())).float().to(self.device)
+                return sample
+
+            def prob(self, val):
+                return torch.from_numpy(self.density(val.cpu().numpy())).float().to(self.device)
+
+            def log_prob(self, val):
+                return torch.log(self.prob(val))
+
+            def rsample(self, shape):
+                return self.sample(shape)
+        
+        return SamplingDistribution
+
+    def get_latent_correction_fn(self, encoder):
+        def get_log_density_fn(encoder):
+            def log_density_fn(x, z, t):
+                latent_distribution_parameters = encoder(x, t)
+                latent_dim = latent_distribution_parameters.size(1)//2
+                mean_z = latent_distribution_parameters[:, :latent_dim]
+                log_var_z = latent_distribution_parameters[:, latent_dim:]
+                logdensity = -1/2*torch.sum(torch.square(z - mean_z)/log_var_z.exp(), dim=1)
+                return logdensity
+                
+            return log_density_fn
+
+        def latent_correction_fn(x, z, t):
+            torch.set_grad_enabled(True)
+            log_density_fn = get_log_density_fn(encoder)
+            device = x.device
+            x.requires_grad=True
+            ftx = log_density_fn(x, z, t)
+            grad_log_density = torch.autograd.grad(outputs=ftx, inputs=x,
+                                            grad_outputs=torch.ones(ftx.size()).to(device),
+                                            create_graph=True, retain_graph=True, only_inputs=True)[0]
+            assert grad_log_density.size() == x.size()
+            torch.set_grad_enabled(False)
+            return grad_log_density
+
+        return latent_correction_fn
+
+    def on_validation_epoch_start(self, trainer, pl_module):
+        sde = pl_module.sde
+        encoder = pl_module.encoder
+        unconditional_score_model = pl_module.unconditional_score_model
+        device = pl_module.device
+        eps = sde.sampling_eps
+        T = sde.T
+
+        if (pl_module.current_epoch+1) % pl_module.config.training.importance_freq == 0:
+            dataloader = trainer.datamodule.val_dataloader()
+            x = next(iter(dataloader))
+            x = x.to(device)
+            z = pl_module.encode(x)
+
+            encoder_correction_fn = self.get_latent_correction_fn(encoder)
+            unconditional_score_fn = mutils.get_score_fn(sde,unconditional_score_model, 
+                                                         conditional=False, train=False, continuous=True)  
+
+            ts = torch.linspace(start=eps, end=T, steps=25)
+            
+            relative_contribution = [] 
+            for t_ in ts:
+                t = torch.ones(x.shape[0]).type_as(x)*t_
+
+                z = torch.randn_like(x)
+                mean, std = sde.marginal_prob(x, t)
+                perturbed_x = mean + std[(...,) + (None,) * len(x.shape[1:])] * z
+
+                unconditional_score = unconditional_score_fn(perturbed_x, t)
+                encoder_correction = encoder_correction_fn(perturbed_x, z, t)
+                #total_score = unconditional_score + encoder_correction #Bayes rule
+                
+                unconditional_score_norm = torch.linalg.norm(unconditional_score.reshape(unconditional_score.shape[0], -1), dim=1)
+                encoder_correction_norm = torch.linalg.norm(encoder_correction.reshape(encoder_correction.shape[0], -1), dim=1)
+                
+                ratio = encoder_correction_norm / unconditional_score_norm
+                mean_ratio = torch.mean(ratio)
+                relative_contribution.append(mean_ratio.item())
+            
+            times = ts.numpy()
+            contributions = np.array(relative_contribution)
+
+            t_dist = self.get_distribution_class()(times, contributions, device)
+            pl_module.t_dist = t_dist
+
+            #create the figure
+            x = np.linspace(eps, 1, 1000)
+            fig, ax = plt.subplots()
+            ax.set_xlabel('x')
+            ax.set_ylabel('probability density')
+            ax.plot(x, pl_module.t_dist.density(x), label='density')
+            samples = pl_module.t_dist.sample((10000,)).numpy()
+            ax.hist(samples, bins='auto', density=True, range=(x.min(),x.max()), alpha=0.5, label='Histogram')
+            ax.legend(loc="upper right")
+            buf = io.BytesIO()
+            plt.savefig(buf, format='jpeg')
+            buf.seek(0)
+            image = Image.open(buf)
+            image = ToTensor()(image)  # Convert the image to PyTorch tensor
+            buf.close()
+            
+            # Log the image to TensorBoard
+            trainer.logger.experiment.add_image('Distribution', image, global_step=pl_module.current_epoch)
+
+
+
+
+
+
+
+
+
