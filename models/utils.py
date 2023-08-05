@@ -139,11 +139,8 @@ def load_encoder(base_config):
   if checkpoint_path is None:
     checkpoint_path = os.path.join(base_config.logging.log_path, encoder_log_name, 'checkpoints', 'best', 'last.ckpt')
   
-  cuda_available = torch.cuda.is_available()
-  map_location = torch.device('cuda') if cuda_available else torch.device('cpu')
-
   LightningModule = create_lightning_module(encoder_config)
-  EncoderLightningModule = LightningModule.load_from_checkpoint(checkpoint_path, config=encoder_config, map_location=map_location)
+  EncoderLightningModule = LightningModule.load_from_checkpoint(checkpoint_path, config=encoder_config)
   print('loaded')
   return EncoderLightningModule.encoder
 
@@ -177,9 +174,12 @@ def load_prior_model(base_config):
       prior_config = pickle.load(file)
   else:
     raise NotADirectoryError('The prior config is not found in the specified directory.')
-    
+  
+  cuda_available = torch.cuda.is_available()
+  map_location = torch.device('cuda') if cuda_available else torch.device('cpu')
+
   LightningModule = create_lightning_module(prior_config)
-  priorLightningModule = LightningModule.load_from_checkpoint(checkpoint_path, config=prior_config)
+  priorLightningModule = LightningModule.load_from_checkpoint(checkpoint_path, config=prior_config, map_location=map_location)
   print('loaded')
   return priorLightningModule.score_model
 
