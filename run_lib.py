@@ -64,8 +64,12 @@ def train(config, log_path, checkpoint_path, log_name=None):
                           logger = logger,
                           num_sanity_val_steps=0
                           )
+    
+    cuda_available = torch.cuda.is_available()
+    map_location = torch.device('cuda') if cuda_available else torch.device('cpu')
+
     if checkpoint_path:
-      LightningModule = LightningModule.load_from_checkpoint(checkpoint_path, config=config)
+      LightningModule = LightningModule.load_from_checkpoint(checkpoint_path, config=config, map_location=map_location)
       
     trainer.fit(LightningModule, datamodule=DataModule, ckpt_path=checkpoint_path)
 

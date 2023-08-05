@@ -139,8 +139,11 @@ def load_encoder(base_config):
   if checkpoint_path is None:
     checkpoint_path = os.path.join(base_config.logging.log_path, encoder_log_name, 'checkpoints', 'best', 'last.ckpt')
   
+  cuda_available = torch.cuda.is_available()
+  map_location = torch.device('cuda') if cuda_available else torch.device('cpu')
+
   LightningModule = create_lightning_module(encoder_config)
-  EncoderLightningModule = LightningModule.load_from_checkpoint(checkpoint_path, config=encoder_config)
+  EncoderLightningModule = LightningModule.load_from_checkpoint(checkpoint_path, config=encoder_config, map_location=map_location)
   print('loaded')
   return EncoderLightningModule.encoder
 
