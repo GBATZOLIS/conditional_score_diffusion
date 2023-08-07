@@ -9,7 +9,7 @@ def get_config():
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = '/home/gb511/projects/scoreVAE/experiments/ffhq' #'/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq'
+  logging.log_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq' #'/home/gb511/projects/scoreVAE/experiments/ffhq' 
   logging.log_name = 'only_encoder_ddpm_plus_smld_VAE_KLweight_1e_m3_DiffDecoders_continuous_prior_importance_sampling'
   logging.top_k = 3
   logging.every_n_epochs = 1000
@@ -19,12 +19,12 @@ def get_config():
   config.training = training = ml_collections.ConfigDict()
   config.training.lightning_module = 'encoder_only_pretrained_score_vae'
   training.use_pretrained = True
-  training.prior_config_path = '/home/gb511/projects/scoreVAE/experiments/ffhq/DiffDecoders_continuous_prior/config.pkl' #'/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/config.pkl'
-  training.prior_checkpoint_path = '/home/gb511/projects/scoreVAE/experiments/ffhq/DiffDecoders_continuous_prior/checkpoints/best/epoch=141--eval_loss_epoch=0.014.ckpt' #'/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/checkpoints/best/epoch=141--eval_loss_epoch=0.014.ckpt'
+  training.prior_config_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/config.pkl' #'/home/gb511/projects/scoreVAE/experiments/ffhq/DiffDecoders_continuous_prior/config.pkl'
+  training.prior_checkpoint_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/checkpoints/best/epoch=141--eval_loss_epoch=0.014.ckpt' #'/home/gb511/projects/scoreVAE/experiments/ffhq/DiffDecoders_continuous_prior/checkpoints/best/epoch=141--eval_loss_epoch=0.014.ckpt'
   training.encoder_only = True
   training.t_dependent = True
   training.conditioning_approach = 'sr3'
-  training.batch_size = 8
+  training.batch_size = 64
   training.t_batch_size = 1
   training.num_nodes = 1
   training.gpus = 1
@@ -39,9 +39,9 @@ def get_config():
   training.eval_freq = 2500
   #------              --------
   
-  training.importance_freq = 1 #we evaluate the contribution profile every importance_freq epochs
+  training.importance_freq = 3 #we evaluate the contribution profile every importance_freq epochs
   training.visualisation_freq = 10
-  training.visualization_callback = ['encoder_contribution'] #, 'celeba_distribution_shift' ,'jan_georgios']
+  training.visualization_callback = ['encoder_contribution', 'celeba_distribution_shift' ,'jan_georgios']
   training.show_evolution = False
 
   training.likelihood_weighting = False
@@ -85,7 +85,7 @@ def get_config():
 
   # data
   config.data = data = ml_collections.ConfigDict()
-  data.base_dir = '/home/gb511/datasets' #'/home/gb511/rds_work/datasets/'
+  data.base_dir = '/home/gb511/rds_work/datasets/' #'/home/gb511/datasets' 
   data.dataset = 'ffhq'
   data.datamodule = 'guided_diffusion_dataset'
   data.return_labels = False
@@ -93,7 +93,7 @@ def get_config():
   data.create_dataset = False
   data.split = [0.9, 0.05, 0.05]
   data.image_size = 128
-  data.percentage_use = 1 #100 #default:100
+  data.percentage_use = 100 #default:100
   data.effective_image_size = data.image_size
   data.shape = [3, data.image_size, data.image_size]
   data.latent_dim = 512
@@ -105,7 +105,7 @@ def get_config():
 
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = '/home/gb511/projects/scoreVAE/experiments/ffhq/only_encoder_ddpm_plus_smld_VAE_KLweight_1e_m3_DiffDecoders_continuous_prior/checkpoints/best/last.ckpt' #'/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq/only_encoder_ddpm_plus_smld_VAE_KLweight_1e_m3_DiffDecoders_continuous_prior/checkpoints/best/last.ckpt'
+  model.checkpoint_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq/only_encoder_ddpm_plus_smld_VAE_KLweight_1e_m3_DiffDecoders_continuous_prior/checkpoints/best/last.ckpt' #'/home/gb511/projects/scoreVAE/experiments/ffhq/only_encoder_ddpm_plus_smld_VAE_KLweight_1e_m3_DiffDecoders_continuous_prior/checkpoints/best/last.ckpt'
   model.sigma_min = 0.01
   model.sigma_max = 50
   model.num_scales = 1000
