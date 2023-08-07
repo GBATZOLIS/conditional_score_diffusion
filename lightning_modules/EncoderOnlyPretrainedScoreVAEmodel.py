@@ -63,7 +63,7 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
 
         # Finally, load the state dictionary again, this time it should work without size mismatch errors
         self.load_state_dict(checkpoint['state_dict'])
-        
+
     def configure_sde(self, config):
         if config.training.sde.lower() == 'vpsde':
             self.sde = sde_lib.cVPSDE(beta_min=config.model.beta_min, beta_max=config.model.beta_max, N=config.model.num_scales)
@@ -215,7 +215,7 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
 
         # visualize reconstruction
         if batch_idx == 2 and (self.current_epoch+1) % self.config.training.visualisation_freq == 0:
-            if torch.all(self.val_batch == 0):
+            if torch.all(self.val_batch == 0) or batch.size(0) != self.val_batch.size(0):
                 self.val_batch = batch
             else:
                 batch = self.val_batch
