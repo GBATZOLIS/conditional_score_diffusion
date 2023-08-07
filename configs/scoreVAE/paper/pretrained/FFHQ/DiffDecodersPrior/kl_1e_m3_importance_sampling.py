@@ -93,7 +93,7 @@ def get_config():
   data.create_dataset = False
   data.split = [0.9, 0.05, 0.05]
   data.image_size = 128
-  data.percentage_use = 5 #100 #default:100
+  data.percentage_use = 1 #100 #default:100
   data.effective_image_size = data.image_size
   data.shape = [3, data.image_size, data.image_size]
   data.latent_dim = 512
