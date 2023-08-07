@@ -85,7 +85,7 @@ def get_config():
 
   # data
   config.data = data = ml_collections.ConfigDict()
-  data.base_dir = '/home/gb511/rds_work/datasets/'  #'/home/gb511/datasets' 
+  data.base_dir = '/home/gb511/datasets' #'/home/gb511/rds_work/datasets/'
   data.dataset = 'ffhq'
   data.datamodule = 'guided_diffusion_dataset'
   data.return_labels = False
