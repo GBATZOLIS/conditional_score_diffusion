@@ -719,7 +719,7 @@ class EncoderContribution(Callback):
             ax.set_xlabel('x')
             ax.set_ylabel('probability density')
             ax.plot(x, pl_module.t_dist.density(x), label='density')
-            samples = pl_module.t_dist.sample((10000,)).numpy()
+            samples = pl_module.t_dist.sample((10000,)).cpu().numpy()
             ax.hist(samples, bins='auto', density=True, range=(x.min(),x.max()), alpha=0.5, label='Histogram')
             ax.legend(loc="upper right")
             buf = io.BytesIO()
