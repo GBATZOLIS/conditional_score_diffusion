@@ -52,13 +52,8 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
         self.register_buffer('val_batch', torch.zeros(tuple([config.validation.batch_size]+config.data.shape)))
 
     def on_load_checkpoint(self, checkpoint):
-        # Load the existing state dictionary for all model components
-        self.load_state_dict(checkpoint['state_dict'])
-
-        # Get the size of the 'val_batch' tensor from the checkpoint
+        # Get the size of the 'val_batch' tensor from the checkpoint and re-register the buffer properly
         val_batch_size = checkpoint['state_dict']['val_batch'].size()
-
-        # Now, re-register the 'val_batch' buffer with the new size
         self.register_buffer('val_batch', torch.zeros(val_batch_size))
 
         # Finally, load the state dictionary again, this time it should work without size mismatch errors
