@@ -647,12 +647,6 @@ class EncoderContribution(Callback):
                 latent_dim = latent_distribution_parameters.size(1)//2
                 mean_z = latent_distribution_parameters[:, :latent_dim]
                 log_var_z = latent_distribution_parameters[:, latent_dim:]
-
-                #print(x.size())
-                print(z.size())
-                print(mean_z.size())
-                print(log_var_z.size())
-
                 logdensity = -1/2*torch.sum(torch.square(z - mean_z)/log_var_z.exp(), dim=1)
                 return logdensity
                 
@@ -698,9 +692,9 @@ class EncoderContribution(Callback):
             for t_ in ts:
                 t = torch.ones(x.shape[0]).type_as(x)*t_
 
-                z = torch.randn_like(x)
+                w = torch.randn_like(x)
                 mean, std = sde.marginal_prob(x, t)
-                perturbed_x = mean + std[(...,) + (None,) * len(x.shape[1:])] * z
+                perturbed_x = mean + std[(...,) + (None,) * len(x.shape[1:])] * w
 
                 unconditional_score = unconditional_score_fn(perturbed_x, t)
                 encoder_correction = encoder_correction_fn(perturbed_x, z, t)
