@@ -41,7 +41,7 @@ def get_config():
   
   training.importance_freq = 1 #we evaluate the contribution profile every importance_freq epochs
   training.visualisation_freq = 10
-  training.visualization_callback = ['encoder_contribution', 'celeba_distribution_shift' ,'jan_georgios']
+  training.visualization_callback = ['encoder_contribution'] #, 'celeba_distribution_shift' ,'jan_georgios']
   training.show_evolution = False
 
   training.likelihood_weighting = False
