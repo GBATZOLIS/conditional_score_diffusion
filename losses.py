@@ -271,7 +271,7 @@ def get_scoreVAE_loss_fn(sde, train, variational=False, likelihood_weighting=Tru
             else:
               w2 = std ** 2
             
-            importance_weight = torch.exp(-1*t_dist.log_prob(t))
+            importance_weight = torch.exp(-1*t_dist.log_prob(t).type_as(t))
             losses = torch.sum(losses.reshape(losses.shape[0], -1), dim=-1) * w2 * importance_weight
             losses *= 1/2
             rec_loss = torch.mean(losses)
