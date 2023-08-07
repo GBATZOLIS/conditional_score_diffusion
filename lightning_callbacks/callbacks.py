@@ -648,11 +648,11 @@ class EncoderContribution(Callback):
                 mean_z = latent_distribution_parameters[:, :latent_dim]
                 log_var_z = latent_distribution_parameters[:, latent_dim:]
 
-                print(x.size())
+                #print(x.size())
                 print(z.size())
                 print(mean_z.size())
                 print(log_var_z.size())
-                
+
                 logdensity = -1/2*torch.sum(torch.square(z - mean_z)/log_var_z.exp(), dim=1)
                 return logdensity
                 
