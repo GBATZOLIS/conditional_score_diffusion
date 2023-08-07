@@ -9,8 +9,8 @@ def get_config():
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq'
-  logging.log_name = 'only_encoder_ddpm_plus_smld_VAE_KLweight_1e_m3_DiffDecoders_continuous_prior'
+  logging.log_path = '/home/gb511/projects/scoreVAE/experiments/ffhq' #'/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq'
+  logging.log_name = 'only_encoder_ddpm_plus_smld_VAE_KLweight_1e_m3_DiffDecoders_continuous_prior_importance_sampling'
   logging.top_k = 3
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
@@ -19,8 +19,8 @@ def get_config():
   config.training = training = ml_collections.ConfigDict()
   config.training.lightning_module = 'encoder_only_pretrained_score_vae'
   training.use_pretrained = True
-  training.prior_config_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/config.pkl'
-  training.prior_checkpoint_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/checkpoints/best/epoch=141--eval_loss_epoch=0.014.ckpt'
+  training.prior_config_path = '/home/gb511/projects/scoreVAE/experiments/ffhq/DiffDecoders_continuous_prior/config.pkl' #'/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/config.pkl'
+  training.prior_checkpoint_path = '/home/gb511/projects/scoreVAE/experiments/ffhq/DiffDecoders_continuous_prior/checkpoints/best/epoch=141--eval_loss_epoch=0.014.ckpt' #'/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/checkpoints/best/epoch=141--eval_loss_epoch=0.014.ckpt'
   training.encoder_only = True
   training.t_dependent = True
   training.conditioning_approach = 'sr3'
@@ -39,8 +39,9 @@ def get_config():
   training.eval_freq = 2500
   #------              --------
   
+  training.importance_freq = 1 #we evaluate the contribution profile every importance_freq epochs
   training.visualisation_freq = 10
-  training.visualization_callback = ['celeba_distribution_shift' ,'jan_georgios']
+  training.visualization_callback = ['encoder_contribution', 'celeba_distribution_shift' ,'jan_georgios']
   training.show_evolution = False
 
   training.likelihood_weighting = False
@@ -104,7 +105,7 @@ def get_config():
 
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq/only_encoder_ddpm_plus_smld_VAE_KLweight_1e_m3_DiffDecoders_continuous_prior/checkpoints/best/last.ckpt'
+  model.checkpoint_path = '/home/gb511/projects/scoreVAE/experiments/ffhq/only_encoder_ddpm_plus_smld_VAE_KLweight_1e_m3_DiffDecoders_continuous_prior/checkpoints/best/last.ckpt' #'/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq/only_encoder_ddpm_plus_smld_VAE_KLweight_1e_m3_DiffDecoders_continuous_prior/checkpoints/best/last.ckpt'
   model.sigma_min = 0.01
   model.sigma_max = 50
   model.num_scales = 1000
