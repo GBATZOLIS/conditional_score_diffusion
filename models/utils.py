@@ -21,7 +21,7 @@ import sde_lib
 import numpy as np
 import pickle
 import os
-from lightning_modules.utils import create_lightning_module
+from lightning_modules.utils import create_lightning_module, get_lightning_module_by_name
 
 _MODELS = {}
 
@@ -140,8 +140,9 @@ def load_encoder(base_config):
   if checkpoint_path is None:
     checkpoint_path = os.path.join(base_config.logging.log_path, encoder_log_name, 'checkpoints', 'best', 'last.ckpt')
   
-  LightningModule = create_lightning_module(encoder_config)
-  EncoderLightningModule = LightningModule.load_from_checkpoint(checkpoint_path, config=encoder_config)
+  lightning_module = get_lightning_module_by_name(encoder_config.training.lightning_module)
+  #LightningModule = create_lightning_module(encoder_config)
+  EncoderLightningModule = lightning_module.load_from_checkpoint(checkpoint_path, config=encoder_config)
   return EncoderLightningModule.encoder
 
 
