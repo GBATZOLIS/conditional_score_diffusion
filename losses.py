@@ -163,7 +163,7 @@ def get_scoreVAE_loss_fn(sde, train, variational=False, likelihood_weighting=Tru
 
             x = batch
             unconditional_score_fn = mutils.get_score_fn(sde, unconditional_score_model, conditional=False, train=train, continuous=True)
-            latent_correction_fn = mutils.get_score_fn(sde, latent_correction_model, conditional=True, train=train, continuous=True)
+            latent_correction_fn = mutils.get_score_fn(sde, latent_correction_model, conditional=False, train=train, continuous=True)
 
             t0 = torch.zeros(x.shape[0]).type_as(x)
             latent_distribution_parameters = encoder(x, t0)
