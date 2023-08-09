@@ -16,6 +16,7 @@ import losses
 import torch
 import lpips
 from pathlib import Path
+from utils import get_named_beta_schedule
 
 @utils.register_lightning_module(name='corrected_encoder_only_pretrained_score_vae')
 class CorrectedEncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
