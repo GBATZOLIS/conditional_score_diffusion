@@ -211,7 +211,7 @@ def get_pc_conditional_sampler(sde, shape, predictor, corrector, snr, p_steps,
             unconditional_score_fn = mutils.get_score_fn(sde, unconditional_score_model, conditional=False, train=False, continuous=continuous)
               
             latent_correction_model = model['latent_correction_model']
-            latent_correction_fn = mutils.get_score_fn(sde, latent_correction_model, conditional=True, train=False, continuous=continuous)
+            latent_correction_fn = mutils.get_score_fn(sde, latent_correction_model, conditional=False, train=False, continuous=continuous)
 
             encoder = model['encoder']
             encoder_correction_fn = get_encoder_latent_correction_fn(encoder)
