@@ -299,7 +299,13 @@ def get_score_fn(sde, model, conditional=False, train=False, continuous=False):
           # continuously-trained models.
           labels = t * (sde.N - 1)
           score = model_fn(x, labels)
-          std = sde.marginal_prob(torch.zeros_like(x), t)[1]
+
+          if type(x) == dict:
+            joker = torch.zeros_like(x['x'])
+          else:
+            joker = torch.zeros_like(x)
+
+          std = sde.marginal_prob(joker, t)[1]
         else:
           # For VP-trained models, t=0 corresponds to the lowest noise level
           labels = t * (sde.N - 1)
