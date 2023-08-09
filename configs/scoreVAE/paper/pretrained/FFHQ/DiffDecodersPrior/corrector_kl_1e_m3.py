@@ -7,7 +7,7 @@ from datetime import timedelta
 def get_config():
   config = ml_collections.ConfigDict()
 
-  hpc = False
+  hpc = True
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
