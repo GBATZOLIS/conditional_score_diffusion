@@ -132,7 +132,7 @@ def load_encoder(base_config):
     with open(encoder_config_path, 'rb') as file:
       encoder_config = pickle.load(file)
     encoder_config.training.prior_checkpoint_path = base_config.training.prior_checkpoint_path
-    encoder_config.training.prior_config_path = os.path.join(base_config.logging.log_path, 'prior', 'config.pkl')
+    encoder_config.training.prior_config_path =  base_config.training.prior_config_path #os.path.join(base_config.logging.log_path, 'prior', 'config.pkl')
   else:
     raise NotADirectoryError('The prior config is not found in the specified directory.')
 
