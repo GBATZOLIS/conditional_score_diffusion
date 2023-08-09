@@ -192,7 +192,7 @@ class CorrectedEncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
 
         if batch_idx == 0 and (self.current_epoch) % self.config.training.visualisation_freq == 0:
             reconstruction = self.encode_n_decode(batch, 
-                                                p_steps=250,
+                                                p_steps=12,
                                                 use_pretrained=self.config.training.use_pretrained,
                                                 encoder_only=self.config.training.encoder_only,
                                                 t_dependent=self.config.training.t_dependent,
