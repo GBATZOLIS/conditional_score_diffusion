@@ -34,12 +34,12 @@ def get_config():
   training.encoder_checkpoint_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq/only_encoder_ddpm_plus_smld_VAE_KLweight_1e_m3_DiffDecoders_continuous_prior_importance_sampling/checkpoints/best/last.ckpt' if hpc else '/home/gb511/projects/scoreVAE/experiments/ffhq/only_encoder_ddpm_plus_smld_VAE_KLweight_1e_m3_DiffDecoders_continuous_prior_importance_sampling/checkpoints/best/last.ckpt'
 
   training.conditioning_approach = 'sr3'
-  training.batch_size = 2
+  training.batch_size = 64
   training.t_batch_size = 1
   training.num_nodes = 1
   training.gpus = 1
-  training.accelerator = 'cpu'
-  training.accumulate_grad_batches = 2
+  training.accelerator = 'gpu'
+  training.accumulate_grad_batches = 1
   training.workers = 4*training.gpus
   #----- to be removed -----
   training.num_epochs = 10000
@@ -125,7 +125,7 @@ def get_config():
   model.embedding_type = 'fourier'
 
   model.name = 'BeatGANsLatentScoreModel'
-  model.ema_rate = 0.9999
+  model.ema_rate = 0.999
   model.image_size = data.image_size
   model.in_channels = data.num_channels
   # base channels, will be multiplied
