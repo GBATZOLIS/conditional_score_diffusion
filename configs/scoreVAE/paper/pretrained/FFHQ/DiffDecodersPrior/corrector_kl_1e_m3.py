@@ -50,7 +50,7 @@ def get_config():
   #------              --------
   
   #training.importance_freq = 3 #we evaluate the contribution profile every importance_freq epochs
-  training.visualisation_freq = 10
+  training.visualisation_freq = 1
   training.visualization_callback = [] #['celeba_distribution_shift' ,'jan_georgios']
   training.show_evolution = False
 
@@ -103,7 +103,7 @@ def get_config():
   data.create_dataset = False
   data.split = [0.9, 0.05, 0.05]
   data.image_size = 128
-  data.percentage_use = 1 #default:100
+  data.percentage_use = 0.05 #default:100
   data.effective_image_size = data.image_size
   data.shape = [3, data.image_size, data.image_size]
   data.latent_dim = 512
