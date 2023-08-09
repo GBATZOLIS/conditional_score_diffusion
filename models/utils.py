@@ -292,6 +292,13 @@ def get_score_fn(sde, model, conditional=False, train=False, continuous=False):
     """COVERS THE BASIC UNCONDITIONAL CASE"""
     if not isinstance(sde, (sde_lib.VESDE, sde_lib.cVESDE)):
       def score_fn(x, t):
+        if type(x) == dict:
+          zeros = torch.zeros_like(x['x'])
+          x_shape = x['x'].shape[1:]
+        else:
+          zeros = torch.zeros_like(x)
+          x_shape = x.shape[1:]
+
         # Scale neural network output by standard deviation and flip sign
         if continuous or isinstance(sde, sde_lib.subVPSDE):
           # For VP-trained models, t=0 corresponds to the lowest noise level
@@ -299,20 +306,14 @@ def get_score_fn(sde, model, conditional=False, train=False, continuous=False):
           # continuously-trained models.
           labels = t * (sde.N - 1)
           score = model_fn(x, labels)
-
-          if type(x) == dict:
-            joker = torch.zeros_like(x['x'])
-          else:
-            joker = torch.zeros_like(x)
-
-          std = sde.marginal_prob(joker, t)[1]
+          std = sde.marginal_prob(zeros, t)[1]
         else:
           # For VP-trained models, t=0 corresponds to the lowest noise level
           labels = t * (sde.N - 1)
           score = model_fn(x, labels)
           std = sde.sqrt_1m_alphas_cumprod.type_as(labels)[labels.long()]
 
-        score = - score / std[(...,)+(None,)*len(x.shape[1:])] #-> why do they scale the output of the network by std ??
+        score = - score / std[(...,)+(None,)*len(x_shape)] #-> why do they scale the output of the network by std ??
         
         if score.size(1) == 6:
           return score[:,:3,::]
