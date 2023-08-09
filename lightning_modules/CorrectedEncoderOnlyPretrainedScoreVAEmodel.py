@@ -102,8 +102,16 @@ class CorrectedEncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
                                     continuous=True, likelihood_weighting=config.training.likelihood_weighting)
             return {0:loss_fn, 1:unconditional_loss_fn}
     
+    def _handle_batch(self, batch):
+        if type(batch) == list:
+            x = batch[0]
+        else:
+            x = batch
+        return x
+
     def training_step(self, *args, **kwargs):
         batch, batch_idx = args[0], args[1]
+        batch = self._handle_batch(batch)
 
         if self.config.training.use_pretrained:
             if self.config.training.encoder_only:
@@ -130,6 +138,7 @@ class CorrectedEncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
         return loss
     
     def validation_step(self, batch, batch_idx):
+        batch = self._handle_batch(batch)
         if self.config.training.use_pretrained:
             if self.config.training.encoder_only:
                 if self.config.training.latent_correction:
@@ -176,6 +185,7 @@ class CorrectedEncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
         return loss
 
     def test_step(self, batch, batch_idx):
+        batch = self._handle_batch(batch)
         reconstruction = self.encode_n_decode(batch, use_pretrained=self.config.training.use_pretrained,
                                                           encoder_only=self.config.training.encoder_only,
                                                           t_dependent=self.config.training.t_dependent,

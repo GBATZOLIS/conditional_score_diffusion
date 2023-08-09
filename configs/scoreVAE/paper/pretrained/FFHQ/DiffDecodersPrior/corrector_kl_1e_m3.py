@@ -7,9 +7,11 @@ from datetime import timedelta
 def get_config():
   config = ml_collections.ConfigDict()
 
+  hpc = False
+
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq' #'/home/gb511/projects/scoreVAE/experiments/ffhq' 
+  logging.log_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq' if hpc else '/home/gb511/projects/scoreVAE/experiments/ffhq' 
   
   logging.encoder_log_name = 'only_encoder_ddpm_plus_smld_VAE_KLweight_1e_m3_DiffDecoders_continuous_prior_importance_sampling'
   logging.log_name = 'corrected' + '_' + logging.encoder_log_name
@@ -22,17 +24,17 @@ def get_config():
   config.training = training = ml_collections.ConfigDict()
   config.training.lightning_module = 'corrected_encoder_only_pretrained_score_vae'
   training.use_pretrained = True
-  training.prior_config_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/config.pkl' #'/home/gb511/projects/scoreVAE/experiments/ffhq/DiffDecoders_continuous_prior/config.pkl'
-  training.prior_checkpoint_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/checkpoints/best/epoch=141--eval_loss_epoch=0.014.ckpt' #'/home/gb511/projects/scoreVAE/experiments/ffhq/DiffDecoders_continuous_prior/checkpoints/best/epoch=141--eval_loss_epoch=0.014.ckpt'
+  training.prior_config_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/config.pkl' if hpc else '/home/gb511/projects/scoreVAE/experiments/ffhq/DiffDecoders_continuous_prior/config.pkl'
+  training.prior_checkpoint_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/checkpoints/best/epoch=141--eval_loss_epoch=0.014.ckpt' if hpc else '/home/gb511/projects/scoreVAE/experiments/ffhq/DiffDecoders_continuous_prior/checkpoints/best/epoch=141--eval_loss_epoch=0.014.ckpt'
   training.encoder_only = True
   training.t_dependent = True
 
   #correction settings
   training.latent_correction = True
-  training.encoder_checkpoint_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq/only_encoder_ddpm_plus_smld_VAE_KLweight_1e_m3_DiffDecoders_continuous_prior_importance_sampling/checkpoints/best/last.ckpt'
+  training.encoder_checkpoint_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq/only_encoder_ddpm_plus_smld_VAE_KLweight_1e_m3_DiffDecoders_continuous_prior_importance_sampling/checkpoints/best/last.ckpt' if hpc else '/home/gb511/projects/scoreVAE/experiments/ffhq/only_encoder_ddpm_plus_smld_VAE_KLweight_1e_m3_DiffDecoders_continuous_prior_importance_sampling/checkpoints/best/last.ckpt'
 
   training.conditioning_approach = 'sr3'
-  training.batch_size = 64
+  training.batch_size = 2
   training.t_batch_size = 1
   training.num_nodes = 1
   training.gpus = 1
@@ -101,7 +103,7 @@ def get_config():
   data.create_dataset = False
   data.split = [0.9, 0.05, 0.05]
   data.image_size = 128
-  data.percentage_use = 100 #default:100
+  data.percentage_use = 1 #default:100
   data.effective_image_size = data.image_size
   data.shape = [3, data.image_size, data.image_size]
   data.latent_dim = 512

@@ -388,9 +388,6 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
                 y = mean_y + torch.sqrt(log_var_y.exp()) * torch.randn_like(mean_y)
         else:
             y = self.encoder(x)
-        
-
-        
 
         sampling_shape = [x.size(0)]+self.config.data.shape
         conditional_sampling_fn = get_conditional_sampling_fn(config=self.config, sde=self.sde, 
