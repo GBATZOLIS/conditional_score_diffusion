@@ -11,7 +11,7 @@ def get_config():
   # logging
   config.logging = logging = ml_collections.ConfigDict()
   config.log_path = '/home/gb511/projects/scoreVAE/experiments'
-  logging.log_freq = 5
+  logging.log_freq = 10
 
   # training
   config.training = training = ml_collections.ConfigDict()
@@ -54,7 +54,7 @@ def get_config():
   model.kl_weight = 0.01
   model.time_conditional = False
 
-  model.checkpoint_path = None
+  model.checkpoint_path = '/home/gb511/projects/scoreVAE/experiments/VAE/cifar10/kl_0.01/vae/latent_dim_384_v0/checkpoints/epoch=2229--val_loss=5.314.ckpt' #'/home/gb511/projects/scoreVAE/experiments/VAE/cifar10/kl_0.01/latent_dim_384/checkpoints/epoch=3460--val_loss=5.338.ckpt'
   model.dropout = 0.1
   model.input_channels = 2*data.num_channels
   model.output_channels = data.num_channels
@@ -72,7 +72,7 @@ def get_config():
   optim.lr = 1e-4
   optim.use_scheduler=True
   optim.sch_factor = 0.25
-  optim.sch_patience = 5
+  optim.sch_patience = 200
   optim.sch_min_lr = 1e-5
 
   return config

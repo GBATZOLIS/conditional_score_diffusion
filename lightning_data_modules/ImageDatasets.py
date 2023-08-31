@@ -41,6 +41,7 @@ class Cifar10DataModule(pl.LightningDataModule):
 
     def setup(self, stage=None):
         train_dataset = CIFAR10Dataset(self.config, train=True)
+        torch.manual_seed(22)
         self.train_data, self.valid_data = torch.utils.data.random_split(train_dataset, [45000, 5000])
         self.test_data = CIFAR10Dataset(self.config, train=False)
 

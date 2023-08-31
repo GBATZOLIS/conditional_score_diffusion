@@ -8,18 +8,97 @@ import pytorch_lightning as pl
 from configs.utils import read_config
 from lightning_data_modules.SRFLOWDataset import UnpairedDataModule
 from lightning_data_modules.ImageDatasets import Cifar10DataModule, ImageDataModule
-from lightning_modules.VAE import VAE, MarkovianProjector
+from lightning_modules.VAE import VAE, MarkovianProjector, MPVisualizationCallback, FullMarkovianProjector
 from pytorch_lightning import loggers as pl_loggers
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, LearningRateMonitor
 #from janutils.callbacks import VisualizationCallback
 from argparse import ArgumentParser
 from pytorch_lightning.callbacks import Callback
+from lightning_callbacks.ema import EMA
 import torchvision
 import numpy as np
 from pathlib import Path
 import torch
+from models import ddpm, BeatGANsUNET_latent_conditioned
+import lpips
+from torch.utils.tensorboard import SummaryWriter
+from torchvision.utils import make_grid
 
- 
+def test_sb(config):
+    VAE_config = read_config(config.VAE_config_path)
+    vae_model = VAE.load_from_checkpoint(checkpoint_path=VAE_config.model.checkpoint_path, config=VAE_config)
+
+    if VAE_config.training.variational:
+        kl_weight = VAE_config.model.kl_weight
+    else:
+        kl_weight = -1
+
+    # create dataloaders
+    DataModule = get_datamodule(VAE_config)
+    DataModule.setup()
+
+    # create log name
+    dataset_name = VAE_config.data.dataset
+    kl_weight = f'kl_{kl_weight}'
+
+    if hasattr(VAE_config, 'log_path'):
+        log_path = VAE_config.log_path
+    else:
+        log_path = 'logs/'
+    
+    tb_name = os.path.join('VAE', dataset_name, kl_weight)
+    tb_version = config.log_name
+    Path(os.path.join(log_path, tb_name, tb_version)).mkdir(parents=True, exist_ok=True)
+    
+    writer = SummaryWriter(log_dir=os.path.join(log_path, tb_name, tb_version))
+    
+    if config.training.sb_latent_conditioned:
+        model = FullMarkovianProjector(config, vae_model).load_from_checkpoint(config.model.checkpoint_path, config=config, vae_model=vae_model)
+    else:
+        model = MarkovianProjector(config, vae_model).load_from_checkpoint(config.model.checkpoint_path, config=config, vae_model=vae_model)
+    
+    device = torch.device('cuda:0')
+    model = model.to(device)
+    dataloader = DataModule.val_dataloader()
+    batch = next(iter(dataloader))
+    batch = batch.to(model.device)
+
+    lpips_distance_fn = lpips.LPIPS(net='vgg').to(device)
+
+    def generate_visualize(writer, model, batch, discretisation, clip_denoise):
+        current_epoch = 0
+        x, x_hat, z = model.get_pair(batch)
+        x_hat_sb = model.ddpm_sample(x_hat, z, discretisation=discretisation, clip_denoise=clip_denoise)
+        avg_lpips_score = torch.mean(lpips_distance_fn(x, x_hat_sb))
+        name = 'avg_lpips_score_%d' % discretisation if not clip_denoise else 'avg_lpips_score_%d_clip_denoised' % discretisation
+
+        writer.add_scalar(name, avg_lpips_score, global_step=current_epoch)
+        
+        # Visualize the first 16 images in the batch
+        x = x[:16]
+        x_hat = x_hat[:16]
+        x_hat_sb = x_hat_sb[:16]
+            
+        # Concatenate tensors along a new dimension and log them
+        img_grid = torch.stack((x, x_hat, x_hat_sb), dim=1)  # shape: [16, 3, H, W]
+        img_grid = img_grid.view(-1, 3, 32, 32) # reshape to [48, H, W]
+        grid = make_grid(img_grid, nrow=3, normalize=True, scale_each=True)  # Creates a grid with 3 images in each row
+        name = 'conditional_%d' % discretisation if not clip_denoise else 'conditional_%d_clip_denoised' % discretisation
+        writer.add_image(name, grid, current_epoch)
+
+    for discretisation in [4, 8, 16]:
+        unconditional_sample = model.unconditional_sample(num_samples = 36, discretisation = discretisation)
+        grid = make_grid(unconditional_sample, nrow=int(np.sqrt(unconditional_sample.size(0))), normalize=True, scale_each=True)
+        writer.add_image('unconditional_%d' % discretisation, grid)
+
+    '''
+    for clip_denoise in [True, False]:
+        for discretisation in [2, 4, 8, 16, 32]:
+            print(discretisation)
+            generate_visualize(writer, model, batch, discretisation, clip_denoise)
+    '''
+
+
 def train_sb(config):
     VAE_config = read_config(config.VAE_config_path)
     vae_model = VAE.load_from_checkpoint(checkpoint_path=VAE_config.model.checkpoint_path, config=VAE_config)
@@ -45,10 +124,10 @@ def train_sb(config):
     
     # create new version
     i = 0
-    tb_version = f'latent_dim_{VAE_config.model.latent_dim}'
+    tb_version = config.log_name
     while os.path.exists(os.path.join(log_path, tb_name, tb_version)):
         i +=1
-        tb_version = f'latent_dim_{VAE_config.model.latent_dim}_v{i}'
+        tb_version = config.log_name + f'_v{i}'
 
     # pickle config
     Path(os.path.join(log_path, tb_name, tb_version)).mkdir(parents=True, exist_ok=True)
@@ -61,7 +140,7 @@ def train_sb(config):
                                              version=tb_version
                                              )
     # callbacks
-    checkpoint_callback =  ModelCheckpoint(dirpath=os.path.join(log_path, 
+    checkpoint_callback = ModelCheckpoint(dirpath=os.path.join(log_path, 
                                                                 tb_name,
                                                                 tb_version,
                                                                 'sb_checkpoints'),
@@ -72,8 +151,11 @@ def train_sb(config):
 
 
     early_stop_callback = EarlyStopping(monitor='val_loss',
-                                        patience=100)
+                                        patience=400)
     lr_monitor = LearningRateMonitor()
+
+    visualization_callback = MPVisualizationCallback()
+    ema = EMA(decay=config.model.ema_rate)
 
     # trainer
     trainer = pl.Trainer(accelerator='gpu', devices=1,
@@ -82,11 +164,16 @@ def train_sb(config):
                         #resume_from_checkpoint=args.checkpoint,
                         callbacks=[checkpoint_callback,
                                    lr_monitor,
-                                   early_stop_callback
+                                   early_stop_callback,
+                                   visualization_callback,
+                                   ema
                                    ]
                         )
+    if config.training.sb_latent_conditioned:
+        model = FullMarkovianProjector(config, vae_model)
+    else:
+        model = MarkovianProjector(config, vae_model)
 
-    model = MarkovianProjector(config, vae_model)
     trainer.fit(model, datamodule=DataModule, ckpt_path=config.model.checkpoint_path)
 
 def train(config):
@@ -121,9 +208,12 @@ def train(config):
     # create new version
     i = 0
     tb_version = f'latent_dim_{config.model.latent_dim}'
-    while os.path.exists(os.path.join('logs', tb_name, tb_version)):
+
+    
+    while os.path.exists(os.path.join(log_path, tb_name, tb_version)):
         i +=1
         tb_version = f'latent_dim_{config.model.latent_dim}_v{i}'
+    
 
     # pickle config
     Path(os.path.join(log_path, tb_name, tb_version)).mkdir(parents=True, exist_ok=True)
@@ -179,7 +269,7 @@ def train(config):
 
     visualization_callback = VisualizationCallback(freq=100)
     early_stop_callback = EarlyStopping(monitor='val_loss',
-                                        patience=100)
+                                        patience=1000)
     lr_monitor = LearningRateMonitor()
 
     # trainer
@@ -194,7 +284,7 @@ def train(config):
                                    ]
                         )
 
-    trainer.fit(model, train_dataloader, val_dataloader)
+    trainer.fit(model, train_dataloader, val_dataloader, ckpt_path=config.model.checkpoint_path)
 
 
 def evaluate(config, eval_path = None):

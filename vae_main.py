@@ -7,7 +7,7 @@ sys.path.append(f'{repo_path}/janutils')
 from configs.utils import read_config
 from argparse import ArgumentParser
 
-from vae_run_lib import train, evaluate
+from vae_run_lib import train, train_sb, test_sb, evaluate
 
 if __name__ == '__main__':
     parser = ArgumentParser()
@@ -24,6 +24,10 @@ if __name__ == '__main__':
     print(f'Latent dim: {config.model.latent_dim}')
     if args.mode == 'train':
         train(config)
+    elif args.mode == 'train_sb':
+        train_sb(config)
+    elif args.mode == 'test_sb':
+        test_sb(config)
     elif args.mode == 'eval':
         if args.eval_path == 'none':
             evaluate(config)
