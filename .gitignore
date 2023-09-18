@@ -30,6 +30,8 @@ run_log/
 logs/
 test_logs/
 old_logs/
+tmp/
+tmp_celeb/
 
 #Wilkes submission scripts
 wilkes_scripts/main.sh

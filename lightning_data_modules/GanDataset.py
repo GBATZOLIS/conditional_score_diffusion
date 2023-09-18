@@ -1,4 +1,5 @@
 import os
+import numpy as np
 import torch
 import pytorch_lightning as pl
 from torch.utils.data import random_split, Dataset, DataLoader 
@@ -12,7 +13,13 @@ class GanDataset(Dataset):
         self.config = config
         self.data_path = self.config.data.data_path
         self.latent_dim = self.config.data.latent_dim
-        self.data = torch.load(os.path.join(self.data_path, f'latent_dim_{self.latent_dim}/data.pt'))
+        
+        if hasattr(self.config.data, 'style_gan'):
+            if self.config.data.style_gan:
+                self.data = np.load(os.path.join(self.data_path, f'style_gan_horvat/gan_{self.latent_dim}d_train.npy'))
+                self.data = torch.from_numpy(self.data).float()
+            else:
+                self.data = torch.load(os.path.join(self.data_path, f'latent_dim_{self.latent_dim}/data.pt'))
 
     def __getitem__(self, index):
         item = self.data[index]
