@@ -84,7 +84,7 @@ def get_config():
   data.style_gan = True
   data.use_data_mean = False
   data.create_dataset = False
-  data.split = [0.8, 0.1, 0.1]
+  data.split = [0.9, 0.1, 0.0]
   data.image_size = 64
   data.effective_image_size = data.image_size
   data.shape = [3, data.image_size, data.image_size]
