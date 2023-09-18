@@ -49,7 +49,10 @@ class SyntheticDataModule(pl.LightningDataModule):
         self.dataset = GanDataset(self.config)
 
         l=len(self.dataset)
-        self.train_data, self.valid_data, self.test_data = random_split(self.dataset, [int(self.split[0]*l), int(self.split[1]*l), int(self.split[2]*l)]) 
+        train_len = int(self.split[0]*l)
+        val_len =  int(self.split[1]*l)
+        test_len = l - train_len - val_len
+        self.train_data, self.valid_data, self.test_data = random_split(self.dataset, [train_len, val_len, test_len]) 
     
     def train_dataloader(self):
         return DataLoader(self.train_data, batch_size = self.train_batch, num_workers=self.train_workers, shuffle=True) 
