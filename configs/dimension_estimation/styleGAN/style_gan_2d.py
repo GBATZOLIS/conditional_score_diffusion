@@ -1,0 +1,21 @@
+import ml_collections
+import torch
+import math
+import numpy as np
+from datetime import timedelta
+import os
+from configs.dimension_estimation.styleGAN.style_gan_base import get_config as get_base_config
+
+
+def get_config():
+  config = get_base_config()
+
+  #logging
+  logging = config.logging 
+  logging.log_name = '2'
+  
+  # data
+  data = config.data 
+  data.latent_dim = 2
+
+  return config
