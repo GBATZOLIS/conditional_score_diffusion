@@ -34,7 +34,7 @@ def get_config():
   logging.every_n_epochs = 1000
   logging.svd_frequency = 50
   logging.save_svd = True
-  logging.svd_points = 1
+  logging.svd_points = 3 #70
   logging.envery_timedelta = timedelta(minutes=1)
   
   # training
@@ -155,6 +155,5 @@ def get_config():
 
   config.seed = 42
   config.device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
-
 
   return config
