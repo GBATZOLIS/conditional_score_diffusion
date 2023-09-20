@@ -17,7 +17,7 @@ def get_config():
   logging.log_name = None
   logging.top_k = 5
   logging.every_n_epochs = 1000
-  logging.svd_frequency = 50
+  logging.svd_frequency = 500
   logging.save_svd = True
   logging.svd_points = 3 #70
   logging.envery_timedelta = timedelta(minutes=1)
@@ -27,7 +27,7 @@ def get_config():
   training.num_nodes = 1
   training.gpus = 1
   training.accelerator = None if training.gpus <= 1 else 'ddp'
-  training.accumulate_grad_batches = 2
+  training.accumulate_grad_batches = 1
   training.lightning_module = 'base' 
   training.batch_size = 128
   training.workers = 4
@@ -84,7 +84,7 @@ def get_config():
   data.style_gan = True
   data.use_data_mean = False
   data.create_dataset = False
-  data.split = [0.9, 0.1, 0.0]
+  data.split = [0.95, 0.05, 0.0]
   data.image_size = 64
   data.effective_image_size = data.image_size
   data.shape = [3, data.image_size, data.image_size]

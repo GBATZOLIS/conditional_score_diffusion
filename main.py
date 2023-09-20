@@ -15,7 +15,7 @@ flags.DEFINE_string("config", None, "Training configuration path.")
 flags.DEFINE_string("checkpoint_path", None, "Checkpoint directory.")
 flags.DEFINE_string("data_path", None, "Checkpoint directory.")
 flags.DEFINE_string("log_path", "./", "Checkpoint directory.")
-flags.DEFINE_enum("mode", "train", ["train", "test", "multi_scale_test", "compute_dataset_statistics", 'manifold_dimension', 'conditional_manifold_dimension'], "Running mode: train or test")
+flags.DEFINE_enum("mode", "train", ["train", "test", "multi_scale_test", "compute_dataset_statistics", 'manifold_dimension', 'conditional_manifold_dimension', 'inspect_VAE', 'inspect_corrected_VAE', 'scoreVAE_fidelity'], "Running mode: train or test")
 flags.DEFINE_string("eval_folder", "eval",
                     "The folder name for storing evaluation results")
 flags.DEFINE_boolean("debug", False, "Use GPU?")
@@ -40,7 +40,7 @@ def main(argv):
   if FLAGS.debug:
     #config.training.gpus = 0
     config.logging.log_path = 'test_logs/'
-    config.logging.log_name += str(uuid.uuid4())
+    config.logging.log_name = str(uuid.uuid4())
     
   if FLAGS.mode == 'train':
     run_lib.train(config, FLAGS.log_path, FLAGS.checkpoint_path, FLAGS.log_name)
@@ -54,6 +54,12 @@ def main(argv):
     run_lib.get_manifold_dimension(config)
   elif FLAGS.mode == 'conditional_manifold_dimension':
     run_lib.get_conditional_manifold_dimension(config)
+  elif FLAGS.mode == 'inspect_VAE':
+    run_lib.inspect_VAE(config)
+  elif FLAGS.mode == 'inspect_corrected_VAE':
+    run_lib.inspect_corrected_VAE(config)
+  elif FLAGS.mode == 'scoreVAE_fidelity':
+    run_lib.scoreVAE_fidelity(config)
 
 if __name__ == "__main__":
   app.run(main)
