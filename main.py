@@ -1,11 +1,12 @@
+import ml_collections
 from absl import app
 from absl import flags
 from ml_collections.config_flags import config_flags
 import run_lib
 import pickle
-from configs.utils import read_config
+from configs.utils import read_config, fix_config
 import uuid
-
+import datetime
 
 FLAGS = flags.FLAGS
 
@@ -29,8 +30,10 @@ def main(argv):
   if FLAGS.config[-3:] == 'pkl':
     with open(FLAGS.config, 'rb') as file:
       config = pickle.load(file)
+      #config = fix_config(config)
   elif FLAGS.config[-2:] == 'py':
     config = read_config(FLAGS.config)
+    #config = fix_config(config)
   else:
     raise RuntimeError('Unknown config extension. Provide a path to .py or .pkl file.')
   
@@ -38,9 +41,21 @@ def main(argv):
         config.model.checkpoint_path =  FLAGS.checkpoint_path
 
   if FLAGS.debug:
-    #config.training.gpus = 0
+    print('-----Debug mode-----')
+    # config.training.gpus = 0
     config.logging.log_path = 'test_logs/'
-    config.logging.log_name = str(uuid.uuid4())
+    # time as string
+    time = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M")
+    config.logging.log_name = str(f"{time}__{uuid.uuid4()}")
+    config.training.batch_size = 16
+    config.validation.batch_size = 16
+    config.eval.batch_size = 16
+    config.training.visualisation_freq = 1
+    config.data.percentage_use = 5
+    
+    # config.debug = ml_collections.ConfigDict()
+    # config.debug.skip_training = True
+    # config.debug.skip_validation = False
     
   if FLAGS.mode == 'train':
     run_lib.train(config, FLAGS.log_path, FLAGS.checkpoint_path, FLAGS.log_name)
