@@ -155,7 +155,7 @@ def plot_norms(samples, return_tensor=False):
     else:
         plt.show()
 
-def plot_distribution(svd, mode='first', return_tensor=False):
+def plot_distribution(svd, mode='first', return_tensor=False, tail=None):
 
     def softmax(x):
         """Compute softmax values for each sets of scores in x."""
@@ -175,6 +175,8 @@ def plot_distribution(svd, mode='first', return_tensor=False):
         norm_factor = s[1]-s[2]
         diff = [(s[i]-s[i+1])/norm_factor for i in range(1, len(s)-1)]
         soft = softmax(diff)
+        if tail:
+            soft = soft[-tail:]
         plt.plot(list(range(1,1+len(soft)))[::-1],soft)
         #plt.xticks(np.arange(0, len(sing_vals)+1, 10))
         dim = len(soft)-soft.argmax()

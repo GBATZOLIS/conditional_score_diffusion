@@ -44,7 +44,7 @@ def get_config():
   # default: None = above
   model.num_input_res_blocks: int = None
   # number of time embed channels and style channels
-  model.embed_channels = data.latent_dim 
+  model.embed_channels = None
   # at what resolutions you want to do self-attention of the feature maps
   # attentions generally improve performance
   # default: [16]

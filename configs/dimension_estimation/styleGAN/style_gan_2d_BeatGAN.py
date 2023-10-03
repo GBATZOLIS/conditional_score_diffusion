@@ -19,6 +19,7 @@ def get_config():
 
   #model
   model = config.model
+  model.embed_channels = data.latent_dim
   model.checkpoint_path = None
 
   #logging
