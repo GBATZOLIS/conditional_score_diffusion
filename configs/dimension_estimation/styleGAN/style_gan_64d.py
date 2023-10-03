@@ -23,6 +23,6 @@ def get_config():
 
   #model 
   model = config.model
-  model.checkpoint_path = f'{home}/rds_work/projects/dimension_detection/experiments/style_gan/{data.latent_dim}/checkpoints/best/last.ckpt'
+  model.checkpoint_path = f'{home}/rds_work/projects/dimension_detection/experiments/style_gan/{logging.log_name}/checkpoints/best/last.ckpt'
 
   return config

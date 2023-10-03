@@ -18,6 +18,7 @@ def main(args):
     gaussian_manifold_20 = read_config('configs/fixedgaussiansmanifold/20.py')
     gaussian_manifold_100 = read_config('configs/fixedgaussiansmanifold/100.py')
     mnist = read_config('configs/mnist/unconditional.py')
+    stylegan_2d = read_config('configs/dimension_estimation/styleGAN/style_gan_2d_BeatGAN.py')
 
     configs_dict = {
         'mammoth': mammoth_config,
@@ -33,7 +34,8 @@ def main(args):
         'gaussian_manifold_10': gaussian_manifold_10,
         'gaussian_manifold_20': gaussian_manifold_20,
         'gaussian_manifold_100': gaussian_manifold_100,
-        'mnist': mnist
+        'mnist': mnist,
+        'stylegan_2d': stylegan_2d
 
     }
 
