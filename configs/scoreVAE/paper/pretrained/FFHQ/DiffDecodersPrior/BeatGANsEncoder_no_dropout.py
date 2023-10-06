@@ -10,7 +10,7 @@ def get_config():
   #logging
   config.logging = logging = ml_collections.ConfigDict()
   logging.log_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq' #'/store/CIA/gb511/projects/scoreVAE/experiments/ffhq' 
-  logging.log_name = 'BeatGANsEncoder'
+  logging.log_name = 'BeatGANsEncoder_no_dropout'
   logging.top_k = 3
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
