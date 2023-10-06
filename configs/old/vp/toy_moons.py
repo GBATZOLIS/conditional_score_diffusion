@@ -84,7 +84,8 @@ def get_config():
   model.beta_min = 0.1
   # We use an adjusted beta max 
   # because the range is doubled in each level starting from the first level
-  model.beta_max = 25 #take the value range into consideration - consider the final perturbation kernels.
+  # take the value range into consideration - consider the final perturbation kernels.
+  model.beta_max = 25 
 
   model.name = 'fcn'
   model.state_size = data.dim
