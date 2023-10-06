@@ -1733,3 +1733,4 @@ DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/ffh
 DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/ffhq/prior/epoch=141--eval_loss_epoch=0.014.ckpt
 DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/ffhq/BeatGANsEncoder/hparams.yaml
 DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/ffhq/prior/epoch=141--eval_loss_epoch=0.014.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/ffhq/prior/epoch=141--eval_loss_epoch=0.014.ckpt

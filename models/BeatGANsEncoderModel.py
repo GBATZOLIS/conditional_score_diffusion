@@ -130,6 +130,9 @@ class BeatGANsEncoderModel(nn.Module):
                 conv_nd(self.conf.dims, ch, self.conf.enc_out_channels, 1),
                 nn.Flatten(),
             )
+        elif self.conf.enc_pool == 'flatten-linear':
+            self.out = nn.Sequential(nn.Flatten(),
+                                    nn.Linear(ch*self.conf.resolution_before_flattening**2, self.conf.enc_out_channels))
         else:
             raise NotImplementedError(f"Unexpected {self.conf.enc_pool} pooling")
 
