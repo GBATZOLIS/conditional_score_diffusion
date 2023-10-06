@@ -21,7 +21,7 @@ def get_config():
   model = config.model
   model.embed_channels = data.latent_dim
   model.checkpoint_path = None
-  model.dropout = 0.1
+  model.dropout = 0.3
 
   #logging
   logging = config.logging 
