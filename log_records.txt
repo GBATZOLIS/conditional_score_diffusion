@@ -1725,3 +1725,11 @@ DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/src/test_logs/20
 DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/src/test_logs/2023-07-28_16:46__d8d85726-ef9e-4c5d-991d-a60f696c7abe/hparams.yaml
 DEBUG:fsspec.local:open file: /home/js2164/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/checkpoints/best/epoch=141--eval_loss_epoch=0.014.ckpt
 DEBUG:fsspec.local:open file: /store/CIA/js2164/repos/diffusion/src/test_logs/2023-07-28_16:46__d8d85726-ef9e-4c5d-991d-a60f696c7abe/checkpoints/time/2023-07-28 16:46.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/ffhq/DDPM_encoder/hparams.yaml
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/ffhq/prior/epoch=141--eval_loss_epoch=0.014.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/ffhq/prior/epoch=141--eval_loss_epoch=0.014.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/ffhq/prior/epoch=141--eval_loss_epoch=0.014.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/ffhq/prior/epoch=141--eval_loss_epoch=0.014.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/ffhq/prior/epoch=141--eval_loss_epoch=0.014.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/ffhq/BeatGANsEncoder/hparams.yaml
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/ffhq/prior/epoch=141--eval_loss_epoch=0.014.ckpt
