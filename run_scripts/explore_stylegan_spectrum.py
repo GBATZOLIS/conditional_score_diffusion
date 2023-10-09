@@ -6,7 +6,11 @@ import run_lib
 from dim_reduction import get_manifold_dimension
 from plot_utils import plot_spectrum, plot_dims
 
-config_path = '/store/CIA/js2164/rds/gb511/projects/dimension_detection/experiments/style_gan/2_BeatGANsUNetModel/config.pkl'
+#get home path
+from pathlib import Path
+home = str(Path.home())
+
+config_path = f'{home}/rds_work/projects/dimension_detection/experiments/style_gan/2_BeatGANsUNetModel/config.pkl'
 with open(config_path, 'rb') as f:
     config = pickle.load(f) 
     log_path = config.logging.log_path
