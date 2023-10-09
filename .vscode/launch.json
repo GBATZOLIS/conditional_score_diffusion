@@ -15,7 +15,7 @@
             "program": "/home/js2164/jan/repos/diffusion/src/main.py",
             "args": [
                 "--config",
-                "configs/dimension_estimation/styleGAN/style_gan_2d_BeatGAN.py",
+                "configs/jan/gaussian/vpsde.py",
                 "--log_path",
                 "./test_logs",
                 "--debug",
