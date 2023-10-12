@@ -53,6 +53,9 @@ def train(config, log_path, checkpoint_path, log_name=None):
       if config.model.checkpoint_path is not None and checkpoint_path is None:
         checkpoint_path = config.model.checkpoint_path
 
+    #from pytorch_lightning.callbacks import LearningRateFinder
+    #callbacks.append(LearningRateFinder())
+
     trainer = pl.Trainer(accelerator = config.training.accelerator,
                           devices = config.training.gpus,
                           num_nodes = config.training.num_nodes,
@@ -70,7 +73,7 @@ def train(config, log_path, checkpoint_path, log_name=None):
 
     #if checkpoint_path:
     #  LightningModule = LightningModule.load_from_checkpoint(checkpoint_path, config=config, map_location=map_location)
-      
+
     trainer.fit(LightningModule, datamodule=DataModule, ckpt_path=checkpoint_path)
 
 def test(config, log_path, checkpoint_path):

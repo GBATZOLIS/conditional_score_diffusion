@@ -1734,3 +1734,23 @@ DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/ffh
 DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/ffhq/BeatGANsEncoder/hparams.yaml
 DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/ffhq/prior/epoch=141--eval_loss_epoch=0.014.ckpt
 DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/ffhq/prior/epoch=141--eval_loss_epoch=0.014.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/ffhq/ConvEncoder/hparams.yaml
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/ffhq/prior/epoch=141--eval_loss_epoch=0.014.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/ffhq/prior/epoch=141--eval_loss_epoch=0.014.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/ffhq/prior/epoch=141--eval_loss_epoch=0.014.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/ffhq/prior/epoch=141--eval_loss_epoch=0.014.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/ffhq/ConvEncoder/checkpoints/best/epoch=0--eval_loss_epoch=326.777.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/ffhq/prior/epoch=141--eval_loss_epoch=0.014.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/ffhq/ConvEncoder/checkpoints/best/epoch=0--eval_loss_epoch=326.777-v1.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/ffhq/ConvEncoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/ffhq/prior/epoch=141--eval_loss_epoch=0.014.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/ffhq/prior/epoch=141--eval_loss_epoch=0.014.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/ffhq/ConvEncoder/checkpoints/best/epoch=0--eval_loss_epoch=331.656.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/ffhq/ConvEncoder/checkpoints/best/last-v1.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/ffhq/ConvEncoder/checkpoints/time/2023-10-12 10:33.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/ffhq/ConvEncoder/hparams.yaml
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/ffhq/prior/epoch=141--eval_loss_epoch=0.014.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/ffhq/prior/epoch=141--eval_loss_epoch=0.014.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/ffhq/ConvEncoder/checkpoints/best/epoch=0--eval_loss_epoch=390.208.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/ffhq/ConvEncoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/ffhq/ConvEncoder/checkpoints/best/epoch=1--eval_loss_epoch=330.180.ckpt

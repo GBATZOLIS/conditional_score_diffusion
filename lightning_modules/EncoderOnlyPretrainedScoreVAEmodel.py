@@ -25,6 +25,7 @@ from torch.distributions import Uniform
 class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
     def __init__(self, config, *args, **kwargs):
         super().__init__()
+        self.learning_rate = config.optim.lr
         self.save_hyperparameters()
 
         # Initialize the score model
@@ -464,20 +465,20 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
             else:
                 ae_params = list(self.encoder.parameters())+list(self.latent_correction_model.parameters())
             
-            ae_optimizer = optim.Adam(ae_params, lr=self.config.optim.lr, betas=(self.config.optim.beta1, 0.999), eps=self.config.optim.eps,
+            ae_optimizer = optim.Adam(ae_params, lr=self.learning_rate, betas=(self.config.optim.beta1, 0.999), eps=self.config.optim.eps,
                             weight_decay=self.config.optim.weight_decay)
             ae_scheduler = {'scheduler': optim.lr_scheduler.LambdaLR(ae_optimizer, scheduler_lambda_function(self.config.optim.warmup)),
                             'interval': 'step'}  # called after each training step
             return [ae_optimizer], [ae_scheduler]
         else:
             ae_params = list(self.encoder.parameters())+list(self.latent_correction_model.parameters())
-            ae_optimizer = optim.Adam(ae_params, lr=self.config.optim.lr, betas=(self.config.optim.beta1, 0.999), eps=self.config.optim.eps,
+            ae_optimizer = optim.Adam(ae_params, lr=self.learning_rate, betas=(self.config.optim.beta1, 0.999), eps=self.config.optim.eps,
                             weight_decay=self.config.optim.weight_decay)
             ae_scheduler = {'scheduler': optim.lr_scheduler.LambdaLR(ae_optimizer, scheduler_lambda_function(self.config.optim.slowing_factor*self.config.optim.warmup)),
                             'interval': 'step'}  # called after each training step
                             
             unconditional_score_optimizer = optim.Adam(self.unconditional_score_model.parameters(), 
-                                            lr=self.config.optim.lr, betas=(self.config.optim.beta1, 0.999), eps=self.config.optim.eps,
+                                            lr=self.learning_rate, betas=(self.config.optim.beta1, 0.999), eps=self.config.optim.eps,
                                             weight_decay=self.config.optim.weight_decay)
             unconditional_score_scheduler = {'scheduler': optim.lr_scheduler.LambdaLR(unconditional_score_optimizer, scheduler_lambda_function(self.config.optim.warmup)),
                                             'interval': 'step'}  # called after each training step

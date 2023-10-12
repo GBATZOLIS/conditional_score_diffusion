@@ -89,6 +89,50 @@ class Encoder(pl.LightningModule):
             self.linear = nn.Linear(4*16*c_hid+1, out_dim)
           else:
             self.linear = nn.Linear(4*16*c_hid, out_dim)
+        
+        elif config.data.image_size == 128:
+          r=8
+          self.net = nn.Sequential(
+              # 128x128 => 64x64
+              nn.Conv2d(num_input_channels, c_hid, kernel_size=3, padding=1, stride=2),
+              act_fn(),
+              nn.Conv2d(c_hid, c_hid, kernel_size=3, padding=1),
+              act_fn(),
+
+              # 64x64 => 32x32
+              nn.Conv2d(c_hid, 2*c_hid, kernel_size=3, padding=1, stride=2),
+              act_fn(),
+              nn.Conv2d(2*c_hid, 2*c_hid, kernel_size=3, padding=1),
+              act_fn(),
+
+              # 32x32 => 16x16
+              nn.Conv2d(2*c_hid, 4*c_hid, kernel_size=3, padding=1, stride=2),
+              act_fn(),
+              nn.Conv2d(4*c_hid, 4*c_hid, kernel_size=3, padding=1),
+              act_fn(),
+
+              # 16x16 => 8x8
+              nn.Conv2d(4*c_hid, 8*c_hid, kernel_size=3, padding=1, stride=2),
+              act_fn(),
+              nn.Conv2d(8*c_hid, 8*c_hid, kernel_size=3, padding=1),
+              act_fn(),
+
+              # 8x8 => 4x4
+              
+              nn.Conv2d(8*c_hid, r*c_hid, kernel_size=3, padding=1, stride=2),
+              act_fn(),
+              nn.Conv2d(r*c_hid, r*c_hid, kernel_size=3, padding=1),
+              act_fn(),
+
+              nn.Flatten(), # Image grid to single feature vector
+          )
+
+          if self.time_conditional:
+              self.linear = nn.Linear(r*16*c_hid+1, out_dim)
+          else:
+              self.linear = nn.Linear(r*16*c_hid, out_dim)
+
+
       
     def forward(self, x, t=None):
         flattened_img = self.net(x)

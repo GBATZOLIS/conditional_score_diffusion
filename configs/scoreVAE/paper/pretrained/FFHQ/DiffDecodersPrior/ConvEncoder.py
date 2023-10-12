@@ -7,10 +7,12 @@ from datetime import timedelta
 def get_config():
   config = ml_collections.ConfigDict()
 
+  config.server = 'hpc'
+
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq' #'/store/CIA/gb511/projects/scoreVAE/experiments/ffhq' 
-  logging.log_name = 'BeatGANsEncoder_no_dropout'
+  logging.log_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq' if config.server=='hpc' else '/store/CIA/gb511/projects/scoreVAE/experiments/ffhq' 
+  logging.log_name = 'ConvEncoder'
   logging.top_k = 3
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
@@ -19,8 +21,8 @@ def get_config():
   config.training = training = ml_collections.ConfigDict()
   config.training.lightning_module = 'encoder_only_pretrained_score_vae'
   training.use_pretrained = True
-  training.prior_config_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/config.pkl' #'/store/CIA/gb511/projects/scoreVAE/experiments/ffhq/prior/config.pkl' 
-  training.prior_checkpoint_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/checkpoints/best/epoch=141--eval_loss_epoch=0.014.ckpt' #'/store/CIA/gb511/projects/scoreVAE/experiments/ffhq/prior/epoch=141--eval_loss_epoch=0.014.ckpt' 
+  training.prior_config_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/config.pkl' if config.server=='hpc' else '/store/CIA/gb511/projects/scoreVAE/experiments/ffhq/prior/config.pkl' 
+  training.prior_checkpoint_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/checkpoints/best/epoch=141--eval_loss_epoch=0.014.ckpt' if config.server=='hpc' else '/store/CIA/gb511/projects/scoreVAE/experiments/ffhq/prior/epoch=141--eval_loss_epoch=0.014.ckpt' 
   training.encoder_only = True
   training.t_dependent = True
   training.conditioning_approach = 'sr3'
@@ -39,7 +41,7 @@ def get_config():
   training.eval_freq = 2500
   #------              --------
   
-  training.visualisation_freq = 10
+  training.visualisation_freq = 50
   training.visualization_callback = ['celeba_distribution_shift' ,'jan_georgios']
   training.show_evolution = False
 
@@ -84,7 +86,7 @@ def get_config():
 
   # data
   config.data = data = ml_collections.ConfigDict()
-  data.base_dir = '/home/gb511/rds_work/datasets/' #'/store/CIA/gb511/datasets' 
+  data.base_dir = '/home/gb511/rds_work/datasets/' if config.server=='hpc' else '/store/CIA/gb511/datasets' 
   data.dataset = 'ffhq'
   data.datamodule = 'guided_diffusion_dataset'
   data.return_labels = False
@@ -92,7 +94,7 @@ def get_config():
   data.create_dataset = False
   data.split = [0.9, 0.05, 0.05]
   data.image_size = 128
-  data.percentage_use = 100 #default:100
+  data.percentage_use = 100
   data.effective_image_size = data.image_size
   data.shape = [3, data.image_size, data.image_size]
   data.latent_dim = 512
@@ -106,45 +108,16 @@ def get_config():
   config.model = model = ml_collections.ConfigDict()
   model.checkpoint_path = None
   model.num_scales = 1000
-  model.ema_rate = 0.9999
+  model.ema_rate = 0.999 #0.9999
   model.image_size = data.image_size
   model.in_channels = data.num_channels
   model.out_channels = data.num_channels
-  model.num_res_blocks: int = 2
-  model.num_input_res_blocks: int = None
-  model.embed_channels = 512
-  model.attention_resolutions = (16, )
-  model.time_embed_channels: int = None
-  model.channel_mult = (1, 1, 2, 3, 4)
-  model.input_channel_mult = None
-  model.conv_resample: bool = True
-  model.dims: int = 2
-  model.num_classes: int = None
-  model.use_checkpoint: bool = False
-  model.num_heads: int = 1
-  model.num_head_channels: int = -1
-  model.num_heads_upsample: int = -1
-  model.resblock_updown: bool = True
-  model.use_new_attention_order: bool = False
-  model.resnet_two_cond: bool = False
-  model.resnet_cond_channels: int = None
-  model.resnet_use_zero_module: bool = True
-  model.attn_checkpoint: bool = False
 
-  model.encoder_name = 'BeatGANsEncoderModel'
-  model.dropout: float = 0
-  model.model_channels: int = 128
-  model.enc_num_res_blocks = 2
-  model.latent_dim = data.latent_dim
-  model.enc_attn_resolutions = (16, )
-  model.enc_use_time_condition = True
-  model.enc_channel_mult = (1, 1, 2, 3, 4, 4)
-  model.enc_pool = 'adaptivenonzero'
+  model.encoder_name = 'time_dependent_simple_encoder'
   model.encoder_input_channels = data.num_channels
-  model.enc_out_channels = 2*data.latent_dim
-  model.encoder_base_channel_size = 64
+  model.encoder_latent_dim = data.latent_dim
+  model.encoder_base_channel_size = 32
   model.encoder_split_output=False
-
 
   # optimization
   config.optim = optim = ml_collections.ConfigDict()
