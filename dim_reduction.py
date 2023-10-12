@@ -144,35 +144,63 @@ def scoreVAE_fidelity(config):
     if i >= 1:
       break
     
+    batch = pl_module._handle_batch(batch)
     grid_batch = torchvision.utils.make_grid(batch, nrow=int(np.sqrt(batch.size(0))), normalize=True, scale_each=True)
     torchvision.utils.save_image(grid_batch, os.path.join(images_save_path, 'original.png'))
     
     batch = batch.to(device)
 
 
-    for gamma in [0.8, 0.9, 1., 1.1, 1.2]:
+    #[0.8, 0.9, 1., 1.1, 1.2]
+    for gamma in [1.]:
       if gamma not in gamma_to_rec:
         gamma_to_rec[gamma] = {'LPIPS': 0, 'L2': 0}
 
-      reconstruction = pl_module.encode_n_decode(batch, p_steps=512,
-                                                  use_pretrained=config.training.use_pretrained,
-                                                  encoder_only=config.training.encoder_only,
-                                                  t_dependent=config.training.t_dependent, 
-                                                  gamma=gamma)
+      #reconstruction = pl_module.encode_n_decode(batch, p_steps=512,
+      #                                            use_pretrained=config.training.use_pretrained,
+      #                                            encoder_only=config.training.encoder_only,
+      #                                            t_dependent=config.training.t_dependent, 
+      #                                            gamma=gamma)
 
-      grid_reconstruction = torchvision.utils.make_grid(reconstruction, nrow=int(np.sqrt(reconstruction.size(0))), normalize=True, scale_each=True)
-      torchvision.utils.save_image(grid_reconstruction, os.path.join(images_save_path,'%.1f.png' % gamma))
+      #test interpolation
+      intermediate_samples = 12
+      interpolation = pl_module.interpolate(batch[4:6], intermediate_samples)
+      grid = torchvision.utils.make_grid(interpolation, nrow=intermediate_samples+2, normalize=True, scale_each=True) 
+      torchvision.utils.save_image(grid, os.path.join(images_save_path,'interpolation.png'))
 
-      avg_lpips_score = torch.mean(lpips_distance_fn(reconstruction.to(device), batch))
-      gamma_to_rec[gamma]['LPIPS'] = avg_lpips_score
+      '''
+      z, x_T = pl_module.encode(batch, encode_x_T=True)
+
+      perfect_rec = pl_module.decode(z, x_T)
+      rec = pl_module.decode(z)
+
+      grid_reconstruction = torchvision.utils.make_grid(perfect_rec, nrow=int(np.sqrt(perfect_rec.size(0))), normalize=True, scale_each=True)
+      torchvision.utils.save_image(grid_reconstruction, os.path.join(images_save_path,'perfect_rec_%.1f.png' % gamma))
+      grid_reconstruction = torchvision.utils.make_grid(rec, nrow=int(np.sqrt(rec.size(0))), normalize=True, scale_each=True)
+      torchvision.utils.save_image(grid_reconstruction, os.path.join(images_save_path,'rec_%.1f.png' % gamma))
+
+      avg_lpips_score = torch.mean(lpips_distance_fn(perfect_rec.to(device), batch))
+      gamma_to_rec[gamma]['LPIPS_perfect_rec'] = avg_lpips_score
+      print('LPIPS_perfect_rec: %.3f' % gamma_to_rec[gamma]['LPIPS_perfect_rec'])
+      avg_lpips_score = torch.mean(lpips_distance_fn(rec.to(device), batch))
+      gamma_to_rec[gamma]['LPIPS_rec'] = avg_lpips_score
+      print('LPIPS_rec: %.3f' % gamma_to_rec[gamma]['LPIPS_rec'])
       
-      difference = torch.flatten(reconstruction, start_dim=1)-torch.flatten(batch, start_dim=1)
+      difference = torch.flatten(perfect_rec, start_dim=1)-torch.flatten(batch, start_dim=1)
       L2norm = torch.linalg.vector_norm(difference, ord=2, dim=1)
       avg_L2norm = torch.mean(L2norm)
-      gamma_to_rec[gamma]['L2'] = avg_L2norm
-  
+      gamma_to_rec[gamma]['L2_perfect_rec'] = avg_L2norm
+      print('L2_perfect_rec: %.3f' % gamma_to_rec[gamma]['L2_perfect_rec'])
+      
+      difference = torch.flatten(rec, start_dim=1)-torch.flatten(batch, start_dim=1)
+      L2norm = torch.linalg.vector_norm(difference, ord=2, dim=1)
+      avg_L2norm = torch.mean(L2norm)
+      gamma_to_rec[gamma]['L2_rec'] = avg_L2norm
+      print('L2_rec: %.3f' % gamma_to_rec[gamma]['L2_rec'])
+
       with open(os.path.join(save_path, 'fidelity.pkl'), 'wb') as f:
         pickle.dump(gamma_to_rec, f)
+      '''
 
 def inspect_corrected_VAE(config):
   pl_module, val_dataloader, sde, device, save_path = create_vae_setup(config)
@@ -405,8 +433,6 @@ def inspect_VAE(config):
   plt.show()
   '''
   
-
-
 
 def get_manifold_dimension(config, name=None):
   #---- create the setup ---

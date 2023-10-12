@@ -291,41 +291,53 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
     
     def interpolate(self, x, num_points):
         def slerp(low, high, val):
-            low_norm = low/torch.linalg.norm(low, ord=2)
-            high_norm = high/torch.linalg.norm(high, ord=2)
-            omega = torch.acos((low_norm*high_norm).sum())
-            so = torch.sin(omega)
-            res = (torch.sin((1.0-val)*omega)/so)*low + (torch.sin(val*omega)/so) * high
-            return res
+            # Normalize the vectors
+            low_norm = low / torch.linalg.norm(low, dim=-1, keepdim=True)
+            high_norm = high / torch.linalg.norm(high, dim=-1, keepdim=True)
 
-        assert x.size(0) == 2
+            # Compute the cosine of the angle between the vectors
+            cos_omega = (low_norm * high_norm).sum(dim=-1, keepdim=True).clamp(-1, 1)
+            
+            # Compute the angle
+            omega = torch.acos(cos_omega)
+            
+            # Handle the special case when low and high are very close
+            sin_omega = torch.sin(omega)
+            eps = 1e-6
+            if torch.abs(sin_omega) < eps:
+                return (1.0 - val) * low + val * high
 
-        t0 = torch.zeros(x.shape[0]).type_as(x)
-        latent_distribution_parameters = self.encoder(x, t0)
-        latent_dim = latent_distribution_parameters.size(1)//2
-        mean_y = latent_distribution_parameters[:, :latent_dim]
-        log_var_y = latent_distribution_parameters[:, latent_dim:]
-        y = mean_y + torch.sqrt(log_var_y.exp()) * torch.randn_like(mean_y)
+            # Compute the spherical linear interpolation
+            factor_low = torch.sin((1.0 - val) * omega) / sin_omega
+            factor_high = torch.sin(val * omega) / sin_omega
+            
+            result = factor_low * low + factor_high * high
+
+            return result
+
+
+        x = x[:2,::] #make sure we retain the first two elements
+
+        y, x_T = self.encode(x, encode_x_T=True)
 
         weights = torch.linspace(0, 1, steps=num_points+2).to(self.device)
         z = torch.zeros(size=(num_points, y.size(1))).type_as(x)    
         for i in range(weights.size(0)-2):
             z[i] = slerp(y[0], y[1], weights[i+1])
         
-        sampling_shape = [z.size(0)]+self.config.data.shape
-        conditional_sampling_fn = get_conditional_sampling_fn(config=self.config, sde=self.sde, 
-                                                              shape=sampling_shape, eps=self.sampling_eps, 
-                                                              predictor='default', corrector='default', 
-                                                              p_steps='default', c_steps='default', snr='default', 
-                                                              denoise='default', use_path=False, 
-                                                              use_pretrained=self.config.training.use_pretrained, 
-                                                              encoder_only=self.config.training.encoder_only, 
-                                                              t_dependent=self.config.training.t_dependent)
+        # SLERP on x_T
+        original_shape = x_T.shape  # (2, 3, w, h)
+        flattened_shape = (x_T.size(0), -1)  # Flatten everything except the batch dimension
+        x_T_flat = x_T.view(flattened_shape)
 
-        model = {'unconditional_score_model':self.unconditional_score_model,
-                 'encoder': self.encoder}
+        z_x_T = torch.zeros(size=(num_points, x_T_flat.size(1))).type_as(x_T)
+        for i in range(weights.size(0)-2):
+            z_x_T[i] = slerp(x_T_flat[0], x_T_flat[1], weights[i+1])
+
+        # Reshape z_x_T back to original shape
+        z_x_T_reshaped = z_x_T.view(num_points, *original_shape[1:])
         
-        interpolation = conditional_sampling_fn(model, z, False)
+        interpolation = self.decode(z, z_x_T_reshaped)
 
         augmented = torch.zeros(size=tuple([num_points+2]+self.config.data.shape))
         augmented[0] =  x[0]
@@ -333,7 +345,7 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
         augmented[-1] = x[1]
         return augmented
 
-    def encode(self, x, use_latent_mean=False):
+    def encode(self, x, use_latent_mean=False, encode_x_T=False):
         t0 = torch.zeros(x.shape[0]).type_as(x)
         latent_distribution_parameters = self.encoder(x, t0)
         latent_dim = latent_distribution_parameters.size(1)//2
@@ -343,19 +355,44 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
             y = mean_y
         else:
             y = mean_y + torch.sqrt(log_var_y.exp()) * torch.randn_like(mean_y)
-        return y
-    
-    def decode(self, z):
+        
+        #--new code--
+        if encode_x_T:
+            use_pretrained=self.config.training.use_pretrained,
+            encoder_only=self.config.training.encoder_only,
+            t_dependent=self.config.training.t_dependent
+            conditional_sampling_fn = get_conditional_sampling_fn(config=self.config, sde=self.sde, 
+                                                              shape=x.size(), eps=self.sampling_eps, 
+                                                              p_steps=128,
+                                                              predictor='conditional_heun',
+                                                              use_pretrained=use_pretrained, encoder_only=encoder_only, 
+                                                              use_path=False, 
+                                                              t_dependent=t_dependent,
+                                                              direction='forward', 
+                                                              x_boundary=x)
+            model = {'unconditional_score_model':self.unconditional_score_model,
+                     'encoder': self.encoder}
+            x_T = conditional_sampling_fn(model, y, False)
+            return y, x_T
+        else:
+            return y
+
+
+    def decode(self, z, x_T=None):
         use_pretrained=self.config.training.use_pretrained,
         encoder_only=self.config.training.encoder_only,
         t_dependent=self.config.training.t_dependent
         show_evolution=False
         sampling_shape = [z.size(0)]+self.config.data.shape
         conditional_sampling_fn = get_conditional_sampling_fn(config=self.config, sde=self.sde, 
-                                                              shape=sampling_shape, eps=self.sampling_eps, 
+                                                              shape=sampling_shape, eps=self.sampling_eps,
+                                                              p_steps=128,
+                                                              predictor='conditional_heun',
                                                               use_pretrained=use_pretrained, encoder_only=encoder_only, 
                                                               use_path=False, 
-                                                              t_dependent=t_dependent)
+                                                              t_dependent=t_dependent,
+                                                              direction='backward',
+                                                              x_boundary=x_T)
         if self.config.training.encoder_only:
             model = {'unconditional_score_model':self.unconditional_score_model,
                      'encoder': self.encoder}

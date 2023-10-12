@@ -7,9 +7,11 @@ from datetime import timedelta
 def get_config():
   config = ml_collections.ConfigDict()
 
+  config.server = 'CIA'
+
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq' #'/store/CIA/gb511/projects/scoreVAE/experiments/ffhq' 
+  logging.log_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq' if config.server=='hpc' else '/store/CIA/gb511/projects/scoreVAE/experiments/ffhq' 
   logging.log_name = 'BeatGANsEncoder_flatten_linear'
   logging.top_k = 3
   logging.every_n_epochs = 1000
@@ -19,12 +21,12 @@ def get_config():
   config.training = training = ml_collections.ConfigDict()
   config.training.lightning_module = 'encoder_only_pretrained_score_vae'
   training.use_pretrained = True
-  training.prior_config_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/config.pkl' #'/store/CIA/gb511/projects/scoreVAE/experiments/ffhq/prior/config.pkl' 
-  training.prior_checkpoint_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/checkpoints/best/epoch=141--eval_loss_epoch=0.014.ckpt' #'/store/CIA/gb511/projects/scoreVAE/experiments/ffhq/prior/epoch=141--eval_loss_epoch=0.014.ckpt' 
+  training.prior_config_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/config.pkl' if config.server=='hpc' else '/store/CIA/gb511/projects/scoreVAE/experiments/ffhq/prior/config.pkl' 
+  training.prior_checkpoint_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/checkpoints/best/epoch=141--eval_loss_epoch=0.014.ckpt' if config.server=='hpc' else '/store/CIA/gb511/projects/scoreVAE/experiments/ffhq/prior/epoch=141--eval_loss_epoch=0.014.ckpt' 
   training.encoder_only = True
   training.t_dependent = True
   training.conditioning_approach = 'sr3'
-  training.batch_size = 64
+  training.batch_size = 16 #64
   training.t_batch_size = 1
   training.num_nodes = 1
   training.gpus = 1
@@ -84,7 +86,7 @@ def get_config():
 
   # data
   config.data = data = ml_collections.ConfigDict()
-  data.base_dir = '/home/gb511/rds_work/datasets/' #'/store/CIA/gb511/datasets' 
+  data.base_dir = '/home/gb511/rds_work/datasets/' if config.server=='hpc' else '/store/CIA/gb511/datasets' 
   data.dataset = 'ffhq'
   data.datamodule = 'guided_diffusion_dataset'
   data.return_labels = False
@@ -92,7 +94,7 @@ def get_config():
   data.create_dataset = False
   data.split = [0.9, 0.05, 0.05]
   data.image_size = 128
-  data.percentage_use = 100 #default:100
+  data.percentage_use = 1 #default:100
   data.effective_image_size = data.image_size
   data.shape = [3, data.image_size, data.image_size]
   data.latent_dim = 512
@@ -104,7 +106,7 @@ def get_config():
 
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = None
+  model.checkpoint_path = '/store/CIA/gb511/projects/scoreVAE/experiments/ffhq/BeatGANsEncoder_flatten_linear/checkpoints/best/epoch=106--eval_loss_epoch=281.685.ckpt'
   model.num_scales = 1000
   model.ema_rate = 0.999 #0.9999
   model.image_size = data.image_size

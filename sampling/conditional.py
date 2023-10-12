@@ -7,7 +7,9 @@ from models import utils as mutils
 
 def get_conditional_sampling_fn(config, sde, shape, eps, 
                           predictor='default', corrector='default', p_steps='default', 
-                          c_steps='default', snr='default', denoise='default', use_path='default', use_pretrained=False, encoder_only=False, t_dependent=True, latent_correction=False, gamma=1):
+                          c_steps='default', snr='default', denoise='default', use_path='default', use_pretrained=False, 
+                          encoder_only=False, t_dependent=True, latent_correction=False, gamma=1,
+                          direction='backward', x_boundary=None):
 
     if predictor == 'default':
       predictor = get_predictor(config.sampling.predictor.lower())
@@ -46,12 +48,14 @@ def get_conditional_sampling_fn(config, sde, shape, eps,
                                             encoder_only=encoder_only,
                                             t_dependent=t_dependent,
                                             latent_correction=latent_correction,
-                                            gamma=gamma)
+                                            gamma=gamma,
+                                            direction=direction,
+                                            x_boundary=x_boundary)
     return sampling_fn
 
 def get_pc_conditional_sampler(sde, shape, predictor, corrector, snr, p_steps,
                    c_steps=1, probability_flow=False, continuous=False, 
-                   denoise=True, use_path=False, eps=1e-5, use_pretrained=False, encoder_only=False, t_dependent=True, latent_correction=False, gamma=1.):
+                   denoise=True, use_path=False, eps=1e-5, use_pretrained=False, encoder_only=False, t_dependent=True, latent_correction=False, gamma=1., direction='backward', x_boundary=None):
 
   """Create a Predictor-Corrector (PC) sampler.
   Args:
@@ -282,7 +286,11 @@ def get_pc_conditional_sampler(sde, shape, predictor, corrector, snr, p_steps,
 
 
     c_sde = sde['x'] if isinstance(sde, dict) else sde
-    timesteps = torch.linspace(c_sde.T, eps, p_steps+1, device=device)
+
+    if direction == 'backward':
+      timesteps = torch.linspace(c_sde.T, eps, p_steps+1, device=device)
+    elif direction == 'forward':
+      timesteps = torch.linspace(eps, c_sde.T, p_steps+1, device=device)
 
     # Create predictor & corrector update functions
     predictor_update_fn = functools.partial(conditional_shared_predictor_update_fn,
@@ -310,7 +318,11 @@ def get_pc_conditional_sampler(sde, shape, predictor, corrector, snr, p_steps,
 
     with torch.no_grad():
       # Initial sample
-      x = c_sde.prior_sampling(shape).to(device)
+      if x_boundary is None:
+        x = c_sde.prior_sampling(shape).to(device)
+      else:
+        x = x_boundary
+
       if show_evolution:
         evolution = {'x':[], 'y':[]}
 

@@ -141,6 +141,64 @@ class DDIMPredictor(Predictor):
     return z_s, z_s
 
 
+@register_predictor(name='conditional_ODE_euler') #Euler's method
+class Conditional_ODE_Euler_Predictor(Predictor):
+  def __init__(self, sde, score_fn, probability_flow=False, discretisation=None):
+    super().__init__(sde, score_fn, probability_flow, discretisation)
+    #we implement the PECE method here. This should give us quadratic order of accuracy.
+
+  def f(self, x, y, t):
+      drift, diffusion = self.sde.sde(x, t)
+      score = self.score_fn(x, y, t)
+      drift = drift - diffusion[(..., ) + (None, ) * len(x.shape[1:])] ** 2 * score * 0.5
+      return drift
+
+  def predict(self, x, f_0, h):
+    prediction = x + f_0 * h
+    return prediction
+
+  def update_fn(self, x, y, t):
+      h = torch.tensor(self.inverse_step_fn(t[0].cpu().item())).type_as(t) #-(1-self.sde.sampling_eps) / self.rsde.N
+      #evaluate
+      f_0 = self.f(x, y, t)
+      #predict
+      x_1 = self.predict(x, f_0, h)
+      return x_1, x_1
+
+@register_predictor(name='conditional_heun') #Heun's method (pc-Adams-11-pece)
+class Conditional_PC_Adams_11_Predictor(Predictor):
+  def __init__(self, sde, score_fn, probability_flow=False, discretisation=None):
+    super().__init__(sde, score_fn, probability_flow, discretisation)
+    #we implement the PECE method here. This should give us quadratic order of accuracy.
+
+  def f(self, x, y, t):
+      drift, diffusion = self.sde.sde(x, t)
+      score = self.score_fn(x, y, t)
+      drift = drift - diffusion[(..., ) + (None, ) * len(x.shape[1:])] ** 2 * score * 0.5
+      return drift
+
+  def predict(self, x, f_0, h):
+    prediction = x + f_0 * h
+    return prediction
+  
+  def correct(self, x, f_1, f_0, h):
+    correction = x + h/2 * (f_1 + f_0)
+    return correction
+
+  def update_fn(self, x, y, t):
+      h = torch.tensor(self.inverse_step_fn(t[0].cpu().item())).type_as(t) #-(1-self.sde.sampling_eps) / self.rsde.N
+
+      #evaluate
+      f_0 = self.f(x, y, t)
+      #predict
+      x_1 = self.predict(x, f_0, h)
+      #evaluate
+      f_1 = self.f(x_1, y, t+h)
+      #correct once
+      x_2 = self.correct(x, f_1, f_0, h)
+
+      return x_2, x_2
+
 @register_predictor(name='heun') #Heun's method (pc-Adams-11-pece)
 class PC_Adams_11_Predictor(Predictor):
   def __init__(self, sde, score_fn, probability_flow=True):
