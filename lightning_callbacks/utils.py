@@ -49,9 +49,10 @@ def get_callbacks(config):
           if callback in ['encoder_contribution', 'celeba_distribution_shift', 'jan_georgios']:
             callbacks.append(get_callback_by_name(callback)(config))
           else:
-            callbacks.append(get_callback_by_name(callback)(show_evolution=config.training.show_evolution))
+            callbacks.append(get_callback_by_name(callback)())
       else:
         callbacks.append(get_callback_by_name(config.training.visualization_callback)(show_evolution=config.training.show_evolution))
+        
     if config.training.lightning_module in ['conditional_decreasing_variance','haar_conditional_decreasing_variance'] :
       callbacks.append(get_callback_by_name('decreasing_variance_configuration')(config))
     else:

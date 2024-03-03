@@ -315,6 +315,7 @@ def inspect_corrected_VAE(config):
 def inspect_VAE(config):
   pl_module, val_dataloader, sde, device, save_path = create_vae_setup(config)
 
+  '''
   encoder = pl_module.encoder
   unconditional_score_model = pl_module.unconditional_score_model
 
@@ -351,9 +352,7 @@ def inspect_VAE(config):
     def score_fn(x, t):
       return conditional_correction_fn(x, t) + unconditional_score_fn(x, t)
     return score_fn
-
-  encoder = pl_module.encoder
-  unconditional_score_model = pl_module.unconditional_score_model
+  '''
 
   iterations = 8
   num_interpolations = 1
@@ -365,10 +364,11 @@ def inspect_VAE(config):
     if i == iterations:
       break
 
+    x = pl_module._handle_batch(x)
     x = x.to(device)
 
     ### INTERPOLATION
-    interpolations = pl_module.interpolate(x[4:6], num_points=20)
+    interpolations = pl_module.interpolate(x[4:6], num_points=5)
     grid_interpolations = torchvision.utils.make_grid(interpolations, nrow=interpolations.size(0), normalize=True, scale_each=True)
     save_image(grid_interpolations, os.path.join(interpolations_path, '%d.png' % num_interpolations))
     num_interpolations+=1

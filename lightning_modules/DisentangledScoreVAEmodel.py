@@ -4,6 +4,7 @@ import pytorch_lightning as pl
 import sde_lib
 from models import utils as mutils
 from . import utils
+from utils import get_named_beta_schedule
 import torch.optim as optim
 import os
 import torch
@@ -16,13 +17,12 @@ import losses
 import torch
 import lpips
 from pathlib import Path
-from utils import get_named_beta_schedule
 from scipy.interpolate import PchipInterpolator
 import numpy as np
 from torch.distributions import Uniform
 
-@utils.register_lightning_module(name='encoder_only_pretrained_score_vae')
-class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
+@utils.register_lightning_module(name='disentangled_score_vae')
+class DisentangledScoreVAEmodel(pl.LightningModule):
     def __init__(self, config, *args, **kwargs):
         super().__init__()
         self.learning_rate = config.optim.lr
@@ -31,22 +31,22 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
         # Initialize the score model
         self.config = config
         
-        if not config.training.encoder_only:
-            #latent correction model
-            config.model.input_channels = 2*config.model.output_channels
-            self.latent_correction_model = mutils.create_model(config)
-        
         #unconditional score model
-        if config.training.use_pretrained:
-            self.unconditional_score_model = mutils.load_prior_model(config)
-            self.unconditional_score_model.freeze()
-        else:
-            config.model.input_channels = config.model.output_channels
-            config.model.name = config.model.unconditional_score_model_name
-            self.unconditional_score_model = mutils.create_model(config)
+        self.unconditional_score_model = mutils.load_prior_model(config)
+        self.unconditional_score_model.freeze()
+
+        #load attribute encoder
+        #Create a ligtning module similar to the Base Lightning module that trains the attribute encoder.
+        self.attribute_encoder = mutils.load_attribute_encoder(config)
+        self.attribute_encoder.freeze()
 
         #encoder
-        self.encoder = mutils.create_encoder(config)
+        self.encoder = mutils.create_encoder(config) #it encodes image latent characteristics independent from the encoded attributes
+
+        #instantiate the model that approximates 
+        #the mutual information between the attibutes encoding and the complementary encoding
+        self.MI_diffusion_model = mutils.create_model(config)
+
 
         # validation batch
         # register buffer 
@@ -121,27 +121,7 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
         return x
 
     def configure_loss_fn(self, config, train):
-        if hasattr(config.training, 'cde_loss'):
-            if config.training.cde_loss:
-                loss_fn = get_old_scoreVAE_loss_fn(self.sde, train, 
-                                        variational=config.training.variational, 
-                                        likelihood_weighting=config.training.likelihood_weighting,
-                                        eps=self.sampling_eps,
-                                        use_pretrained=config.training.use_pretrained,
-                                        encoder_only = config.training.encoder_only,
-                                        t_dependent = config.training.t_dependent)
-            else:
-                loss_fn = get_scoreVAE_loss_fn(self.sde, train, 
-                                            variational=config.training.variational, 
-                                            likelihood_weighting=config.training.likelihood_weighting,
-                                            eps=self.sampling_eps,
-                                            t_batch_size=config.training.t_batch_size,
-                                            kl_weight=config.training.kl_weight,
-                                            use_pretrained=config.training.use_pretrained,
-                                            encoder_only = config.training.encoder_only,
-                                            t_dependent = config.training.t_dependent)
-        else:
-            loss_fn = get_scoreVAE_loss_fn(self.sde, train, 
+        loss_fn = get_scoreVAE_loss_fn(self.sde, train, 
                                         variational=config.training.variational, 
                                         likelihood_weighting=config.training.likelihood_weighting,
                                         eps=self.sampling_eps,
@@ -149,14 +129,10 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
                                         kl_weight=config.training.kl_weight,
                                         use_pretrained=config.training.use_pretrained,
                                         encoder_only = config.training.encoder_only,
-                                        t_dependent = config.training.t_dependent)
+                                        t_dependent = config.training.t_dependent,
+                                        attibute_encoder = True)
         
-        if config.training.use_pretrained:
-            return {0:loss_fn}
-        else:
-            unconditional_loss_fn = get_general_sde_loss_fn(self.usde, train, conditional=False, reduce_mean=True,
-                                    continuous=True, likelihood_weighting=config.training.likelihood_weighting)
-            return {0:loss_fn, 1:unconditional_loss_fn}
+        return {0:loss_fn}
     
     def training_step(self, *args, **kwargs):
         batch, batch_idx = args[0], args[1]
@@ -170,18 +146,6 @@ class EncoderOnlyPretrainedScoreVAEmodel(pl.LightningModule):
             else:
                 loss = self.train_loss_fn[0](self.encoder, self.latent_correction_model, self.unconditional_score_model, batch)
             self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
-        else:
-            optimizer_idx = args[2]
-            if optimizer_idx == 0:
-                loss = self.train_loss_fn[0](self.encoder, self.latent_correction_model, self.unconditional_score_model, batch)
-                if self.config.training.use_pretrained:
-                    self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
-                else:
-                    self.logger.experiment.add_scalars('train_loss', {'conditional': loss}, self.global_step)
-
-            elif optimizer_idx == 1:
-                loss = self.train_loss_fn[1](self.unconditional_score_model, batch)
-                self.logger.experiment.add_scalars('train_loss', {'unconditional': loss}, self.global_step)
 
         return loss
     

@@ -23,6 +23,8 @@ from models import utils as mutils
 from sde_lib import VESDE, VPSDE, cVESDE
 import math
 from torch.autograd.functional import vjp
+import torch.nn as nn
+import torch.nn.functional as F
 
 def get_optimizer(config, params):
   """Returns a flax optimizer object based on `config`."""
@@ -51,6 +53,59 @@ def optimization_manager(config):
     optimizer.step()
 
   return optimize_fn
+
+def get_attribute_classifier_loss_fn(sde, train, eps):
+    #multi-label multi-class classification
+    def loss_fn(attribute_classifier, batch, t_dist):
+        x, attributes = batch  # attributes shape=(batch_size, num_features)
+        t = t_dist.sample((x.shape[0],)).type_as(x) * (sde.T - eps) + eps
+        z = torch.randn_like(x)
+
+        mean, std = sde.marginal_prob(x, t)
+        perturbed_x = mean + std[(...,) + (None,) * len(x.shape[1:])] * z
+
+        logits = attribute_classifier(perturbed_x, t)  # output size: (batch_size, num_features, classes_per_feature)
+
+        # Reshape logits for cross-entropy calculation
+        # CrossEntropyLoss expects logits of shape (N, C) where N is the batch size times the number of features,
+        # and C is the number of classes per feature
+        logits = logits.view(-1, logits.shape[-1])
+
+        # Flatten attributes to match the logits shape
+        targets = attributes.view(-1)  # No need for conversion, attributes already contain class indices
+
+        # Calculate cross-entropy loss
+        cross_entropy_loss = nn.CrossEntropyLoss()
+        loss = cross_entropy_loss(logits, targets)
+        return loss
+
+    return loss_fn
+
+def get_accuracy_fn(sde, attribute_classifier, t):
+    def accuracy_fn(batch):
+        x, attributes = batch  # attributes shape=(batch_size, num_features)
+        # Create a tensor filled with the specific diffusion time `t` for each item in the batch
+        t_tensor = torch.full((x.shape[0],), t, device=x.device, dtype=x.dtype)
+        z = torch.randn_like(x)
+
+        mean, std = sde.marginal_prob(x, t_tensor)
+        perturbed_x = mean + std * z
+
+        logits = attribute_classifier(perturbed_x, t_tensor)  # output size: (batch_size, num_features, classes_per_feature)
+        # Compute the predicted classes
+        predictions = torch.argmax(logits, dim=-1)  # shape=(batch_size, num_features)
+
+        # Compare predictions to the actual class indices
+        correct_predictions = (predictions == attributes).float()
+        # Calculate the accuracy for each feature
+        accuracy_per_feature = correct_predictions.mean(dim=0)
+        # Calculate the mean accuracy across all features
+        mean_accuracy = accuracy_per_feature.mean()
+
+        return mean_accuracy.item()  # Return the item for a plain number
+
+    return accuracy_fn
+
 
 def get_scoreVAE_loss_fn(sde, train, variational=False, likelihood_weighting=True, eps=1e-5, t_batch_size=1, kl_weight=1, 
                           use_pretrained=False, encoder_only=True, t_dependent=True, latent_correction=False):
@@ -209,13 +264,19 @@ def get_scoreVAE_loss_fn(sde, train, variational=False, likelihood_weighting=Tru
             def get_latent_correction_fn(encoder, z):
               def get_log_density_fn(encoder):
                 def log_density_fn(z, x, t):
-                  latent_distribution_parameters = encoder(x, t)
-                  latent_dim = latent_distribution_parameters.size(1)//2
-                  mean_z = latent_distribution_parameters[:, :latent_dim]
-                  log_var_z = latent_distribution_parameters[:, latent_dim:]
-                  logdensity = -1/2*torch.sum(torch.square(z - mean_z)/log_var_z.exp(), dim=1)
-                  return logdensity
-                
+                    latent_distribution_parameters = encoder(x, t)
+                    channels = latent_distribution_parameters.size(1) // 2
+                    mean_z = latent_distribution_parameters[:, :channels]
+                    log_var_z = latent_distribution_parameters[:, channels:]
+
+                    # Flatten mean_z and log_var_z for consistent shape handling
+                    mean_z_flat = mean_z.view(mean_z.size(0), -1)
+                    log_var_z_flat = log_var_z.view(log_var_z.size(0), -1)
+                    z_flat = z.view(z.size(0), -1)
+
+                    logdensity = -0.5 * torch.sum(torch.square(z_flat - mean_z_flat) / log_var_z_flat.exp(), dim=1)
+                    return logdensity
+
                 return log_density_fn
 
               def latent_correction_fn(x, t):
@@ -243,11 +304,15 @@ def get_scoreVAE_loss_fn(sde, train, variational=False, likelihood_weighting=Tru
 
             t0 = torch.zeros(x.shape[0]).type_as(x)
             latent_distribution_parameters = encoder(x, t0)
-            latent_dim = latent_distribution_parameters.size(1)//2
-            mean_z = latent_distribution_parameters[:, :latent_dim]
-            log_var_z = latent_distribution_parameters[:, latent_dim:]
+            channels = latent_distribution_parameters.size(1)//2
+            mean_z = latent_distribution_parameters[:, :channels]
+            log_var_z = latent_distribution_parameters[:, channels:]
 
-            kl_loss = -0.5 * torch.sum(1 + log_var_z - mean_z ** 2 - log_var_z.exp(), dim=1).mean()
+            # Compute KL loss using directly flattened tensors
+            kl_loss = -0.5 * torch.sum(
+                  1 + log_var_z.view(log_var_z.size(0), -1) - mean_z.view(mean_z.size(0), -1).pow(2) - log_var_z.view(log_var_z.size(0), -1).exp(),dim=1).mean()
+
+            # Sample latent variables using the original shape of mean_z and log_var_z
             latent = mean_z + torch.sqrt(log_var_z.exp())*torch.randn_like(mean_z)
 
             conditional_correction_fn = get_latent_correction_fn(encoder, latent)

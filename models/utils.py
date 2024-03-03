@@ -114,7 +114,7 @@ def get_ddpm_params(config):
 
 def create_encoder(config):
   """Create the encoder model"""
-  model_name = config.model.encoder_name
+  model_name = config.encoder.name if hasattr(config, 'encoder') else config.model.encoder_name
   encoder = get_model(model_name)(config)
   return encoder
 
@@ -145,6 +145,29 @@ def load_encoder(base_config):
   EncoderLightningModule = lightning_module.load_from_checkpoint(checkpoint_path, config=encoder_config)
   return EncoderLightningModule.encoder
 
+def load_attribute_encoder(base_config):
+  if not hasattr(base_config.training, 'attribute_encoder_config_path'):
+    config_path = os.path.join(base_config.logging.log_path, 'attribute_encoder', 'config.pkl')
+  else:
+    config_path = base_config.training.attribute_encoder_config_path
+
+  if not hasattr(base_config.training, 'attribute_encoder_checkpoint_path') or base_config.training.attribute_encoder_checkpoint_path == None:
+    checkpoint_path = os.path.join(base_config.logging.log_path, 'attribute_encoder', 'checkpoints', 'best', 'last.ckpt')
+  else:
+    checkpoint_path = base_config.training.attribute_encoder_checkpoint_path
+
+  if os.path.exists(config_path):
+    with open(config_path, 'rb') as file:
+      config = pickle.load(file)
+  else:
+    raise NotADirectoryError(f'The attiribute encoder config is not found in the specified directory: {config_path}')
+  
+  cuda_available = torch.cuda.is_available()
+  map_location = torch.device('cuda') if cuda_available else torch.device('cpu')
+
+  LightningModule = create_lightning_module(config)
+  AttributeEncoderLightningModule = LightningModule.load_from_checkpoint(checkpoint_path, config=config, map_location=map_location)
+  return AttributeEncoderLightningModule.attribute_encoder
 
 def load_prior_model(base_config):
   #load a prior score model

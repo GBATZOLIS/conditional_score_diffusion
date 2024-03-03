@@ -122,7 +122,55 @@ class PKLDataset(data.Dataset):
 
         return img
 
+# Annotated CelebA
+class CelebAAnnotatedDataset(PKLDataset):
+    def __init__(self, config, phase) -> None:
+        super().__init__(config, phase)
+        if phase == 'test':
+            raise NotImplementedError('Test phase not implemented for CelebAAnnotatedDataset. Use val instead.')
+        self.config = config
+        self.attributes = self.process_attributes(phase)
 
+    def __getitem__(self, index):
+        image = super().__getitem__(index)
+        attributes = self.attributes[index]
+        return image, attributes
+    
+    def process_attributes(self, phase, path_to_attributes='list_attr_celeba.txt'):
+        if phase == 'train':
+            offset = 0
+        elif phase == 'val':
+            offset = 162770
+        elif phase == 'test':
+            offset = 182637
+
+        with open(path_to_attributes, 'r') as f:
+            lines = f.readlines()
+            attribute_names = lines[1].split()
+            attributes = []
+
+            for line in lines[2 + offset:]:
+                line = line.split()
+                line = [int(x) for x in line[1:]]
+                attributes.append(torch.tensor(line))
+
+            attributes = torch.stack(attributes, dim=0)
+
+            if self.config.data.attributes == 'all':
+                selected_attribute_names = attribute_names
+            else:
+                selected_attribute_names = self.config.data.attributes
+                columns = [attribute_names.index(name) for name in selected_attribute_names]
+                attributes = attributes[:, columns]
+
+            attributes[attributes == -1] = 0
+
+            # Create dictionaries for attribute name to index mapping and vice versa
+            self.index_to_attribute = {index: name for index, name in enumerate(selected_attribute_names)}
+            self.attribute_to_index = {name: index for index, name in self.index_to_attribute.items()}
+
+            return attributes
+        
 class LRHR_PKLDataset(data.Dataset):
     def __init__(self, config, phase):
         super(LRHR_PKLDataset, self).__init__()
@@ -564,3 +612,33 @@ class UnpairedDataModule(pl.LightningDataModule):
   
     def test_dataloader(self): 
         return DataLoader(self.test_dataset, batch_size = self.test_batch, shuffle=False, num_workers=self.test_workers) 
+
+@utils.register_lightning_datamodule(name='CelebA_Annotated_PKLDataset')
+class CelebAAnnotatedDataModule(pl.LightningDataModule):
+    def __init__(self, config):
+        super().__init__()
+        #DataLoader arguments
+        self.config = config
+        self.train_workers = config.training.workers
+        self.val_workers = config.eval.workers
+        self.test_workers = config.eval.workers
+
+        self.train_batch = config.training.batch_size
+        self.val_batch = config.eval.batch_size
+        self.test_batch = config.eval.batch_size
+
+    def get_index_to_attribute_map(self,):
+        return self.train_dataset.index_to_attribute
+    
+    def get_attribute_to_index_map(self,):
+        return self.train_dataset.attribute_to_index
+    
+    def setup(self, stage=None): 
+        self.train_dataset = CelebAAnnotatedDataset(self.config, phase='train')
+        self.val_dataset = CelebAAnnotatedDataset(self.config, phase='val')
+
+    def train_dataloader(self):
+        return DataLoader(self.train_dataset, batch_size = self.train_batch, shuffle=True, num_workers=self.train_workers) 
+  
+    def val_dataloader(self):
+        return DataLoader(self.val_dataset, batch_size = self.val_batch, shuffle=False, num_workers=self.val_workers) 

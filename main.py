@@ -7,6 +7,9 @@ import pickle
 from configs.utils import read_config, fix_config
 import uuid
 import datetime
+import os
+
+os.environ["CUDA_VISIBLE_DEVICES"] = '3'
 
 FLAGS = flags.FLAGS
 

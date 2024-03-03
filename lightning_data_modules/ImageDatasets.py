@@ -191,44 +191,5 @@ class ImageDataModule(pl.LightningDataModule):
   
     def test_dataloader(self): 
         return DataLoader(self.test_data, batch_size = self.test_batch, num_workers=self.test_workers) 
-
-
-# anotated celeba
-class CelebAAnnotatedDataset(PKLDataset):
-
-    def __init__(self, config, phase) -> None:
-        super().__init__(config, phase)
-        if phase == 'test':
-            raise NotImplementedError('Test phase not implemented for CelebAAnnotatedDataset. Use val instead.')
-        self.config = config
-        self.attributes = self.process_attributes(phase)
-
-    def __getitem__(self, index):
-        image = super().__getitem__(index)
-        attributes = self.attributes[index]
-        return image, attributes
-    
-    def process_attributes(self, phase, path_to_attributes='list_attr_celeba.txt'):
-        # read text file line by line
-        # split by space
-        if phase == 'train':
-            offset = 0
-        if phase == 'val':
-            offset = 162770
-        if phase == 'test':
-            offset = 182637
-        with open(path_to_attributes, 'r') as f:
-            lines = f.readlines()
-            attribute_names = lines[1].split()
-            attributes = []
-            for line in lines[2 + offset:]:
-                line = line.split()
-                line = [int(x) for x in line[1:]]
-                attributes.append(torch.tensor(line))
-            attributes = torch.stack(attributes, dim=0)
-            columns = [attribute_names.index(name) for name in self.config.data.attributes]
-            attributes = attributes[:, columns]
-            attributes[attributes == -1] = 0
-            return attributes
             
                 

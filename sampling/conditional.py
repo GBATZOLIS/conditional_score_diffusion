@@ -5,125 +5,7 @@ import torch
 from tqdm import tqdm
 from models import utils as mutils
 
-def get_conditional_sampling_fn(config, sde, shape, eps, 
-                          predictor='default', corrector='default', p_steps='default', 
-                          c_steps='default', snr='default', denoise='default', use_path='default', use_pretrained=False, 
-                          encoder_only=False, t_dependent=True, latent_correction=False, gamma=1,
-                          direction='backward', x_boundary=None):
-
-    if predictor == 'default':
-      predictor = get_predictor(config.sampling.predictor.lower())
-    else:
-      predictor = get_predictor(predictor.lower())
-
-    if corrector == 'default':
-      corrector = get_corrector(config.sampling.corrector.lower())
-    else:
-      corrector = get_corrector(corrector.lower())
-
-    if p_steps == 'default':
-      p_steps = config.model.num_scales
-    if c_steps == 'default':
-      c_steps = config.sampling.n_steps_each
-    if snr == 'default':
-      snr = config.sampling.snr
-    if denoise == 'default':
-      denoise = config.sampling.noise_removal
-    if use_path =='default':
-      use_path = config.sampling.use_path
-    
-    sampling_fn = get_pc_conditional_sampler(sde=sde, 
-                                            shape = shape,
-                                            predictor=predictor, 
-                                            corrector=corrector, 
-                                            snr=snr,
-                                            p_steps=p_steps,
-                                            c_steps=c_steps, 
-                                            probability_flow=config.sampling.probability_flow, 
-                                            continuous=config.training.continuous,
-                                            denoise = denoise,
-                                            use_path = use_path,
-                                            eps=eps, 
-                                            use_pretrained=use_pretrained,
-                                            encoder_only=encoder_only,
-                                            t_dependent=t_dependent,
-                                            latent_correction=latent_correction,
-                                            gamma=gamma,
-                                            direction=direction,
-                                            x_boundary=x_boundary)
-    return sampling_fn
-
-def get_pc_conditional_sampler(sde, shape, predictor, corrector, snr, p_steps,
-                   c_steps=1, probability_flow=False, continuous=False, 
-                   denoise=True, use_path=False, eps=1e-5, use_pretrained=False, encoder_only=False, t_dependent=True, latent_correction=False, gamma=1., direction='backward', x_boundary=None):
-
-  """Create a Predictor-Corrector (PC) sampler.
-  Args:
-    sde: An `sde_lib.SDE` object representing the forward SDE.
-    shape: A sequence of integers. The expected shape of a single sample.
-    predictor: A subclass of `sampling.Predictor` representing the predictor algorithm.
-    corrector: A subclass of `sampling.Corrector` representing the corrector algorithm.
-    snr: A `float` number. The signal-to-noise ratio for configuring correctors.
-    c_steps: An integer. The number of corrector steps per predictor update.
-    probability_flow: If `True`, solve the reverse-time probability flow ODE when running the predictor.
-    continuous: `True` indicates that the score model was continuously trained.
-    denoise: If `True`, add one-step denoising to the final samples.
-    eps: A `float` number. The reverse-time SDE and ODE are integrated to `epsilon` to avoid numerical issues.
-    device: PyTorch device.
-  Returns:
-    A conditional sampling function that returns samples and the number of function evaluations during sampling.
-  """
-  
-
-  def get_conditional_update_fn(update_fn, sampler_type):
-    """Modify the update function of predictor & corrector to incorporate data information."""
-
-    if isinstance(sde, dict) and len(sde.keys())==2:
-      if use_path:
-        if sampler_type == 'predictor':
-          def conditional_update_fn(x, y, t, model, y_tplustau, tau):
-            with torch.no_grad():
-              vec_t = torch.ones(x.shape[0]).to(model.device) * t
-              vec_tau = torch.ones(x.shape[0]).to(model.device) * tau
-              y_t_mean, y_t_std = sde['y'].compute_backward_kernel(y, y_tplustau, vec_t, vec_tau)
-              y_t_perturbed = y_t_mean + torch.randn_like(y) * y_t_std[(...,) + (None,) * len(y.shape[1:])]
-              x, x_mean = update_fn(x=x, y=y_t_perturbed, t=vec_t, model=model)
-              return x, x_mean, y_t_perturbed
-        elif sampler_type == 'corrector':
-          #y_t is the sample from P(y_t|y_{t+tau}, y0). We do not resample that. 
-          #The mean and std that created y_t should be saved before. No need to return them with this function.
-          def conditional_update_fn(x, y_t, t, model):
-            vec_t = torch.ones(x.shape[0]).to(model.device) * t
-            return update_fn(x=x, y=y_t, t=vec_t, model=model)
-        else:
-          return NotImplementedError('Sampler type %s is not supported. Available sampler type options: [predictor, corrector]' % sampler_type)
-      else:
-        def conditional_update_fn(x, y, t, model):
-          with torch.no_grad():
-            vec_t = torch.ones(x.shape[0]).to(model.device) * t
-            y_mean, y_std = sde['y'].marginal_prob(y, vec_t)
-            y_perturbed = y_mean + torch.randn_like(y) * y_std[(...,) + (None,) * len(y.shape[1:])]
-            x, x_mean = update_fn(x=x, y=y_perturbed, t=vec_t, model=model)
-            return x, x_mean, y_perturbed, y_mean
-    else:
-      def conditional_update_fn(x, y, t, score_fn):
-        with torch.no_grad():
-          vec_t = torch.ones(x.shape[0]).to(t.device) * t
-          x, x_mean = update_fn(x=x, y=y, t=vec_t, score_fn=score_fn)
-        return x, x_mean, y, y
-
-    return conditional_update_fn
-
-  
-  def pc_conditional_sampler(model, y, show_evolution=False):
-    """ The PC conditional sampler function.
-    Args:
-      model: A score model.
-    Returns:
-      Samples, number of function evaluations.
-    """
-
-    #SETUP THE SCORE FUNCTION
+def setup_score_fn(sde, model, continuous, use_pretrained, encoder_only, t_dependent, latent_correction, gamma):
     if not use_pretrained:
       score_fn = mutils.get_score_fn(sde, model, conditional=True, train=False, continuous=continuous)
       score_fn = mutils.get_conditional_score_fn(score_fn, target_domain='x')
@@ -143,12 +25,18 @@ def get_pc_conditional_sampler(sde, shape, predictor, corrector, snr, p_steps,
             def get_latent_correction_fn(encoder):
               def get_log_density_fn(encoder):
                 def log_density_fn(x, z, t):
-                  latent_distribution_parameters = encoder(x, t)
-                  latent_dim = latent_distribution_parameters.size(1)//2
-                  mean_z = latent_distribution_parameters[:, :latent_dim]
-                  log_var_z = latent_distribution_parameters[:, latent_dim:]
-                  logdensity = -1/2*torch.sum(torch.square(z - mean_z)/log_var_z.exp(), dim=1)
-                  return logdensity
+                    latent_distribution_parameters = encoder(x, t)
+                    channels = latent_distribution_parameters.size(1) // 2
+                    mean_z = latent_distribution_parameters[:, :channels]
+                    log_var_z = latent_distribution_parameters[:, channels:]
+
+                    # Flatten mean_z and log_var_z for consistent shape handling
+                    mean_z_flat = mean_z.view(mean_z.size(0), -1)
+                    log_var_z_flat = log_var_z.view(log_var_z.size(0), -1)
+                    z_flat = z.view(z.size(0), -1)
+
+                    logdensity = -0.5 * torch.sum(torch.square(z_flat - mean_z_flat) / log_var_z_flat.exp(), dim=1)
+                    return logdensity
                   
                 return log_density_fn
 
@@ -187,12 +75,18 @@ def get_pc_conditional_sampler(sde, shape, predictor, corrector, snr, p_steps,
             def get_encoder_latent_correction_fn(encoder):
               def get_log_density_fn(encoder):
                 def log_density_fn(x, z, t):
-                  latent_distribution_parameters = encoder(x, t)
-                  latent_dim = latent_distribution_parameters.size(1)//2
-                  mean_z = latent_distribution_parameters[:, :latent_dim]
-                  log_var_z = latent_distribution_parameters[:, latent_dim:]
-                  logdensity = -1/2*torch.sum(torch.square(z - mean_z)/log_var_z.exp(), dim=1)
-                  return logdensity
+                    latent_distribution_parameters = encoder(x, t)
+                    channels = latent_distribution_parameters.size(1) // 2
+                    mean_z = latent_distribution_parameters[:, :channels]
+                    log_var_z = latent_distribution_parameters[:, channels:]
+
+                    # Flatten mean_z and log_var_z for consistent shape handling
+                    mean_z_flat = mean_z.view(mean_z.size(0), -1)
+                    log_var_z_flat = log_var_z.view(log_var_z.size(0), -1)
+                    z_flat = z.view(z.size(0), -1)
+
+                    logdensity = -0.5 * torch.sum(torch.square(z_flat - mean_z_flat) / log_var_z_flat.exp(), dim=1)
+                    return logdensity
                   
                 return log_density_fn
 
@@ -284,9 +178,107 @@ def get_pc_conditional_sampler(sde, shape, predictor, corrector, snr, p_steps,
           score_fn = get_conditional_score_fn_with_prior(unconditional_score_fn, conditional_correction_fn)
           device = unconditional_score_model.device
 
+    return score_fn, device
+
+
+def get_conditional_sampling_fn(config, sde, shape, eps, 
+                          predictor='default', corrector='default', p_steps='default', 
+                          c_steps='default', snr='default', denoise='default', use_path='default', use_pretrained=False, 
+                          encoder_only=False, t_dependent=True, latent_correction=False, gamma=1,
+                          direction='backward', x_boundary=None):
+
+    if predictor == 'default':
+      predictor = get_predictor(config.sampling.predictor.lower())
+    else:
+      predictor = get_predictor(predictor.lower())
+
+    if corrector == 'default':
+      corrector = get_corrector(config.sampling.corrector.lower())
+    else:
+      corrector = get_corrector(corrector.lower())
+
+    if p_steps == 'default':
+      p_steps = config.model.num_scales
+    if c_steps == 'default':
+      c_steps = config.sampling.n_steps_each
+    if snr == 'default':
+      snr = config.sampling.snr
+    if denoise == 'default':
+      denoise = config.sampling.noise_removal
+    if use_path =='default':
+      use_path = getattr(config.sampling, 'use_path', False)
+    
+    sampling_fn = get_pc_conditional_sampler(sde=sde, 
+                                            shape = shape,
+                                            predictor=predictor, 
+                                            corrector=corrector, 
+                                            snr=snr,
+                                            p_steps=p_steps,
+                                            c_steps=c_steps, 
+                                            probability_flow=config.sampling.probability_flow, 
+                                            continuous=config.training.continuous,
+                                            denoise = denoise,
+                                            use_path = use_path,
+                                            eps=eps, 
+                                            use_pretrained=use_pretrained,
+                                            encoder_only=encoder_only,
+                                            t_dependent=t_dependent,
+                                            latent_correction=latent_correction,
+                                            gamma=gamma,
+                                            direction=direction,
+                                            x_boundary=x_boundary)
+    return sampling_fn
+
+def get_pc_conditional_sampler(sde, shape, predictor, corrector, snr, p_steps,
+                   c_steps=1, probability_flow=False, continuous=False, 
+                   denoise=True, use_path=False, eps=1e-5, use_pretrained=False, encoder_only=False, t_dependent=True, 
+                   latent_correction=False, gamma=1., direction='backward', x_boundary=None):
+
+  """Create a Predictor-Corrector (PC) sampler.
+  Args:
+    sde: An `sde_lib.SDE` object representing the forward SDE.
+    shape: A sequence of integers. The expected shape of a single sample.
+    predictor: A subclass of `sampling.Predictor` representing the predictor algorithm.
+    corrector: A subclass of `sampling.Corrector` representing the corrector algorithm.
+    snr: A `float` number. The signal-to-noise ratio for configuring correctors.
+    c_steps: An integer. The number of corrector steps per predictor update.
+    probability_flow: If `True`, solve the reverse-time probability flow ODE when running the predictor.
+    continuous: `True` indicates that the score model was continuously trained.
+    denoise: If `True`, add one-step denoising to the final samples.
+    eps: A `float` number. The reverse-time SDE and ODE are integrated to `epsilon` to avoid numerical issues.
+    device: PyTorch device.
+  Returns:
+    A conditional sampling function that returns samples and the number of function evaluations during sampling.
+  """
+  
+
+  def get_conditional_update_fn(update_fn, sampler_type):
+    """Modify the update function of predictor & corrector to incorporate data information."""
+    def conditional_update_fn(x, y, t, score_fn):
+      with torch.no_grad():
+        vec_t = torch.ones(x.shape[0]).to(t.device) * t
+        x, x_mean = update_fn(x=x, y=y, t=vec_t, score_fn=score_fn)
+      return x, x_mean, y, y
+
+    return conditional_update_fn
+
+  
+  def pc_conditional_sampler(model, y, show_evolution=False, score_fn=None):
+    """ The PC conditional sampler function.
+    Args:
+      model: A score model.
+    Returns:
+      Samples, number of function evaluations.
+    """
+    
+    #Set the score function if it is not provided
+    if score_fn is None:
+      score_fn, device = setup_score_fn(sde, model, continuous, use_pretrained, encoder_only, t_dependent, latent_correction, gamma)
+    else:
+      device = model.device #set the device
 
     c_sde = sde['x'] if isinstance(sde, dict) else sde
-
+ 
     if direction == 'backward':
       timesteps = torch.linspace(c_sde.T, eps, p_steps+1, device=device)
     elif direction == 'forward':
@@ -299,22 +291,8 @@ def get_pc_conditional_sampler(sde, shape, predictor, corrector, snr, p_steps,
                                             probability_flow=probability_flow,
                                             continuous=continuous,
                                             discretisation=timesteps)
-
-    corrector_update_fn = functools.partial(conditional_shared_corrector_update_fn,
-                                            sde=sde,
-                                            corrector=corrector,
-                                            continuous=continuous,
-                                            snr=snr,
-                                            n_steps=c_steps)
                                             
     predictor_conditional_update_fn = get_conditional_update_fn(predictor_update_fn, sampler_type='predictor')
-    corrector_conditional_update_fn = get_conditional_update_fn(corrector_update_fn, sampler_type='corrector')
-      
-    #this function can be used for the exploration of variable correction schemes
-    #i.e. the num of correction steps is a function of the diffusion time. 
-    #This can possibly increase sampling speed or sampling quality. To be explored.
-    def corrections_steps(i):
-        return 1
 
     with torch.no_grad():
       # Initial sample
@@ -328,11 +306,7 @@ def get_pc_conditional_sampler(sde, shape, predictor, corrector, snr, p_steps,
 
       for i in tqdm(range(p_steps)):
         t = timesteps[i]
-        #vec_t = torch.ones(shape[0], device=device) * t
         x, x_mean, y_perturbed, y_mean = predictor_conditional_update_fn(x, y, t, score_fn)
-
-        for _ in range(corrections_steps(i)):
-          x, x_mean, y_perturbed, y_mean = corrector_conditional_update_fn(x, y, t, score_fn)
           
         if show_evolution:
           evolution['x'].append(x.cpu())

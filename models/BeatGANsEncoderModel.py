@@ -23,7 +23,7 @@ class BeatGANsEncoderModel(nn.Module):
     """
     def __init__(self, config):
         super().__init__()
-        self.conf = config.model
+        self.conf = config.encoder if hasattr(config, 'encoder') else config.model
         self.dtype = th.float32
 
         if self.conf.enc_use_time_condition:
@@ -132,7 +132,12 @@ class BeatGANsEncoderModel(nn.Module):
             )
         elif self.conf.enc_pool == 'flatten-linear':
             self.out = nn.Sequential(nn.Flatten(),
+                                     nn.Dropout(p=self.conf.dropout), #new addition. we might need to create a separate class or use a configuration option as we don't maintain backward compatibility.
                                     nn.Linear(ch*self.conf.resolution_before_flattening**2, self.conf.enc_out_channels))
+        elif self.conf.enc_pool == 'unflattened':
+            self.out = nn.Sequential(
+                    normalization(ch), 
+                    nn.Conv2d(ch, self.conf.enc_out_channels, kernel_size=3, stride=1, padding=1))
         else:
             raise NotImplementedError(f"Unexpected {self.conf.enc_pool} pooling")
 
@@ -175,3 +180,16 @@ class BeatGANsEncoderModel(nn.Module):
         """
         h = self.out(x)
         return h
+
+@utils.register_model(name='AttributeEncoderModel')
+class AttributeEncoderModel(BeatGANsEncoderModel):
+    def __init__(self, config):
+        super().__init__(config)
+        self.num_attributes = config.data.total_num_attributes if config.data.attributes == 'all' else len(config.data.attributes)
+        self.num_classes = config.data.num_classes
+
+    def forward(self, x, t=None):
+        output = super().forward(x, t)
+        batch_size = output.shape[0]
+        reshaped_output = output.view(batch_size, self.num_attributes, self.num_classes)
+        return reshaped_output

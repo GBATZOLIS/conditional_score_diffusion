@@ -78,11 +78,29 @@ def fix_rds_path(path):
 
 
 def fix_config(config):
-    config.data.base_dir = fix_rds_path(config.data.base_dir)
-    config.model.checkpoint_path = fix_rds_path(config.model.checkpoint_path)
-    config.training.prior_checkpoint_path = fix_rds_path(config.training.prior_checkpoint_path)
-    config.training.prior_config_path = fix_rds_path(config.training.prior_config_path)
-    config.logging.log_path = fix_rds_path(config.logging.log_path)
-    config.model.time_conditional = True
+    # List of attributes to check and potentially fix
+    attributes_to_fix = [
+        ('data', 'base_dir'),
+        ('model', 'checkpoint_path'),
+        ('training', 'prior_checkpoint_path'),
+        ('training', 'prior_config_path'),
+        ('logging', 'log_path'),
+    ]
+
+    for attribute_group, attribute_name in attributes_to_fix:
+        # Use getattr to safely get attribute groups if they exist
+        attribute_group_obj = getattr(config, attribute_group, None)
+        if attribute_group_obj is not None:
+            # Check if the specific attribute exists within the group
+            if hasattr(attribute_group_obj, attribute_name):
+                # Apply fix_rds_path only if the attribute exists
+                current_path = getattr(attribute_group_obj, attribute_name)
+                fixed_path = fix_rds_path(current_path)
+                setattr(attribute_group_obj, attribute_name, fixed_path)
+
+    # Set model.time_conditional to True if model exists in config
+    if hasattr(config, 'model'):
+        config.model.time_conditional = True
+
     return config
-    
+

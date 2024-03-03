@@ -527,7 +527,7 @@ class DistributionShift(Callback):
         self.celeb_config = celeb_config
 
         # load data
-        from lightning_data_modules.ImageDatasets import CelebAAnnotatedDataset
+        from lightning_data_modules.SRFLOWDataset import CelebAAnnotatedDataset
         from torch.utils.data import DataLoader
         celeb_dataset = CelebAAnnotatedDataset(celeb_config, phase='val') #test and val are the same
         test_dataloader = DataLoader(celeb_dataset, batch_size=celeb_config.validation.batch_size, shuffle=False)
