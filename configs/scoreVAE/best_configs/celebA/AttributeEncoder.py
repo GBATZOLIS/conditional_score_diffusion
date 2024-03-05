@@ -12,7 +12,7 @@ def get_config():
   #logging
   config.logging = logging = ml_collections.ConfigDict()
   logging.log_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/CelebAHQ' if config.server=='hpc' else '/store/CIA/gb511/projects/scoreVAE/experiments/CelebAHQ' 
-  logging.log_name = 'AttributeEncoder_5attributes'
+  logging.log_name = 'AttributeEncoder_multiple_features'
   logging.top_k = 3
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
@@ -20,14 +20,14 @@ def get_config():
   # training
   config.training = training = ml_collections.ConfigDict()
   config.training.lightning_module = 'attribute_encoder'
-  training.prior_config_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/config.pkl' if config.server=='hpc' else '/store/CIA/gb511/projects/scoreVAE/experiments/ffhq/prior/config.pkl' 
-  training.prior_checkpoint_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/checkpoints/best/epoch=141--eval_loss_epoch=0.014.ckpt' if config.server=='hpc' else '/store/CIA/gb511/projects/scoreVAE/experiments/ffhq/prior/epoch=141--eval_loss_epoch=0.014.ckpt' 
+  training.prior_config_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/CelebAHQ/prior/config.pkl' if config.server=='hpc' else '/store/CIA/gb511/projects/scoreVAE/experiments/ffhq/prior/config.pkl' 
+  training.prior_checkpoint_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/CelebAHQ/prior/checkpoints/best/epoch=149--eval_loss_epoch=0.012.ckpt' if config.server=='hpc' else '/store/CIA/gb511/projects/scoreVAE/experiments/ffhq/prior/epoch=141--eval_loss_epoch=0.014.ckpt' 
   training.conditioning_approach = 'sr3'
-  training.batch_size = 32
+  training.batch_size = 64
   training.num_nodes = 1
-  training.gpus = 1
+  training.gpus = 2
   training.accelerator = 'gpu'
-  training.accumulate_grad_batches = 2
+  training.accumulate_grad_batches = 1
   training.workers = 4*training.gpus
   
   #----- to be removed -----
@@ -76,7 +76,7 @@ def get_config():
   data.dataset = 'celebA-HQ-160'
   data.datamodule = 'CelebA_Annotated_PKLDataset'
   data.normalization_mode = 'gd'
-  data.attributes = ['Eyeglasses', 'Male', 'Smiling', 'Wearing_Hat', 'Young']
+  data.attributes = ['Eyeglasses', 'Male', 'Smiling', 'Wavy_Hair', 'Wearing_Hat', 'Young']
   data.total_num_attributes = 40
   data.num_classes = 2
 
@@ -104,7 +104,7 @@ def get_config():
   encoder.image_size = data.image_size  # Ensure 'data.image_size' is defined elsewhere in your code
   encoder.enc_channel_mult = (1, 1, 2, 3, 4, 4)
   encoder.enc_num_res_blocks = 2
-  encoder.dropout = 0.2
+  encoder.dropout = 0.25
   encoder.dims = 2
   encoder.use_checkpoint = False
   encoder.num_heads = 1

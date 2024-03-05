@@ -55,6 +55,39 @@ def optimization_manager(config):
   return optimize_fn
 
 def get_attribute_classifier_loss_fn(sde, train, eps):
+    def loss_fn(attribute_classifier, batch, t_dist):
+        x, attributes = batch  # attributes shape=(batch_size, num_features)
+        t = t_dist.sample((x.shape[0],)).type_as(x) * (sde.T - eps) + eps
+        z = torch.randn_like(x)
+
+        mean, std = sde.marginal_prob(x, t)
+        perturbed_x = mean + std[(...,) + (None,) * len(x.shape[1:])] * z
+
+        logits = attribute_classifier(perturbed_x, t)  # output size: (batch_size, num_features, classes_per_feature)
+
+        # Initialize cross-entropy loss
+        cross_entropy_loss = nn.CrossEntropyLoss(reduction='none')
+
+        total_loss = 0.0
+        for feature_idx in range(attributes.shape[1]):  # Iterate over each feature
+            # Extract logits and targets for the current feature
+            feature_logits = logits[:, feature_idx, :]
+            feature_targets = attributes[:, feature_idx]
+
+            # Calculate cross-entropy loss for the current feature
+            feature_loss = cross_entropy_loss(feature_logits, feature_targets)
+
+            # Sum up the losses
+            total_loss += feature_loss.mean()  # Calculate mean to normalize the loss for the current feature
+
+        # Calculate the average loss over all features
+        avg_loss = total_loss / attributes.shape[1]
+
+        return avg_loss
+
+    return loss_fn
+
+def get_attribute_classifier_loss_fn_deprecated(sde, train, eps):
     #multi-label multi-class classification
     def loss_fn(attribute_classifier, batch, t_dist):
         x, attributes = batch  # attributes shape=(batch_size, num_features)

@@ -11,6 +11,7 @@ class AttributeEncoderVisualizationCallback(Callback):
 
     def on_validation_epoch_end(self, trainer, pl_module):
         current_epoch = pl_module.current_epoch
+        vis_freq = pl_module.config.training.visualisation_freq
         
         dataloader_iterator = iter(trainer.datamodule.val_dataloader())
         num_batches = 1
@@ -22,9 +23,13 @@ class AttributeEncoderVisualizationCallback(Callback):
                 print('Requested number of batches exceeds the number of batches available in the val dataloader.')
                 break
             
-            if current_epoch % 5 == 0:
+            if current_epoch % vis_freq == 0:
                 # Generate conditional samples
                 conditional_samples = pl_module.sample(attributes)
+                accuracy_mean, accuracy_std = self.get_accuracy(trainer, pl_module, pl_module.sampling_eps, conditional_samples, attributes)
+                if trainer.global_rank == 0 and pl_module.logger:
+                    pl_module.logger.experiment.add_scalar('generated_acc', accuracy_mean, current_epoch) #accuracy mean
+                    pl_module.logger.experiment.add_scalar('generated_acc_std', accuracy_std, current_epoch) #accuracy std
 
                 # Create a grid of original images
                 num_rows = int(sqrt(x.size(0)))
@@ -42,33 +47,35 @@ class AttributeEncoderVisualizationCallback(Callback):
                     pl_module.logger.experiment.add_image(tag, concatenated_grid, current_epoch)
 
             accuracies = {}
+            accuracy_stds = {}
             for time in [pl_module.sampling_eps, 0.25, 0.5, 0.75, pl_module.sde.T]:
-                accuracy, perturbed_images = self.get_accuracy_and_perturbed_images(trainer, pl_module, time, x, attributes)
-                accuracies[f'Time_{time:.2f}'] = accuracy
-
-                # Visualize the perturbed images for this diffusion time
-                self.visualise_samples(trainer, pl_module, perturbed_images, time)
+                accuracy_mean, accuracy_std = self.get_accuracy(trainer, pl_module, time, x, attributes)
+                accuracies[f'Time_{time:.2f}'] = accuracy_mean
+                accuracy_stds[f'Time_{time:.2f}'] = accuracy_std
 
             # Log all accuracies together with the current epoch using add_scalars
             if trainer.global_rank == 0 and pl_module.logger:
-                pl_module.logger.experiment.add_scalars('val_accuracy', accuracies, current_epoch)
+                pl_module.logger.experiment.add_scalars('val_acc', accuracies, current_epoch)
+                pl_module.logger.experiment.add_scalars('val_acc_std', accuracy_stds, current_epoch)
 
-
-    def get_accuracy_and_perturbed_images(self, trainer, pl_module, t, x, attributes):
+    
+    def get_accuracy(self, trainer, pl_module, t, x, attributes):
         t_tensor = torch.full((x.shape[0],), t, device=x.device, dtype=x.dtype)
         z = torch.randn_like(x)
 
         mean, std = pl_module.sde.marginal_prob(x, t_tensor)
         perturbed_x = mean + std[(...,) + (None,) * len(x.shape[1:])] * z
 
-        logits = pl_module.attribute_encoder(perturbed_x, t_tensor)
-        predictions = torch.argmax(logits, dim=-1)
+        logits = pl_module.attribute_encoder(perturbed_x, t_tensor) #output size: (batchsize, num_features, num_classes)
+        predictions = torch.argmax(logits, dim=-1) #choose as prediction the class with the highest logprobability
 
         correct_predictions = (predictions == attributes).float()
-        accuracy_per_feature = correct_predictions.mean(dim=0)
-        mean_accuracy = accuracy_per_feature.mean()
+        accuracy_per_feature = correct_predictions.mean(dim=0) #calculate the accuracy for each feature
+        
+        mean_accuracy = accuracy_per_feature.mean()  # Calculate the average accuracy over all features
+        std_accuracy = accuracy_per_feature.std()  # Calculate the standard deviation of accuracy over all features
 
-        return mean_accuracy.item(), perturbed_x
+        return mean_accuracy.item(), std_accuracy.item()
 
     def visualise_samples(self, trainer, pl_module, samples, time):
         # Log sampled images for a specific diffusion time

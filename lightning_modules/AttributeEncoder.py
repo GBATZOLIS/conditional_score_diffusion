@@ -84,29 +84,33 @@ class AttributeEncodermodel(pl.LightningModule):
         def attribute_encoder_correction(x, y, t):
             # Ensure `y` is provided with shape (batchsize, num_features) where each element is an integer
             # representing the class index for the corresponding feature.
-            with torch.enable_grad():
-                x_in = x.detach().requires_grad_(True)
+            torch.set_grad_enabled(True)
+            x_in = x.detach().requires_grad_(True)
 
-                # Obtain logits from the encoder; shape: (batchsize, num_features, num_classes)
-                logits = self.attribute_encoder(x_in, t)
+            # Obtain logits from the encoder; shape: (batchsize, num_features, num_classes)
+            logits = self.attribute_encoder(x_in, t)
 
-                # Calculate log probabilities across the num_classes dimension
-                log_probs = F.log_softmax(logits, dim=-1)  # Shape: (batchsize, num_features, num_classes)
+            # Calculate log probabilities across the num_classes dimension
+            log_probs = F.log_softmax(logits, dim=-1)  # Shape: (batchsize, num_features, num_classes)
 
-                # Use `y` to select the log probability of the correct class for each feature.
-                # This requires gathering the relevant log_probs using `y` as the index.
-                # First, prepare `y` indices for gathering. It should have the same dimension as `log_probs`.
-                y_indices = y.unsqueeze(-1)  # Shape: (batchsize, num_features, 1)
-                selected_log_probs = log_probs.gather(dim=-1, index=y_indices)  # Shape: (batchsize, num_features, 1)
+            # Use `y` to select the log probability of the correct class for each feature.
+            # This requires gathering the relevant log_probs using `y` as the index.
+            # First, prepare `y` indices for gathering. It should have the same dimension as `log_probs`.
+            y_indices = y.unsqueeze(-1)  # Shape: (batchsize, num_features, 1)
+            selected_log_probs = log_probs.gather(dim=-1, index=y_indices)  # Shape: (batchsize, num_features, 1)
 
-                # Since we're only interested in the selected log_probs, squeeze the last dimension
-                selected_log_probs = selected_log_probs.squeeze(-1)  # Shape: (batchsize, num_features)
+            # Since we're only interested in the selected log_probs, squeeze the last dimension
+            selected_log_probs = selected_log_probs.squeeze(-1)  # Shape: (batchsize, num_features)
 
-                # Compute gradients with respect to inputs
-                conditional_score = torch.autograd.grad(selected_log_probs.sum(), x_in, create_graph=True)[0]  # Shape: same as `x`
+            log_probs = torch.sum(selected_log_probs, dim=1)
 
-                # Apply a scaling factor if needed
-                return conditional_score
+            # Compute gradients with respect to inputs
+            conditional_score = torch.autograd.grad(outputs=log_probs, inputs=x_in,
+                                      grad_outputs=torch.ones(log_probs.size()).to(x.device),
+                                      create_graph=True, retain_graph=True, only_inputs=True)[0]
+            torch.set_grad_enabled(False)
+
+            return conditional_score
 
         return attribute_encoder_correction
 
@@ -138,7 +142,7 @@ class AttributeEncodermodel(pl.LightningModule):
         sampling_shape = [y.size(0)]+self.config.data.shape
         conditional_sampling_fn = get_conditional_sampling_fn(config=self.config, sde=self.sde, 
                                                               shape=sampling_shape, eps=self.sampling_eps,
-                                                              p_steps=128, predictor='conditional_heun')
+                                                              p_steps=128)
         score_fn = self.get_conditional_score_fn()
         return conditional_sampling_fn(self.unconditional_score_model, y, score_fn=score_fn)
         
