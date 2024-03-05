@@ -1,1 +1,0 @@
-REPO_PATH_HOLIDAY = '/home/js2164/jan/repos/diffusion/score_sde_pytorch'
