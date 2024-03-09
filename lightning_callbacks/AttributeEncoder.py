@@ -29,7 +29,7 @@ class AttributeEncoderVisualizationCallback(Callback):
                 accuracy_mean, accuracy_std = self.get_accuracy(trainer, pl_module, pl_module.sampling_eps, conditional_samples, attributes)
                 if trainer.global_rank == 0 and pl_module.logger:
                     pl_module.logger.experiment.add_scalar('generated_acc', accuracy_mean, current_epoch) #accuracy mean
-                    pl_module.logger.experiment.add_scalar('generated_acc_std', accuracy_std, current_epoch) #accuracy std
+                    #pl_module.logger.experiment.add_scalar('generated_acc_std', accuracy_std, current_epoch) #accuracy std
 
                 # Create a grid of original images
                 num_rows = int(sqrt(x.size(0)))
@@ -56,7 +56,7 @@ class AttributeEncoderVisualizationCallback(Callback):
             # Log all accuracies together with the current epoch using add_scalars
             if trainer.global_rank == 0 and pl_module.logger:
                 pl_module.logger.experiment.add_scalars('val_acc', accuracies, current_epoch)
-                pl_module.logger.experiment.add_scalars('val_acc_std', accuracy_stds, current_epoch)
+                #pl_module.logger.experiment.add_scalars('val_acc_std', accuracy_stds, current_epoch)
 
     
     def get_accuracy(self, trainer, pl_module, t, x, attributes):

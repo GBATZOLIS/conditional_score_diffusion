@@ -12,7 +12,7 @@ def get_config():
   #logging
   config.logging = logging = ml_collections.ConfigDict()
   logging.log_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/CelebAHQ' if config.server=='hpc' else '/store/CIA/gb511/projects/scoreVAE/experiments/CelebAHQ' 
-  logging.log_name = 'AttributeEncoder_multiple_features'
+  logging.log_name = 'AttributeEncoder_scoreVAE_updated_male'
   logging.top_k = 3
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
@@ -20,10 +20,10 @@ def get_config():
   # training
   config.training = training = ml_collections.ConfigDict()
   config.training.lightning_module = 'attribute_encoder'
-  training.prior_config_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/CelebAHQ/prior/config.pkl' if config.server=='hpc' else '/store/CIA/gb511/projects/scoreVAE/experiments/ffhq/prior/config.pkl' 
-  training.prior_checkpoint_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/CelebAHQ/prior/checkpoints/best/epoch=149--eval_loss_epoch=0.012.ckpt' if config.server=='hpc' else '/store/CIA/gb511/projects/scoreVAE/experiments/ffhq/prior/epoch=141--eval_loss_epoch=0.014.ckpt' 
+  training.prior_config_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/CelebAHQ/prior/config.pkl' if config.server=='hpc' else '/store/CIA/gb511/projects/scoreVAE/experiments/CelebAHQ/prior/config.pkl' 
+  training.prior_checkpoint_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/CelebAHQ/prior/checkpoints/best/epoch=149--eval_loss_epoch=0.012.ckpt' if config.server=='hpc' else '/store/CIA/gb511/projects/scoreVAE/experiments/CelebAHQ/prior/checkpoints/epoch=149--eval_loss_epoch=0.012.ckpt'
   training.conditioning_approach = 'sr3'
-  training.batch_size = 64
+  training.batch_size = 32
   training.num_nodes = 1
   training.gpus = 2
   training.accelerator = 'gpu'
@@ -41,7 +41,8 @@ def get_config():
   training.visualisation_freq = 10
   training.visualization_callback = ['AttributeEncoder']
   training.show_evolution = False
-
+  
+  training.loss_type = 'scoreVAE' #['scoreVAE', 'crossentropy']
   training.likelihood_weighting = False
   training.continuous = True
   training.reduce_mean = True 
@@ -76,7 +77,7 @@ def get_config():
   data.dataset = 'celebA-HQ-160'
   data.datamodule = 'CelebA_Annotated_PKLDataset'
   data.normalization_mode = 'gd'
-  data.attributes = ['Eyeglasses', 'Male', 'Smiling', 'Wavy_Hair', 'Wearing_Hat', 'Young']
+  data.attributes = ['Male']
   data.total_num_attributes = 40
   data.num_classes = 2
 
@@ -123,7 +124,7 @@ def get_config():
   config.model = model = ml_collections.ConfigDict()
   model.checkpoint_path = None
   model.num_scales = 1000
-  model.ema_rate = 0.999 #0.9999
+  model.ema_rate = 0.999
 
   # optimization
   config.optim = optim = ml_collections.ConfigDict()

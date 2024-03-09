@@ -13,7 +13,7 @@ import torch.nn.functional as F
 from sampling.conditional import get_conditional_sampling_fn
 
 @utils.register_lightning_module(name='attribute_encoder')
-class AttributeEncodermodel(pl.LightningModule):
+class UnpairedImage2ImageModel(pl.LightningModule):
     def __init__(self, config, *args, **kwargs):
         super().__init__()
         self.learning_rate = config.optim.lr
@@ -21,10 +21,19 @@ class AttributeEncodermodel(pl.LightningModule):
         self.config = config
 
         #unconditional score model
-        self.unconditional_score_model = mutils.load_prior_model(config)
-        self.unconditional_score_model.freeze()
+        self.score_model_A = mutils.load_prior_model(config, domain='A')
+        self.score_model_A.freeze()
+        self.score_model_B = mutils.load_prior_model(config, domain='B')
+        self.score_model_B.freeze()
         
-        self.attribute_encoder = mutils.create_encoder(config)
+        #encoders
+        self.shared_encoder = mutils.create_encoder(config, type='shared')
+        self.domain_A_encoder = mutils.create_encoder(config, type='domain_A')
+        self.domain_B_encoder = mutils.create_encoder(config, type='domain_B')
+
+        #MI estimators
+        self.MI_score_model_domain_A = mutils.create_model(config, type='MI')
+        self.MI_score_model_domain_B = mutils.create_model(config, type='MI')
 
     def configure_sde(self, config):
         if config.training.sde.lower() == 'vpsde':

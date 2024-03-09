@@ -20,7 +20,6 @@ from torchvision.transforms import RandomCrop, CenterCrop, ToTensor, Resize
 from torchvision.transforms.functional import InterpolationMode
 
 import create_dataset
-import compute_dataset_statistics
 from torch.nn import Upsample
 import torch 
 
@@ -128,6 +127,3 @@ def get_manifold_dimension(config, name=None):
 
 def get_conditional_manifold_dimension(config, name=None):
   dim_reduction.get_conditional_manifold_dimension(config, name)
-
-def compute_data_stats(config):
-  compute_dataset_statistics.compute_dataset_statistics(config)
