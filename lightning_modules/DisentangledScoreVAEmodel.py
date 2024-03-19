@@ -32,33 +32,20 @@ class DisentangledScoreVAEmodel(pl.LightningModule):
         self.config = config
         
         #unconditional score model
-        self.unconditional_score_model = mutils.load_prior_model(config)
-        self.unconditional_score_model.freeze()
+        self.score_model = mutils.load_prior_model(config) #can be either conditional or unconditional
+        self.score_model.freeze()
 
         #load attribute encoder
         #Create a ligtning module similar to the Base Lightning module that trains the attribute encoder.
-        self.attribute_encoder = mutils.load_attribute_encoder(config)
-        self.attribute_encoder.freeze()
+        #self.attribute_encoder = mutils.load_attribute_encoder(config)
+        #self.attribute_encoder.freeze()
 
         #encoder
         self.encoder = mutils.create_encoder(config) #it encodes image latent characteristics independent from the encoded attributes
 
         #instantiate the model that approximates 
         #the mutual information between the attibutes encoding and the complementary encoding
-        self.MI_diffusion_model = mutils.create_model(config)
-
-
-        # validation batch
-        # register buffer 
-        self.register_buffer('val_batch', torch.zeros(tuple([config.validation.batch_size]+config.data.shape)))
-
-    def on_load_checkpoint(self, checkpoint):
-        # Get the size of the 'val_batch' tensor from the checkpoint and re-register the buffer properly
-        val_batch_size = checkpoint['state_dict']['val_batch'].size()
-        self.register_buffer('val_batch', torch.zeros(val_batch_size))
-
-        # Finally, load the state dictionary again, this time it should work without size mismatch errors
-        self.load_state_dict(checkpoint['state_dict'])
+        #self.MI_diffusion_model = mutils.create_model(config)
 
     def configure_sde(self, config):
         if config.training.sde.lower() == 'vpsde':
@@ -120,8 +107,58 @@ class DisentangledScoreVAEmodel(pl.LightningModule):
             x = batch
         return x
 
+    def get_conditional_score_fn(self, train=False):
+        def get_latent_correction_fn(encoder):
+            def get_log_density_fn(encoder):
+                def log_density_fn(x, z, t):
+                    latent_distribution_parameters = encoder(x, t)
+                    channels = latent_distribution_parameters.size(1) // 2
+                    mean_z = latent_distribution_parameters[:, :channels]
+                    log_var_z = latent_distribution_parameters[:, channels:]
+
+                    # Flatten mean_z and log_var_z for consistent shape handling
+                    mean_z_flat = mean_z.view(mean_z.size(0), -1)
+                    log_var_z_flat = log_var_z.view(log_var_z.size(0), -1)
+                    z_flat = z.view(z.size(0), -1)
+
+                    logdensity = -0.5 * torch.sum(torch.square(z_flat - mean_z_flat) / log_var_z_flat.exp(), dim=1)
+                    return logdensity
+
+                return log_density_fn
+
+            def latent_correction_fn(x, z, t):
+                  if not train: 
+                    torch.set_grad_enabled(True)
+
+                  log_density_fn = get_log_density_fn(encoder)
+                  device = x.device
+                  x.requires_grad=True
+                  ftx = log_density_fn(x, z, t)
+                  grad_log_density = torch.autograd.grad(outputs=ftx, inputs=x,
+                                      grad_outputs=torch.ones(ftx.size()).to(device),
+                                      create_graph=True, retain_graph=True, only_inputs=True)[0]
+                  assert grad_log_density.size() == x.size()
+
+                  if not train:
+                    torch.set_grad_enabled(False)
+
+                  return grad_log_density
+
+            return latent_correction_fn
+
+        def conditional_score_fn(x, cond, t):
+            y, z = cond
+            latent_correction_fn = get_latent_correction_fn(self.encoder)
+            pretrained_score_fn = mutils.get_score_fn(self.sde, self.score_model, conditional=True, 
+                                                       train=train, continuous=True)
+            conditional_score = pretrained_score_fn({'x':x, 'y':y}, t) + latent_correction_fn(x, z, t)
+            return conditional_score
+
+        return conditional_score_fn
+
+
     def configure_loss_fn(self, config, train):
-        loss_fn = get_scoreVAE_loss_fn(self.sde, train, 
+        score_loss_fn = get_scoreVAE_loss_fn(self.sde, train, 
                                         variational=config.training.variational, 
                                         likelihood_weighting=config.training.likelihood_weighting,
                                         eps=self.sampling_eps,
@@ -132,7 +169,11 @@ class DisentangledScoreVAEmodel(pl.LightningModule):
                                         t_dependent = config.training.t_dependent,
                                         attibute_encoder = True)
         
-        return {0:loss_fn}
+        #trains a conditional+unconditional score model on the latent encodings. 
+        #This model is used to estimate the mutual information.
+        #MI_estimator_loss_fn = get_MI_estimator_loss_fn 
+
+        return {0:score_loss_fn}
     
     def training_step(self, *args, **kwargs):
         batch, batch_idx = args[0], args[1]
@@ -200,52 +241,6 @@ class DisentangledScoreVAEmodel(pl.LightningModule):
 
         return loss
 
-    def test_step(self, batch, batch_idx):
-        batch = self._handle_batch(batch)
-        reconstruction = self.encode_n_decode(batch, use_pretrained=self.config.training.use_pretrained,
-                                                          encoder_only=self.config.training.encoder_only,
-                                                          t_dependent=self.config.training.t_dependent)
-        if batch_idx == 0:
-            #save the first batch and its reconstruction
-            log_path = self.config.logging.log_path
-            log_name = self.config.logging.log_name
-
-            base_save_path = os.path.join(log_path, log_name, 'images')
-            Path(base_save_path).mkdir(parents=True, exist_ok=True)
-
-            original_save_path = os.path.join(log_path, log_name, 'images', 'original')
-            Path(original_save_path).mkdir(parents=True, exist_ok=True)
-
-            reconstruction_save_path = os.path.join(log_path, log_name, 'images', 'reconstructions')
-            Path(reconstruction_save_path).mkdir(parents=True, exist_ok=True)
-
-            for i in range(batch.size(0)):
-                torchvision.utils.save_image(batch[i, :, :, :], os.path.join(original_save_path,'{}.png'.format(i+1)))
-            
-            for i in range(batch.size(0)):
-                a = reconstruction[i, :, :, :]
-                min_a, max_a = a.min(), a.max()
-                a -= min_a
-                a /= max_a - min_a
-                torchvision.utils.save_image(a, os.path.join(reconstruction_save_path,'{}.png'.format(i+1)))
-
-        self.lpips_distance_fn = lpips.LPIPS(net='vgg').to(self.device)
-        avg_lpips_score = torch.mean(self.lpips_distance_fn(reconstruction.to(self.device), batch))
-
-        difference = torch.flatten(reconstruction, start_dim=1)-torch.flatten(batch, start_dim=1)
-        L2norm = torch.linalg.vector_norm(difference, ord=2, dim=1)
-        avg_L2norm = torch.mean(L2norm)
-
-        self.log("LPIPS", avg_lpips_score, on_step=True, on_epoch=True, prog_bar=True, logger=True)
-        self.log("L2", avg_L2norm, on_step=True, on_epoch=True, prog_bar=True, logger=True)
-
-        output = dict({
-        'LPIPS': avg_lpips_score,
-        'L2': avg_L2norm,
-        })
-        return output
-
-
     def unconditional_sample(self, num_samples=None, p_steps='default'):
         if num_samples is None:
             sampling_shape = [self.config.training.batch_size] +  self.config.data.shape
@@ -254,159 +249,51 @@ class DisentangledScoreVAEmodel(pl.LightningModule):
         sampling_fn = get_sampling_fn(self.config, self.usde, sampling_shape, self.sampling_eps, p_steps)
         return sampling_fn(self.unconditional_score_model)
     
-    def interpolate(self, x, num_points):
-        def slerp(low, high, val):
-            # Normalize the vectors
-            low_norm = low / torch.linalg.norm(low, dim=-1, keepdim=True)
-            high_norm = high / torch.linalg.norm(high, dim=-1, keepdim=True)
-
-            # Compute the cosine of the angle between the vectors
-            cos_omega = (low_norm * high_norm).sum(dim=-1, keepdim=True).clamp(-1, 1)
-            
-            # Compute the angle
-            omega = torch.acos(cos_omega)
-            
-            # Handle the special case when low and high are very close
-            sin_omega = torch.sin(omega)
-            eps = 1e-6
-            if torch.abs(sin_omega) < eps:
-                return (1.0 - val) * low + val * high
-
-            # Compute the spherical linear interpolation
-            factor_low = torch.sin((1.0 - val) * omega) / sin_omega
-            factor_high = torch.sin(val * omega) / sin_omega
-            
-            result = factor_low * low + factor_high * high
-
-            return result
-
-
-        x = x[:2,::] #make sure we retain the first two elements
-
-        y, x_T = self.encode(x, encode_x_T=True)
-
-        weights = torch.linspace(0, 1, steps=num_points+2).to(self.device)
-        z = torch.zeros(size=(num_points, y.size(1))).type_as(x)    
-        for i in range(weights.size(0)-2):
-            z[i] = slerp(y[0], y[1], weights[i+1])
-        
-        # SLERP on x_T
-        original_shape = x_T.shape  # (2, 3, w, h)
-        flattened_shape = (x_T.size(0), -1)  # Flatten everything except the batch dimension
-        x_T_flat = x_T.view(flattened_shape)
-
-        z_x_T = torch.zeros(size=(num_points, x_T_flat.size(1))).type_as(x_T)
-        for i in range(weights.size(0)-2):
-            z_x_T[i] = slerp(x_T_flat[0], x_T_flat[1], weights[i+1])
-
-        # Reshape z_x_T back to original shape
-        z_x_T_reshaped = z_x_T.view(num_points, *original_shape[1:])
-        
-        interpolation = self.decode(z, z_x_T_reshaped)
-
-        augmented = torch.zeros(size=tuple([num_points+2]+self.config.data.shape))
-        augmented[0] =  x[0]
-        augmented[1:-1] = interpolation
-        augmented[-1] = x[1]
-        return augmented
-
-    def encode(self, x, use_latent_mean=False, encode_x_T=False):
+    def encode(self, x, y, use_latent_mean=False, encode_x_T=False):
         t0 = torch.zeros(x.shape[0]).type_as(x)
         latent_distribution_parameters = self.encoder(x, t0)
         latent_dim = latent_distribution_parameters.size(1)//2
-        mean_y = latent_distribution_parameters[:, :latent_dim]
-        log_var_y = latent_distribution_parameters[:, latent_dim:]
+        mean_z = latent_distribution_parameters[:, :latent_dim]
+        log_var_z = latent_distribution_parameters[:, latent_dim:]
         if use_latent_mean:
-            y = mean_y
+            z = mean_z
         else:
-            y = mean_y + (0.5 * log_var_y).exp() * torch.randn_like(mean_y)
+            z = mean_z + (0.5 * log_var_z).exp() * torch.randn_like(mean_z)
         
         #--new code--
         if encode_x_T:
-            use_pretrained=self.config.training.use_pretrained,
-            encoder_only=self.config.training.encoder_only,
-            t_dependent=self.config.training.t_dependent
             conditional_sampling_fn = get_conditional_sampling_fn(config=self.config, sde=self.sde, 
                                                               shape=x.size(), eps=self.sampling_eps, 
                                                               p_steps=128,
                                                               predictor='conditional_heun',
-                                                              use_pretrained=use_pretrained, encoder_only=encoder_only, 
-                                                              use_path=False, 
-                                                              t_dependent=t_dependent,
                                                               direction='forward', 
                                                               x_boundary=x)
-            model = {'unconditional_score_model':self.unconditional_score_model,
-                     'encoder': self.encoder}
-            x_T = conditional_sampling_fn(model, y, False)
-            return y, x_T
+
+            score_fn = self.get_conditional_score_fn(train=False)
+            cond = [y, z]
+            x_T = conditional_sampling_fn(self.score_model, cond, score_fn=score_fn)
+            return z, x_T
         else:
-            return y
+            return z, None
 
-
-    def decode(self, z, x_T=None):
-        use_pretrained=self.config.training.use_pretrained,
-        encoder_only=self.config.training.encoder_only,
-        t_dependent=self.config.training.t_dependent
-        show_evolution=False
+    def decode(self, y, z, x_T=None):
         sampling_shape = [z.size(0)]+self.config.data.shape
         conditional_sampling_fn = get_conditional_sampling_fn(config=self.config, sde=self.sde, 
                                                               shape=sampling_shape, eps=self.sampling_eps,
                                                               p_steps=128,
                                                               predictor='conditional_heun',
-                                                              use_pretrained=use_pretrained, encoder_only=encoder_only, 
-                                                              use_path=False, 
-                                                              t_dependent=t_dependent,
-                                                              direction='backward',
                                                               x_boundary=x_T)
-        if self.config.training.encoder_only:
-            model = {'unconditional_score_model':self.unconditional_score_model,
-                     'encoder': self.encoder}
-        else:
-            model = {'unconditional_score_model':self.unconditional_score_model,
-                     'latent_correction_model': self.latent_correction_model}
+        cond = [y, z]
+        score_fn = self.get_conditional_score_fn(train=False)
+        return conditional_sampling_fn(self.score_model, cond, score_fn=score_fn)
 
-        return conditional_sampling_fn(model, z, show_evolution)
-
-
-    def encode_n_decode(self, x, show_evolution=False, predictor='default', corrector='default', p_steps='default', \
-                     c_steps='default', snr='default', denoise='default', use_pretrained=True, encoder_only=False, t_dependent=True, gamma=1.):
-
-        if self.config.training.variational:
-            if self.config.training.encoder_only:
-                if t_dependent:
-                    t0 = torch.zeros(x.shape[0]).type_as(x)
-                    latent_distribution_parameters = self.encoder(x, t0)
-                else:
-                    latent_distribution_parameters = self.encoder(x)
-
-                latent_dim = latent_distribution_parameters.size(1)//2
-                mean_y = latent_distribution_parameters[:, :latent_dim]
-                log_var_y = latent_distribution_parameters[:, latent_dim:]
-                y = mean_y + (0.5 * log_var_y).exp() * torch.randn_like(mean_y)
-                #y = torch.sqrt(torch.tensor(latent_dim)) * (y / torch.linalg.norm(y, dim=1, keepdim=True)) #this must be removed.
-            else:
-                mean_y, log_var_y = self.encoder(x)
-                y = mean_y + (0.5 * log_var_y).exp() * torch.randn_like(mean_y)
-        else:
-            y = self.encoder(x)
-
-        sampling_shape = [x.size(0)]+self.config.data.shape
-        conditional_sampling_fn = get_conditional_sampling_fn(config=self.config, sde=self.sde, 
-                                                              shape=sampling_shape, eps=self.sampling_eps, 
-                                                              predictor=predictor, corrector=corrector, 
-                                                              p_steps=p_steps, c_steps=c_steps, snr=snr, 
-                                                              denoise=denoise, use_path=False, 
-                                                              use_pretrained=use_pretrained, encoder_only=encoder_only, 
-                                                              t_dependent=t_dependent, gamma=gamma)
-        if self.config.training.encoder_only:
-            model = {'unconditional_score_model':self.unconditional_score_model,
-                     'encoder': self.encoder}
-        else:
-            model = {'unconditional_score_model':self.unconditional_score_model,
-                     'latent_correction_model': self.latent_correction_model}
-
-        return conditional_sampling_fn(model, y, show_evolution)
+    def encode_n_decode(self, x, y, encode_x_T=False):
+        z, x_T = self.encode(x, y, encode_x_T=encode_x_T)
+        x_hat = self.decode(y, z, x_T)
     
+    def flip_attributes(self, y, attributes=None):
+        pass
+
     def configure_optimizers(self):
         class scheduler_lambda_function:
             def __init__(self, warm_up):

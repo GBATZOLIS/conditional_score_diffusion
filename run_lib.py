@@ -13,7 +13,7 @@ from lightning_callbacks.utils import get_callbacks
 from lightning_data_modules import HaarDecomposedDataset, ImageDatasets, PairedDataset, SyntheticDataset, SyntheticPairedDataset, Synthetic1DConditionalDataset, SyntheticTimeSeries, SRDataset, SRFLOWDataset, KSphereDataset, MammothDataset, LineDataset, GanDataset, guided_diff_datasets #needed for datamodule registration
 from lightning_data_modules.utils import create_lightning_datamodule
 
-from lightning_modules import AttributeEncoder, BaseSdeGenerativeModel, ScoreVAEmodel, PretrainedScoreVAEmodel, EncoderOnlyPretrainedScoreVAEmodel, CorrectedEncoderOnlyPretrainedScoreVAEmodel, ConditionalSdeGenerativeModel #need for lightning module registration
+from lightning_modules import AttributeConditionalModel, AttributeEncoder, BaseSdeGenerativeModel, ScoreVAEmodel, PretrainedScoreVAEmodel, EncoderOnlyPretrainedScoreVAEmodel, CorrectedEncoderOnlyPretrainedScoreVAEmodel, ConditionalSdeGenerativeModel #need for lightning module registration
 from lightning_modules.utils import create_lightning_module
 
 from torchvision.transforms import RandomCrop, CenterCrop, ToTensor, Resize
@@ -31,6 +31,7 @@ from tqdm import tqdm
 
 #additions for manifold dimension estimation
 import dim_reduction
+import scoreVAE_testing
 
 def train(config, log_path, checkpoint_path, log_name=None):
     print('RESUMING: ' + str(checkpoint_path))
@@ -91,14 +92,12 @@ def test(config, log_path, checkpoint_path):
     logger = pl.loggers.TensorBoardLogger(log_path, name='test', version=log_name)
 
     checkpoint_path = config.model.checkpoint_path
-    print('-----')
     pl_module = create_lightning_module(config)
-    print('------')
-    #print(config.logging.log_path)
     pl_module = pl_module.load_from_checkpoint(checkpoint_path, config=config)
-    #print(config.logging.log_path)
-    print('------')
+    pl_module = pl_module.to('cuda')
 
+    scoreVAE_testing.check_increasing_classifier_guidance_strength(pl_module, DataModule, logger)
+    '''
     trainer = pl.Trainer(accelerator = 'gpu' if config.training.gpus > 0 else 'cpu',
                           devices = config.training.gpus,
                           num_nodes = config.training.num_nodes,
@@ -109,8 +108,8 @@ def test(config, log_path, checkpoint_path):
                           callbacks=callbacks, 
                           logger = logger                   
                           )
-    
     trainer.test(pl_module, datamodule=DataModule, ckpt_path=checkpoint_path)
+  '''
 
 
 def inspect_corrected_VAE(config):

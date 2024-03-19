@@ -19,6 +19,7 @@ class BeatGANsAutoencModel(BeatGANsUNetModel):
 
         # having only time, cond
         self.time_embed = TimeStyleSeperateEmbed(
+            cond_channels=self.conf.cond_channels,
             time_channels=self.conf.model_channels,
             time_out_channels=self.conf.embed_channels,
         )
@@ -160,14 +161,22 @@ class EmbedReturn(NamedTuple):
 
 class TimeStyleSeperateEmbed(nn.Module):
     # embed only style
-    def __init__(self, time_channels, time_out_channels):
+    def __init__(self, cond_channels, time_channels, time_out_channels):
         super().__init__()
         self.time_embed = nn.Sequential(
             linear(time_channels, time_out_channels),
             nn.SiLU(),
             linear(time_out_channels, time_out_channels),
         )
-        self.style = nn.Identity()
+
+        if cond_channels is None:
+            self.style = nn.Identity()
+        else:
+            self.style = nn.Sequential(
+                linear(cond_channels, time_out_channels),
+                nn.SiLU(),
+                linear(time_out_channels, time_out_channels),
+            )
 
     def forward(self, time_emb=None, cond=None, **kwargs):
         if time_emb is None:

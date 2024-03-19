@@ -39,8 +39,8 @@ class BaseSdeGenerativeModel(pl.LightningModule):
             print(f'Number of keys unique to dict1: {len(unique_to_dict1)}')
             print(f'Number of keys unique to dict2: {len(unique_to_dict2)}')
 
-        discrete_checkpoint_path = self.config.model.discrete_checkpoint_path
-        checkpoint_path = self.config.model.checkpoint_path
+        discrete_checkpoint_path = self.config.model.get('discrete_checkpoint_path', None)
+        checkpoint_path = self.config.model.get('checkpoint_path', None)
         
         if discrete_checkpoint_path and not checkpoint_path:
             # Load the pretrained diffusion model trained in discrete time

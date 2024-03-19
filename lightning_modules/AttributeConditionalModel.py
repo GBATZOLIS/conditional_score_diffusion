@@ -8,12 +8,12 @@ from utils import get_named_beta_schedule
 from models import utils as mutils
 from scipy.interpolate import PchipInterpolator
 import numpy as np
-from losses import get_attribute_classifier_loss_fn, get_attribute_classifier_scoreVAE_loss_fn
+from losses import get_attribute_corrector_loss_fn
 import torch.nn.functional as F
 from sampling.conditional import get_conditional_sampling_fn
 
-@utils.register_lightning_module(name='UnpairedImage2Image')
-class UnpairedImage2ImageModel(pl.LightningModule):
+@utils.register_lightning_module(name='attribute_conditional')
+class AttributeConditionalModel(pl.LightningModule):
     def __init__(self, config, *args, **kwargs):
         super().__init__()
         self.learning_rate = config.optim.lr
@@ -21,19 +21,11 @@ class UnpairedImage2ImageModel(pl.LightningModule):
         self.config = config
 
         #unconditional score model
-        self.score_model_A = mutils.load_prior_model(config, domain='A')
-        self.score_model_A.freeze()
-        self.score_model_B = mutils.load_prior_model(config, domain='B')
-        self.score_model_B.freeze()
-        
-        #encoders
-        self.shared_encoder = mutils.create_encoder(config, type='shared')
-        self.domain_A_encoder = mutils.create_encoder(config, type='domain_A')
-        self.domain_B_encoder = mutils.create_encoder(config, type='domain_B')
-
-        #MI estimators
-        self.MI_score_model_domain_A = mutils.create_model(config, type='MI')
-        self.MI_score_model_domain_B = mutils.create_model(config, type='MI')
+        if config.training.use_prior:
+            self.unconditional_score_model = mutils.load_prior_model(config)
+            self.unconditional_score_model.freeze()
+            
+        self.attribute_correction_model = mutils.create_model(config)
 
     def configure_sde(self, config):
         if config.training.sde.lower() == 'vpsde':
@@ -88,89 +80,48 @@ class UnpairedImage2ImageModel(pl.LightningModule):
 
         self.t_dist = Uniform(self.sampling_eps, 1)
     
-    def get_attribute_encoder_correction(self, train=False):
+    def get_attribute_correction(self, train=False):
         #derive the conditional score contribution of the attribute encoder
-        def attribute_encoder_correction(x, y, t):
-            # Ensure `y` is provided with shape (batchsize, num_features) where each element is an integer
-            # representing the class index for the corresponding feature.
-            if not train: 
-                torch.set_grad_enabled(True)
+        attribute_correction = mutils.get_score_fn(self.sde, self.attribute_correction_model, conditional=True, train=train, continuous=True)
+        return attribute_correction
 
-            x_in = x.detach().requires_grad_(True)
-
-            # Obtain logits from the encoder; shape: (batchsize, num_features, num_classes)
-            logits = self.attribute_encoder(x_in, t)
-
-            # Calculate log probabilities across the num_classes dimension
-            log_probs = F.log_softmax(logits, dim=-1)  # Shape: (batchsize, num_features, num_classes)
-
-            # Use `y` to select the log probability of the correct class for each feature.
-            # This requires gathering the relevant log_probs using `y` as the index.
-            # First, prepare `y` indices for gathering. It should have the same dimension as `log_probs`.
-            y_indices = y.unsqueeze(-1)  # Shape: (batchsize, num_features, 1)
-            selected_log_probs = log_probs.gather(dim=-1, index=y_indices)  # Shape: (batchsize, num_features, 1)
-
-            # Since we're only interested in the selected log_probs, squeeze the last dimension
-            selected_log_probs = selected_log_probs.squeeze(-1)  # Shape: (batchsize, num_features)
-
-            log_probs = torch.sum(selected_log_probs, dim=1)
-
-            # Compute gradients with respect to inputs
-            conditional_score = torch.autograd.grad(outputs=log_probs, inputs=x_in,
-                                      grad_outputs=torch.ones(log_probs.size()).to(x.device),
-                                      create_graph=True, retain_graph=True, only_inputs=True)[0]
+    def get_conditional_score_fn(self, train=False, gamma=1):
+        if self.config.training.use_prior:
+            unconditional_score_fn = mutils.get_score_fn(self.usde, self.unconditional_score_model, conditional=False, train=False, continuous=True)
+            attribute_encoder_correction = self.get_attribute_correction(train=train)
+            def conditional_score_fn(x, y, t):
+                return unconditional_score_fn(x, t) + gamma*attribute_encoder_correction({'x':x, 'y':y}, t)
+        else:
+            attribute_encoder_correction = self.get_attribute_correction(train=train)
+            def conditional_score_fn(x, y, t):
+                return gamma*attribute_encoder_correction({'x':x, 'y':y}, t)
             
-            if not train:
-                torch.set_grad_enabled(False)
-
-            return conditional_score
-
-        return attribute_encoder_correction
-
-    def get_conditional_score_fn(self, train=False):
-        unconditional_score_fn = mutils.get_score_fn(self.sde, self.unconditional_score_model, 
-                                                    conditional=False, train=False, continuous=True)
-        attribute_encoder_correction = self.get_attribute_encoder_correction(train=train)
-
-        def conditional_score_fn(x, y, t):
-            return unconditional_score_fn(x, t) + attribute_encoder_correction(x, y, t)
-
         return conditional_score_fn
 
     def configure_loss_fn(self, config, train):
-        if config.training.loss_type == 'scoreVAE':
-            loss_fn = get_attribute_classifier_scoreVAE_loss_fn(
-                        self.sde, config.training.likelihood_weighting,
-                        self.sampling_eps)
-        elif config.training.loss_type == 'crossentropy':
-            loss_fn = get_attribute_classifier_loss_fn(self.sde, train, self.sampling_eps)
+        loss_fn = get_attribute_corrector_loss_fn(self.sde, config.training.likelihood_weighting)
         return loss_fn
     
     def training_step(self, batch, batch_idx):
-        if self.config.training.loss_type == 'scoreVAE':
-            cond_score_fn = self.get_conditional_score_fn(train=True)
-            loss = self.train_loss_fn(self.attribute_encoder, cond_score_fn, batch, self.t_dist)
-        elif self.config.training.loss_type == 'crossentropy':
-            loss = self.train_loss_fn(self.attribute_encoder, batch, self.t_dist)
+        cond_score_fn = self.get_conditional_score_fn(train=True)
+        loss = self.train_loss_fn(cond_score_fn, batch, self.t_dist)
         self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         return loss
     
     def validation_step(self, batch, batch_idx):
-        if self.config.training.loss_type == 'scoreVAE':
-            cond_score_fn = self.get_conditional_score_fn(train=False)
-            loss = self.eval_loss_fn(self.attribute_encoder, cond_score_fn, batch, self.t_dist)
-        elif self.config.training.loss_type == 'crossentropy':
-            loss = self.eval_loss_fn(self.attribute_encoder, batch, self.t_dist)
+        cond_score_fn = self.get_conditional_score_fn(train=False)
+        loss = self.eval_loss_fn(cond_score_fn, batch, self.t_dist)
         self.log('eval_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         return loss
     
-    def sample(self, y):
+    def sample(self, y, gamma=1):
+        y = y.float()
         sampling_shape = [y.size(0)]+self.config.data.shape
         conditional_sampling_fn = get_conditional_sampling_fn(config=self.config, sde=self.sde, 
                                                               shape=sampling_shape, eps=self.sampling_eps,
                                                               p_steps=128)
-        score_fn = self.get_conditional_score_fn()
-        return conditional_sampling_fn(self.unconditional_score_model, y, score_fn=score_fn)
+        score_fn = self.get_conditional_score_fn(train=False, gamma=gamma)
+        return conditional_sampling_fn(self.attribute_correction_model, y, score_fn=score_fn)
         
         
     def configure_optimizers(self):
@@ -193,7 +144,7 @@ class UnpairedImage2ImageModel(pl.LightningModule):
 
         # Optimizer for the attribute encoder
         optimizer = optim.Adam(
-            self.attribute_encoder.parameters(), 
+            self.attribute_correction_model.parameters(), 
             lr=self.learning_rate, 
             betas=(self.config.optim.beta1, 0.999), 
             eps=self.config.optim.eps,

@@ -205,7 +205,11 @@ def load_prior_model(base_config):
   LightningModule = create_lightning_module(prior_config)
   priorLightningModule = LightningModule.load_from_checkpoint(checkpoint_path, config=prior_config, map_location=map_location)
   print('loaded')
-  return priorLightningModule.score_model
+
+  if hasattr(priorLightningModule, 'attribute_correction_model'):
+    return priorLightningModule.attribute_correction_model
+  else:
+    return priorLightningModule.score_model
 
 
 def get_model_fn(model, train=False):
@@ -277,7 +281,7 @@ def get_score_fn(sde, model, conditional=False, train=False, continuous=False):
         raise NotImplementedError('This combination of SDEs is not supported for conditional SDEs yet.')
     else:
       """COVERS THE SR3 CONDITIONAL SCORE ESTIMATOR"""
-      if isinstance(sde, (sde_lib.VPSDE, sde_lib.cVPSDE, sde_lib.subVPSDE, sde_lib.csubVPSDE)):
+      if isinstance(sde, (sde_lib.VPSDE, sde_lib.cVPSDE, sde_lib.subVPSDE, sde_lib.csubVPSDE, sde_lib.SNRSDE, sde_lib.cSNRSDE)):
         def score_fn(x, t):
           # Scale neural network output by standard deviation and flip sign
           if continuous or isinstance(sde, sde_lib.subVPSDE):
