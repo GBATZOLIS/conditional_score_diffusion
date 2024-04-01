@@ -1,5 +1,5 @@
 from . import BaseSdeGenerativeModel
-from losses import get_scoreVAE_loss_fn, get_old_scoreVAE_loss_fn, get_general_sde_loss_fn
+from disentanglement_losses import get_disentangled_scoreVAE_loss_fn, get_classifier_free_loss_fn, scoreVAE_loss_fn, get_DSM_loss_fn, get_MI_loss_fn
 import pytorch_lightning as pl
 import sde_lib
 from models import utils as mutils
@@ -20,13 +20,14 @@ from pathlib import Path
 from scipy.interpolate import PchipInterpolator
 import numpy as np
 from torch.distributions import Uniform
+from torch.nn.utils import clip_grad_norm_
 
 @utils.register_lightning_module(name='disentangled_score_vae')
 class DisentangledScoreVAEmodel(pl.LightningModule):
     def __init__(self, config, *args, **kwargs):
         super().__init__()
-        self.learning_rate = config.optim.lr
         self.save_hyperparameters()
+        self.automatic_optimization = False  # Disable automatic optimization
 
         # Initialize the score model
         self.config = config
@@ -35,17 +36,20 @@ class DisentangledScoreVAEmodel(pl.LightningModule):
         self.score_model = mutils.load_prior_model(config) #can be either conditional or unconditional
         self.score_model.freeze()
 
-        #load attribute encoder
-        #Create a ligtning module similar to the Base Lightning module that trains the attribute encoder.
-        #self.attribute_encoder = mutils.load_attribute_encoder(config)
-        #self.attribute_encoder.freeze()
-
         #encoder
-        self.encoder = mutils.create_encoder(config) #it encodes image latent characteristics independent from the encoded attributes
+        self.encoder = mutils.create_model(config, aux_model='encoder') #it encodes image latent characteristics independent from the encoded attributes
 
         #instantiate the model that approximates 
         #the mutual information between the attibutes encoding and the complementary encoding
-        #self.MI_diffusion_model = mutils.create_model(config)
+        self.MI_diffusion_model = mutils.create_model(config, aux_model='MI_estimator')
+
+        # other initialization code
+        self.mi_step_counter = 0  # Counter to control when to update MI_diffusion_model vs encoder
+    
+    # Function to toggle the `requires_grad` status of encoder parameters
+    def set_requires_grad(self, model, value):
+        for param in model.parameters():
+            param.requires_grad = value
 
     def configure_sde(self, config):
         if config.training.sde.lower() == 'vpsde':
@@ -100,13 +104,12 @@ class DisentangledScoreVAEmodel(pl.LightningModule):
 
         self.t_dist = Uniform(self.sampling_eps, 1)
     
-    def _handle_batch(self, batch):
-        if type(batch) == list:
-            x = batch[0]
-        else:
-            x = batch
-        return x
-
+    def get_latent_score_fn(self, train):
+        score_fn = mutils.get_score_fn(self.sde, self.MI_diffusion_model, conditional=True, train=train, continuous=True)
+        def latent_score_fn(x, y, t):
+            return score_fn({'x':x, 'y':y}, t)
+        return latent_score_fn
+        
     def get_conditional_score_fn(self, train=False):
         def get_latent_correction_fn(encoder):
             def get_log_density_fn(encoder):
@@ -148,6 +151,8 @@ class DisentangledScoreVAEmodel(pl.LightningModule):
 
         def conditional_score_fn(x, cond, t):
             y, z = cond
+            #y = y.float()
+            
             latent_correction_fn = get_latent_correction_fn(self.encoder)
             pretrained_score_fn = mutils.get_score_fn(self.sde, self.score_model, conditional=True, 
                                                        train=train, continuous=True)
@@ -156,98 +161,103 @@ class DisentangledScoreVAEmodel(pl.LightningModule):
 
         return conditional_score_fn
 
-
     def configure_loss_fn(self, config, train):
-        score_loss_fn = get_scoreVAE_loss_fn(self.sde, train, 
-                                        variational=config.training.variational, 
+        encoder_loss_fn = get_disentangled_scoreVAE_loss_fn(self.sde,
                                         likelihood_weighting=config.training.likelihood_weighting,
-                                        eps=self.sampling_eps,
-                                        t_batch_size=config.training.t_batch_size,
                                         kl_weight=config.training.kl_weight,
-                                        use_pretrained=config.training.use_pretrained,
-                                        encoder_only = config.training.encoder_only,
-                                        t_dependent = config.training.t_dependent,
-                                        attibute_encoder = True)
+                                        disentanglement_factor=config.training.disentanglement_factor)
         
-        #trains a conditional+unconditional score model on the latent encodings. 
-        #This model is used to estimate the mutual information.
-        #MI_estimator_loss_fn = get_MI_estimator_loss_fn 
+        #Denosiing score matching loss for the Diffusion Model that will be used to approximate the Mutual Information
+        #trains a conditional+unconditional score model on the latent encodings in classifier-guidance free style.
+        MI_diffusion_model_loss_fn = get_classifier_free_loss_fn(self.sde, config.training.likelihood_weighting)
 
-        return {0:score_loss_fn}
+        return {0:encoder_loss_fn, 1:MI_diffusion_model_loss_fn}
     
-    def training_step(self, *args, **kwargs):
-        batch, batch_idx = args[0], args[1]
-        if hasattr(self.config, 'debug') and self.config.debug.skip_training and batch_idx > 1:
-            return None
-        batch = self._handle_batch(batch)
+    def training_step(self, batch, batch_idx):
+        MI_UPDATE_STEPS = self.config.optim.MI_update_steps
 
-        if self.config.training.use_pretrained:
-            if self.config.training.encoder_only:
-                loss = self.train_loss_fn[0](self.encoder, self.unconditional_score_model, batch, self.t_dist)
-            else:
-                loss = self.train_loss_fn[0](self.encoder, self.latent_correction_model, self.unconditional_score_model, batch)
-            self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        # Assume first optimizer is for the encoder, and the second is for the MI_diffusion_model
+        optimizers = self.optimizers()
+        schedulers = self.lr_schedulers()        
+        encoder_optimizer, mi_diffusion_optimizer = optimizers
+        encoder_scheduler, mi_diffusion_scheduler = schedulers
 
-        return loss
-    
+        if self.mi_step_counter % MI_UPDATE_STEPS == 0:
+            # Encoder training step
+            self.set_requires_grad(self.encoder, True)
+            self.set_requires_grad(self.MI_diffusion_model, False)
+
+            cond_score_fn = self.get_conditional_score_fn(train=True)
+            MI_diffusion_model_score_fn = self.get_latent_score_fn(train=False)
+            encoder_loss = self.train_loss_fn[0](cond_score_fn, MI_diffusion_model_score_fn, self.encoder, batch, self.t_dist)
+            self.log('encoder_loss', encoder_loss)
+
+            self.toggle_optimizer(encoder_optimizer)
+            encoder_optimizer.zero_grad()
+            self.manual_backward(encoder_loss)
+            clip_grad_norm_(self.encoder.parameters(), self.config.optim.manual_grad_clip)
+            encoder_optimizer.step()
+            self.untoggle_optimizer(encoder_optimizer)
+            encoder_scheduler.step()
+
+        # MI_diffusion_model training step
+        self.set_requires_grad(self.encoder, False)
+        self.set_requires_grad(self.MI_diffusion_model, True)
+
+        self.mi_step_counter += 1
+        x, y = batch
+        latent, _ = self.encode(x, y, use_latent_mean=False, encode_x_T=False)
+        MI_batch = [latent, y]
+        MI_diffusion_model_score_fn = self.get_latent_score_fn(train=True)
+        mi_diffusion_loss = self.train_loss_fn[1](MI_diffusion_model_score_fn, MI_batch, self.t_dist)
+        self.log('mi_diffusion_loss', mi_diffusion_loss)
+
+        self.toggle_optimizer(mi_diffusion_optimizer)
+        mi_diffusion_optimizer.zero_grad()
+        self.manual_backward(mi_diffusion_loss)
+        clip_grad_norm_(self.MI_diffusion_model.parameters(), self.config.optim.manual_grad_clip)
+        mi_diffusion_optimizer.step()
+        self.untoggle_optimizer(mi_diffusion_optimizer)
+        mi_diffusion_scheduler.step()
+
     def validation_step(self, batch, batch_idx):
-        batch = self._handle_batch(batch)
-        if hasattr(self.config, 'debug') and self.config.debug.skip_validation and batch_idx > 1:
-            return None
-        if self.config.training.use_pretrained:
-            if self.config.training.encoder_only:
-                loss = self.eval_loss_fn[0](self.encoder, self.unconditional_score_model, batch, self.t_dist)
-            else:
-                loss = self.eval_loss_fn[0](self.encoder, self.latent_correction_model, self.unconditional_score_model, batch)
-            self.log('eval_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
-        else:
-            loss = self.eval_loss_fn[0](self.encoder, self.latent_correction_model, self.unconditional_score_model, batch)
-            self.logger.experiment.add_scalars('val_loss', {'conditional': loss}, self.global_step)
-            self.log('eval_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
-            
-            loss = self.eval_loss_fn[1](self.unconditional_score_model, batch)
-            self.logger.experiment.add_scalars('val_loss', {'unconditional': loss}, self.global_step)
+        x, y = batch
 
-        if batch_idx == 2 and self.current_epoch+1 == 2:
-            sample, _ = self.unconditional_sample(p_steps=250)
-            sample = sample.cpu()
-            grid_batch = torchvision.utils.make_grid(sample, nrow=int(np.sqrt(sample.size(0))), normalize=True, scale_each=True)
-            self.logger.experiment.add_image('unconditional_sample', grid_batch, self.current_epoch)
+        #get the encoded latent and its associated parameters (mean_z, log_var_z)
+        t0 = torch.zeros(x.shape[0]).type_as(x)
+        latent_distribution_parameters = self.encoder(x, t0)
+        channels = latent_distribution_parameters.size(1)//2
+        mean_z = latent_distribution_parameters[:, :channels]
+        log_var_z = latent_distribution_parameters[:, channels:]
+        latent = mean_z + (0.5 * log_var_z).exp() * torch.randn_like(mean_z)
+        
+        cond_score_fn = self.get_conditional_score_fn(train=False)
+        weighting = self.config.training.likelihood_weighting
+        kl_weight = self.config.training.kl_weight
+        val_scoreVAE_loss = scoreVAE_loss_fn(cond_score_fn, x, y, mean_z, log_var_z, 
+                                            latent, self.t_dist, weighting, 
+                                            kl_weight, self.sde)
+        self.log('val_scoreVAE_loss', val_scoreVAE_loss)
 
-        # visualize reconstruction
-        if batch_idx == 2 and (self.current_epoch+1) % self.config.training.visualisation_freq == 0:
-            if torch.all(self.val_batch == 0) or batch.size(0) != self.val_batch.size(0):
-                self.val_batch = batch
-            else:
-                batch = self.val_batch
-                
-            reconstruction = self.encode_n_decode(batch, p_steps=250,
-                                                         use_pretrained=self.config.training.use_pretrained,
-                                                         encoder_only=self.config.training.encoder_only,
-                                                         t_dependent=self.config.training.t_dependent)
+        DSM_loss_fn = get_DSM_loss_fn(self.sde, weighting)
+        MI_diffusion_model_score_fn = self.get_latent_score_fn(train=False)
+        
+        y_unlabeled = torch.ones_like(y) * -1
+        MI_batch_unlabeled = [latent, y_unlabeled]
+        val_latent_diffusion_loss = DSM_loss_fn(MI_diffusion_model_score_fn, MI_batch_unlabeled, self.t_dist)
+        self.log('val_latent_diffusion_loss', val_latent_diffusion_loss)
 
-            reconstruction =  reconstruction.cpu()
-            grid_reconstruction = torchvision.utils.make_grid(reconstruction, nrow=int(np.sqrt(batch.size(0))), normalize=True, scale_each=True)
-            self.logger.experiment.add_image('reconstruction', grid_reconstruction, self.current_epoch)
-            
-            batch = batch.cpu()
-            grid_batch = torchvision.utils.make_grid(batch, nrow=int(np.sqrt(batch.size(0))), normalize=True, scale_each=True)
-            self.logger.experiment.add_image('real', grid_batch)
+        MI_batch_labeled = [latent, y]
+        val_latent_diffusion_loss_conditional = DSM_loss_fn(MI_diffusion_model_score_fn, MI_batch_labeled, self.t_dist)
+        self.log('val_latent_diffusion_loss_conditional', val_latent_diffusion_loss_conditional)
 
-            difference = torch.flatten(reconstruction, start_dim=1)-torch.flatten(batch, start_dim=1)
-            L2norm = torch.linalg.vector_norm(difference, ord=2, dim=1)
-            avg_L2norm = torch.mean(L2norm)
-            self.log('reconstruction_loss', avg_L2norm, logger=True)
+        MI_loss_fn = get_MI_loss_fn(self.sde)
+        val_mutual_information = MI_loss_fn(MI_diffusion_model_score_fn, MI_batch_labeled, self.t_dist)
+        self.log('val_mutual_information', val_mutual_information)
 
-        return loss
-
-    def unconditional_sample(self, num_samples=None, p_steps='default'):
-        if num_samples is None:
-            sampling_shape = [self.config.training.batch_size] +  self.config.data.shape
-        else:
-            sampling_shape = [num_samples] +  self.config.data.shape
-        sampling_fn = get_sampling_fn(self.config, self.usde, sampling_shape, self.sampling_eps, p_steps)
-        return sampling_fn(self.unconditional_score_model)
+        dis_factor = self.config.training.disentanglement_factor
+        loss = val_scoreVAE_loss + dis_factor * val_mutual_information
+        self.log('eval_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
     
     def encode(self, x, y, use_latent_mean=False, encode_x_T=False):
         t0 = torch.zeros(x.shape[0]).type_as(x)
@@ -290,9 +300,39 @@ class DisentangledScoreVAEmodel(pl.LightningModule):
     def encode_n_decode(self, x, y, encode_x_T=False):
         z, x_T = self.encode(x, y, encode_x_T=encode_x_T)
         x_hat = self.decode(y, z, x_T)
+        return x_hat
     
-    def flip_attributes(self, y, attributes=None):
-        pass
+    def flip_attributes(self, y, attributes=None, attribute_to_index_map=None):
+        # Create a copy of y to avoid modifying the original tensor
+        y_flipped = y.clone()
+
+        # Check if an attribute_to_index_map is provided, if not, fetch it from the data module
+        if attribute_to_index_map is None:
+            # Ensure self.trainer is available and has been set
+            if self.trainer and hasattr(self.trainer, 'datamodule') and self.trainer.datamodule is not None:
+                data_module = self.trainer.datamodule
+                attribute_to_index_map = data_module.get_attribute_to_index_map()
+            else:
+                # Handle the case where the data module or trainer is not available
+                raise RuntimeError("Data module is not accessible. Ensure this method is called within the LightningModule lifecycle.")
+
+        if attributes == 'all':
+            # If no attributes specified, assume flipping all attributes
+            indices_to_flip = list(range(y.shape[1]))
+        elif attributes == None:
+            indices_to_flip = []
+        else:
+            if isinstance(attributes, str):
+                attributes = [attributes]  # Wrap the single attribute in a list
+
+            # Find the column indices for the specified attributes using the provided or fetched map
+            indices_to_flip = [attribute_to_index_map[attr] for attr in attributes]
+
+        # Flip the specified attributes in y_flipped
+        for index in indices_to_flip:
+            y_flipped[:, index] = 1 - y_flipped[:, index]
+
+        return y_flipped
 
     def configure_optimizers(self):
         class scheduler_lambda_function:
@@ -308,29 +348,23 @@ class DisentangledScoreVAEmodel(pl.LightningModule):
                         return 1
                 else:
                     return 1
+                
+        # Optimizer for the encoder
+        encoder_optimizer = optim.Adam(self.encoder.parameters(), lr=self.config.optim.encoder_lr, betas=(self.config.optim.beta1, 0.999), 
+                                        eps=self.config.optim.eps, weight_decay=self.config.optim.weight_decay)
         
-        if self.config.training.use_pretrained:
-            if self.config.training.encoder_only:
-                ae_params = self.encoder.parameters()
-            else:
-                ae_params = list(self.encoder.parameters())+list(self.latent_correction_model.parameters())
-            
-            ae_optimizer = optim.Adam(ae_params, lr=self.learning_rate, betas=(self.config.optim.beta1, 0.999), eps=self.config.optim.eps,
-                            weight_decay=self.config.optim.weight_decay)
-            ae_scheduler = {'scheduler': optim.lr_scheduler.LambdaLR(ae_optimizer, scheduler_lambda_function(self.config.optim.warmup)),
+        # Set up the learning rate scheduler for the encoder's optimizer
+        encoder_scheduler = {'scheduler': optim.lr_scheduler.LambdaLR(encoder_optimizer, scheduler_lambda_function(self.config.optim.warmup)),
                             'interval': 'step'}  # called after each training step
-            return [ae_optimizer], [ae_scheduler]
-        else:
-            ae_params = list(self.encoder.parameters())+list(self.latent_correction_model.parameters())
-            ae_optimizer = optim.Adam(ae_params, lr=self.learning_rate, betas=(self.config.optim.beta1, 0.999), eps=self.config.optim.eps,
-                            weight_decay=self.config.optim.weight_decay)
-            ae_scheduler = {'scheduler': optim.lr_scheduler.LambdaLR(ae_optimizer, scheduler_lambda_function(self.config.optim.slowing_factor*self.config.optim.warmup)),
-                            'interval': 'step'}  # called after each training step
-                            
-            unconditional_score_optimizer = optim.Adam(self.unconditional_score_model.parameters(), 
-                                            lr=self.learning_rate, betas=(self.config.optim.beta1, 0.999), eps=self.config.optim.eps,
-                                            weight_decay=self.config.optim.weight_decay)
-            unconditional_score_scheduler = {'scheduler': optim.lr_scheduler.LambdaLR(unconditional_score_optimizer, scheduler_lambda_function(self.config.optim.warmup)),
-                                            'interval': 'step'}  # called after each training step
-            
-            return [ae_optimizer, unconditional_score_optimizer], [ae_scheduler, unconditional_score_scheduler]
+        
+        
+        # Optimizer for the MI_diffusion_model
+        mi_diffusion_optimizer = optim.Adam(self.MI_diffusion_model.parameters(), lr=self.config.optim.MI_diffusion_lr, betas=(self.config.optim.beta1, 0.999), 
+                                        eps=self.config.optim.eps, weight_decay=self.config.optim.weight_decay)
+
+        # Set up the learning rate scheduler for the MI diffusion optimizer
+        mi_diffusion_scheduler = {'scheduler': optim.lr_scheduler.LambdaLR(mi_diffusion_optimizer, scheduler_lambda_function(self.config.optim.warmup)),
+                                'interval': 'step'}  # called after each training step
+
+        return [encoder_optimizer, mi_diffusion_optimizer], [encoder_scheduler, mi_diffusion_scheduler]
+

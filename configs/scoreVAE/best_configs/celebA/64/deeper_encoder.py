@@ -12,7 +12,7 @@ def get_config():
   #logging
   config.logging = logging = ml_collections.ConfigDict()
   logging.log_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/CelebA_64' if config.server=='hpc' else '/store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64' 
-  logging.log_name = 'encoder'
+  logging.log_name = 'deeper_encoder'
   logging.top_k = 3
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
@@ -26,10 +26,10 @@ def get_config():
   training.encoder_only = True
   training.t_dependent = True
   training.conditioning_approach = 'sr3'
-  training.batch_size = 36
+  training.batch_size = 32
   training.t_batch_size = 1
   training.num_nodes = 1
-  training.gpus = 1
+  training.gpus = 2
   training.accelerator = 'gpu'
   training.accumulate_grad_batches = 1
   training.workers = 4*training.gpus
@@ -112,7 +112,7 @@ def get_config():
 
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = '/store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/epoch=23--eval_loss_epoch=69.133.ckpt'
+  model.checkpoint_path = None
   model.num_scales = 1000
   model.ema_rate = 0.999 #0.9999
   model.image_size = data.image_size
@@ -137,7 +137,7 @@ def get_config():
   model.attn_checkpoint: bool = False
 
   model.encoder_name = 'BeatGANsEncoderModel'
-  model.model_channels: int = 64
+  model.model_channels: int = 128
   model.enc_num_res_blocks = 2
   model.latent_dim = data.latent_dim
   model.enc_attn_resolutions = ()
@@ -149,7 +149,7 @@ def get_config():
   model.encoder_input_channels = data.num_channels
   model.enc_out_channels = 2*data.latent_dim
   model.encoder_split_output=False
-  model.dropout: float = 0
+  model.dropout: float = 0.1
 
   # optimization
   config.optim = optim = ml_collections.ConfigDict()

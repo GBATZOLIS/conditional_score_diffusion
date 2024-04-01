@@ -54,65 +54,51 @@ def optimization_manager(config):
 
   return optimize_fn
 
-def multi_label_crossentropy(logits, labels):
-  #logits size: (batch_size, num_features, classes_per_feature)
-  #labels size: (batch_size, num_features)
 
-  # Initialize cross-entropy loss
-  cross_entropy_loss = nn.CrossEntropyLoss(reduction='none')
+def get_simplified_scoreVAE_loss_fn(sde, likelihood_weighting=True, kl_weight=1):
+    def loss_fn(score_fn, encoder, batch, t_dist):
+      x, y = batch
 
-  total_loss = 0.0
-  for feature_idx in range(labels.shape[1]):  # Iterate over each feature
-    # Extract logits and targets for the current feature
-    feature_logits = logits[:, feature_idx, :]
-    feature_targets = labels[:, feature_idx]
+      t0 = torch.zeros(x.shape[0]).type_as(x)
+      latent_distribution_parameters = encoder(x, t0)
+      channels = latent_distribution_parameters.size(1)//2
+      mean_z = latent_distribution_parameters[:, :channels]
+      log_var_z = latent_distribution_parameters[:, channels:]
 
-    # Calculate cross-entropy loss for the current feature
-    feature_loss = cross_entropy_loss(feature_logits, feature_targets)
-
-    # Sum up the losses
-    total_loss += feature_loss.mean()  # Calculate mean to normalize the loss for the current feature
-
-  # Calculate the average loss over all features
-  avg_loss = total_loss / labels.shape[1]
-
-  return avg_loss
-
-def get_unpaired_image2image_loss_fn(sde, likelihood_weighting, kl_weight):
-  def loss_fn(score_fn, x, mean_z, log_var_z, t_dist):
-    # Compute KL loss using directly flattened tensors
-    kl_loss = -0.5 * torch.sum(
+      # Compute KL loss using directly flattened tensors
+      kl_loss = -0.5 * torch.sum(
                   1 + log_var_z.view(log_var_z.size(0), -1) - mean_z.view(mean_z.size(0), -1).pow(2) - log_var_z.view(log_var_z.size(0), -1).exp(),dim=1).mean()
 
-    # Sample latent variables using the original shape of mean_z and log_var_z
-    latent = mean_z + (0.5 * log_var_z).exp() * torch.randn_like(mean_z)
-    
-    t = t_dist.sample((x.shape[0],)).type_as(x)
-    z = torch.randn_like(x)
-    mean, std = sde.marginal_prob(x, t)
-    perturbed_x = mean + std[(...,) + (None,) * len(x.shape[1:])] * z
+      # Sample latent variables using the original shape of mean_z and log_var_z
+      latent = mean_z + (0.5 * log_var_z).exp() * torch.randn_like(mean_z)
+      
+      t = t_dist.sample((x.shape[0],)).type_as(x)
+      n = torch.randn_like(x)
+      mean, std = sde.marginal_prob(x, t)
+      perturbed_x = mean + std[(...,) + (None,) * len(x.shape[1:])] * n
+      
+      cond = [y, latent]
+      score = score_fn(perturbed_x, cond, t)
+      grad_log_pert_kernel = -1 * n / std[(...,) + (None,) * len(x.shape[1:])]
+      losses = torch.square(score - grad_log_pert_kernel)
+            
+      if likelihood_weighting:
+        _, g = sde.sde(torch.zeros_like(x), t, True)
+        w2 = g ** 2
+      else:
+        w2 = std ** 2
+            
+      importance_weight = torch.exp(-1*t_dist.log_prob(t).type_as(t))
+      losses = torch.sum(losses.reshape(losses.shape[0], -1), dim=-1) * w2 * importance_weight
+      losses *= 1/2
+      rec_loss = torch.mean(losses)
 
-    score = score_fn(perturbed_x, latent, t)
-            
-    grad_log_pert_kernel = -1 * z / std[(...,) + (None,) * len(x.shape[1:])]
-    losses = torch.square(score - grad_log_pert_kernel)
-            
-    if likelihood_weighting:
-      _, g = sde.sde(torch.zeros_like(x), t, True)
-      w2 = g ** 2
-    else:
-      w2 = std ** 2
-            
-    importance_weight = torch.exp(-1*t_dist.log_prob(t).type_as(t))
-    losses = torch.sum(losses.reshape(losses.shape[0], -1), dim=-1) * w2 * importance_weight
-    losses *= 1/2
-    rec_loss = torch.mean(losses)
-    loss = rec_loss + kl_weight * kl_loss
-    return loss
-  
-  return loss_fn
+      loss = rec_loss + kl_weight * kl_loss
 
+      return loss
     
+    return loss_fn
+
 def get_attribute_corrector_loss_fn(sde, likelihood_weighting=True):
   def recon_loss_fn(score_fn, batch, t_dist):
     x, y = batch
@@ -142,82 +128,6 @@ def get_attribute_corrector_loss_fn(sde, likelihood_weighting=True):
   
   return recon_loss_fn
 
-#to be deleted
-def get_attribute_classifier_scoreVAE_loss_fn(sde, likelihood_weighting=True, eps=1e-5):
-  def AttributeClassifier_loss_fn(attribute_classifier, batch):
-        x, attributes = batch  # attributes shape=(batch_size, num_features)
-        t = torch.zeros(x.shape[0]).type_as(x)
-        logits = attribute_classifier(x, t)  # output size: (batch_size, num_features, classes_per_feature)
-        avg_cross_entropy = multi_label_crossentropy(logits, attributes)
-        return avg_cross_entropy
-        
-  def recon_loss_fn(score_fn, batch, t_dist):
-        x, y = batch
-
-        t = t_dist.sample((x.shape[0],)).type_as(x)
-        z = torch.randn_like(x)
-        mean, std = sde.marginal_prob(x, t)
-        perturbed_x = mean + std[(...,) + (None,) * len(x.shape[1:])] * z
-            
-        score = score_fn(perturbed_x, y, t)
-            
-        grad_log_pert_kernel = -1 * z / std[(...,) + (None,) * len(x.shape[1:])]
-        losses = torch.square(score - grad_log_pert_kernel)
-            
-        if likelihood_weighting:
-          _, g = sde.sde(torch.zeros_like(x), t, True)
-          w2 = g ** 2
-        else:
-          w2 = std ** 2
-            
-        #importance_weight = torch.exp(-1*t_dist.log_prob(t).type_as(t))
-        losses = torch.sum(losses.reshape(losses.shape[0], -1), dim=-1) * w2 #* importance_weight
-        losses *= 1/2
-        loss = torch.mean(losses)
-
-        return loss
-
-  def loss_fn(attribute_classifier, score_fn, batch, t_dist):
-    crossentropy_loss = AttributeClassifier_loss_fn(attribute_classifier, batch)
-    recon_loss = recon_loss_fn(score_fn, batch, t_dist)
-    loss = recon_loss + crossentropy_loss
-    return loss
-  
-  return loss_fn
-
-def get_attribute_classifier_loss_fn(sde, train, eps):
-    def loss_fn(attribute_classifier, batch, t_dist):
-        x, attributes = batch  # attributes shape=(batch_size, num_features)
-        t = t_dist.sample((x.shape[0],)).type_as(x)
-        z = torch.randn_like(x)
-
-        mean, std = sde.marginal_prob(x, t)
-        perturbed_x = mean + std[(...,) + (None,) * len(x.shape[1:])] * z
-
-        logits = attribute_classifier(perturbed_x, t)  # output size: (batch_size, num_features, classes_per_feature)
-
-        # Initialize cross-entropy loss
-        cross_entropy_loss = nn.CrossEntropyLoss(reduction='none')
-
-        total_loss = 0.0
-        for feature_idx in range(attributes.shape[1]):  # Iterate over each feature
-            # Extract logits and targets for the current feature
-            feature_logits = logits[:, feature_idx, :]
-            feature_targets = attributes[:, feature_idx]
-
-            # Calculate cross-entropy loss for the current feature
-            feature_loss = cross_entropy_loss(feature_logits, feature_targets)
-
-            # Sum up the losses
-            total_loss += feature_loss.mean()  # Calculate mean to normalize the loss for the current feature
-
-        # Calculate the average loss over all features
-        avg_loss = total_loss / attributes.shape[1]
-
-        return avg_loss
-
-    return loss_fn
-
 def get_accuracy_fn(sde, attribute_classifier, t):
     def accuracy_fn(batch):
         x, attributes = batch  # attributes shape=(batch_size, num_features)
@@ -242,7 +152,6 @@ def get_accuracy_fn(sde, attribute_classifier, t):
         return mean_accuracy.item()  # Return the item for a plain number
 
     return accuracy_fn
-
 
 
 def get_scoreVAE_loss_fn(sde, train, variational=False, likelihood_weighting=True, eps=1e-5, t_batch_size=1, kl_weight=1, 
@@ -836,3 +745,140 @@ def get_general_sde_loss_fn(sde, train, conditional=False, reduce_mean=True, con
       return loss
 
   return loss_fn
+
+#---------------------------------
+#NEW LOSS FUNCTIONS - UNUSED YET
+
+def multi_label_crossentropy(logits, labels):
+  #logits size: (batch_size, num_features, classes_per_feature)
+  #labels size: (batch_size, num_features)
+
+  # Initialize cross-entropy loss
+  cross_entropy_loss = nn.CrossEntropyLoss(reduction='none')
+
+  total_loss = 0.0
+  for feature_idx in range(labels.shape[1]):  # Iterate over each feature
+    # Extract logits and targets for the current feature
+    feature_logits = logits[:, feature_idx, :]
+    feature_targets = labels[:, feature_idx]
+
+    # Calculate cross-entropy loss for the current feature
+    feature_loss = cross_entropy_loss(feature_logits, feature_targets)
+
+    # Sum up the losses
+    total_loss += feature_loss.mean()  # Calculate mean to normalize the loss for the current feature
+
+  # Calculate the average loss over all features
+  avg_loss = total_loss / labels.shape[1]
+
+  return avg_loss
+
+def get_unpaired_image2image_loss_fn(sde, likelihood_weighting, kl_weight):
+  def loss_fn(score_fn, x, mean_z, log_var_z, t_dist):
+    # Compute KL loss using directly flattened tensors
+    kl_loss = -0.5 * torch.sum(
+                  1 + log_var_z.view(log_var_z.size(0), -1) - mean_z.view(mean_z.size(0), -1).pow(2) - log_var_z.view(log_var_z.size(0), -1).exp(),dim=1).mean()
+
+    # Sample latent variables using the original shape of mean_z and log_var_z
+    latent = mean_z + (0.5 * log_var_z).exp() * torch.randn_like(mean_z)
+    
+    t = t_dist.sample((x.shape[0],)).type_as(x)
+    z = torch.randn_like(x)
+    mean, std = sde.marginal_prob(x, t)
+    perturbed_x = mean + std[(...,) + (None,) * len(x.shape[1:])] * z
+
+    score = score_fn(perturbed_x, latent, t)
+            
+    grad_log_pert_kernel = -1 * z / std[(...,) + (None,) * len(x.shape[1:])]
+    losses = torch.square(score - grad_log_pert_kernel)
+            
+    if likelihood_weighting:
+      _, g = sde.sde(torch.zeros_like(x), t, True)
+      w2 = g ** 2
+    else:
+      w2 = std ** 2
+            
+    importance_weight = torch.exp(-1*t_dist.log_prob(t).type_as(t))
+    losses = torch.sum(losses.reshape(losses.shape[0], -1), dim=-1) * w2 * importance_weight
+    losses *= 1/2
+    rec_loss = torch.mean(losses)
+    loss = rec_loss + kl_weight * kl_loss
+    return loss
+  
+  return loss_fn
+
+#to be deleted
+def get_attribute_classifier_scoreVAE_loss_fn(sde, likelihood_weighting=True, eps=1e-5):
+  def AttributeClassifier_loss_fn(attribute_classifier, batch):
+        x, attributes = batch  # attributes shape=(batch_size, num_features)
+        t = torch.zeros(x.shape[0]).type_as(x)
+        logits = attribute_classifier(x, t)  # output size: (batch_size, num_features, classes_per_feature)
+        avg_cross_entropy = multi_label_crossentropy(logits, attributes)
+        return avg_cross_entropy
+        
+  def recon_loss_fn(score_fn, batch, t_dist):
+        x, y = batch
+
+        t = t_dist.sample((x.shape[0],)).type_as(x)
+        z = torch.randn_like(x)
+        mean, std = sde.marginal_prob(x, t)
+        perturbed_x = mean + std[(...,) + (None,) * len(x.shape[1:])] * z
+            
+        score = score_fn(perturbed_x, y, t)
+            
+        grad_log_pert_kernel = -1 * z / std[(...,) + (None,) * len(x.shape[1:])]
+        losses = torch.square(score - grad_log_pert_kernel)
+            
+        if likelihood_weighting:
+          _, g = sde.sde(torch.zeros_like(x), t, True)
+          w2 = g ** 2
+        else:
+          w2 = std ** 2
+            
+        #importance_weight = torch.exp(-1*t_dist.log_prob(t).type_as(t))
+        losses = torch.sum(losses.reshape(losses.shape[0], -1), dim=-1) * w2 #* importance_weight
+        losses *= 1/2
+        loss = torch.mean(losses)
+
+        return loss
+
+  def loss_fn(attribute_classifier, score_fn, batch, t_dist):
+    crossentropy_loss = AttributeClassifier_loss_fn(attribute_classifier, batch)
+    recon_loss = recon_loss_fn(score_fn, batch, t_dist)
+    loss = recon_loss + crossentropy_loss
+    return loss
+  
+  return loss_fn
+
+def get_attribute_classifier_loss_fn(sde, train, eps):
+    def loss_fn(attribute_classifier, batch, t_dist):
+        x, attributes = batch  # attributes shape=(batch_size, num_features)
+        t = t_dist.sample((x.shape[0],)).type_as(x)
+        z = torch.randn_like(x)
+
+        mean, std = sde.marginal_prob(x, t)
+        perturbed_x = mean + std[(...,) + (None,) * len(x.shape[1:])] * z
+
+        logits = attribute_classifier(perturbed_x, t)  # output size: (batch_size, num_features, classes_per_feature)
+
+        # Initialize cross-entropy loss
+        cross_entropy_loss = nn.CrossEntropyLoss(reduction='none')
+
+        total_loss = 0.0
+        for feature_idx in range(attributes.shape[1]):  # Iterate over each feature
+            # Extract logits and targets for the current feature
+            feature_logits = logits[:, feature_idx, :]
+            feature_targets = attributes[:, feature_idx]
+
+            # Calculate cross-entropy loss for the current feature
+            feature_loss = cross_entropy_loss(feature_logits, feature_targets)
+
+            # Sum up the losses
+            total_loss += feature_loss.mean()  # Calculate mean to normalize the loss for the current feature
+
+        # Calculate the average loss over all features
+        avg_loss = total_loss / attributes.shape[1]
+
+        return avg_loss
+
+    return loss_fn

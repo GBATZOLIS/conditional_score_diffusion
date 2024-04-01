@@ -24,8 +24,16 @@ def get_callback_by_name(name):
 
 def get_callbacks(config):
     #callbacks=[get_callback_by_name('ema')()] #check if this works for testing as well.
-    callbacks=[get_callback_by_name('ema')(decay=config.model.ema_rate)]
-    #callbacks = []
+    if hasattr(config.optim, 'use_ema'):
+      use_ema = config.optim.use_ema
+    else:
+      use_ema = True
+    
+    callbacks = []
+
+    if use_ema:
+      callbacks.append(get_callback_by_name('ema')(decay=config.model.ema_rate))
+
 
     if config.training.lightning_module == 'encoder_only_pretrained_score_vae':
       callbacks.append(get_callback_by_name('load_new_prior')(config))

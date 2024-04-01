@@ -1069,3 +1069,296 @@ DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/Cel
 DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/prior/checkpoints/best/last.ckpt
 DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/attribute_conditional/checkpoints/best/last.ckpt
 DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/prior/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/hparams.yaml
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/hparams.yaml
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/epoch=0--eval_loss_epoch=102.800.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/time/2024-03-19 19:04.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/epoch=1--eval_loss_epoch=99.030.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/time/2024-03-19 19:04.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/epoch=2--eval_loss_epoch=93.049.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/time/2024-03-19 19:04.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/epoch=3--eval_loss_epoch=90.435.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/time/2024-03-19 19:04.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/epoch=4--eval_loss_epoch=92.539.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/epoch=5--eval_loss_epoch=88.619.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/time/2024-03-19 19:04.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/epoch=6--eval_loss_epoch=88.923.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/epoch=7--eval_loss_epoch=90.252.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/epoch=8--eval_loss_epoch=86.541.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/time/2024-03-19 19:04.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/epoch=10--eval_loss_epoch=88.223.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/epoch=11--eval_loss_epoch=86.433.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/time/2024-03-19 19:04.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/epoch=12--eval_loss_epoch=87.260.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/epoch=14--eval_loss_epoch=85.128.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/time/2024-03-19 19:04.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/epoch=16--eval_loss_epoch=83.328.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/time/2024-03-19 19:04.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/epoch=17--eval_loss_epoch=85.308.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/epoch=18--eval_loss_epoch=83.838.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/epoch=19--eval_loss_epoch=82.844.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/time/2024-03-19 19:04.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/epoch=20--eval_loss_epoch=83.810.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/epoch=21--eval_loss_epoch=82.483.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/time/2024-03-19 19:04.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/epoch=22--eval_loss_epoch=81.354.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/time/2024-03-19 19:04.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/epoch=23--eval_loss_epoch=79.711.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/time/2024-03-19 19:04.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/epoch=23--eval_loss_epoch=69.133.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/time/2024-03-20 08:55.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/epoch=26--eval_loss_epoch=77.702.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/epoch=29--eval_loss_epoch=78.565.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/epoch=35--eval_loss_epoch=75.338.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/hparams.yaml
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/hparams.yaml
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/epoch=0--eval_loss_epoch=99.236.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/time/2024-03-20 14:08.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/epoch=1--eval_loss_epoch=94.152.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/time/2024-03-20 14:08.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/epoch=2--eval_loss_epoch=96.510.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/epoch=3--eval_loss_epoch=91.401.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/time/2024-03-20 14:08.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/epoch=4--eval_loss_epoch=85.838.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/time/2024-03-20 14:08.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/epoch=5--eval_loss_epoch=92.949.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/epoch=6--eval_loss_epoch=86.454.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/epoch=8--eval_loss_epoch=85.924.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/epoch=9--eval_loss_epoch=85.457.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/time/2024-03-20 14:08.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/epoch=10--eval_loss_epoch=84.120.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/epoch=12--eval_loss_epoch=83.864.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/epoch=13--eval_loss_epoch=84.806.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/time/2024-03-20 14:08.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/epoch=15--eval_loss_epoch=81.807.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/epoch=19--eval_loss_epoch=82.052.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/epoch=21--eval_loss_epoch=77.105.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/epoch=22--eval_loss_epoch=79.090.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/time/2024-03-20 14:08.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/epoch=24--eval_loss_epoch=77.753.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/time/2024-03-20 14:08.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/epoch=28--eval_loss_epoch=77.732.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/epoch=33--eval_loss_epoch=76.018.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/epoch=40--eval_loss_epoch=76.919.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/time/2024-03-20 14:08.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/epoch=47--eval_loss_epoch=76.791.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/epoch=48--eval_loss_epoch=73.414.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/time/2024-03-20 14:08.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/epoch=57--eval_loss_epoch=74.527.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/epoch=60--eval_loss_epoch=70.700.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/epoch=67--eval_loss_epoch=74.156.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/epoch=81--eval_loss_epoch=72.311.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/time/2024-03-20 14:08.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/epoch=0--eval_loss_epoch=10442.037.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/best/last-v1.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_encoder/checkpoints/time/2024-03-29 12:28.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/hparams.yaml
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/hparams.yaml
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/checkpoints/best/epoch=0--eval_loss_epoch=9562.132.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/checkpoints/time/2024-03-29 12:48.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/checkpoints/best/epoch=1--eval_loss_epoch=nan.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/checkpoints/best/epoch=2--eval_loss_epoch=nan.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/checkpoints/best/epoch=0--eval_loss_epoch=83.727.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/checkpoints/time/2024-03-29 13:22.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/checkpoints/best/epoch=1--eval_loss_epoch=nan.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/hparams.yaml
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/hparams.yaml
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/checkpoints/best/epoch=0--eval_loss_epoch=104.519.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/checkpoints/time/2024-03-29 13:58.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/checkpoints/best/epoch=1--eval_loss_epoch=nan.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/hparams.yaml
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/hparams.yaml
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/checkpoints/best/epoch=0--eval_loss_epoch=105.346.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/checkpoints/time/2024-04-01 11:22.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/checkpoints/best/epoch=1--eval_loss_epoch=102.233.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/checkpoints/time/2024-04-01 11:22.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/checkpoints/best/epoch=2--eval_loss_epoch=103.641.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/checkpoints/best/epoch=3--eval_loss_epoch=100.758.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/checkpoints/time/2024-04-01 11:22.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/checkpoints/best/epoch=4--eval_loss_epoch=97.651.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/checkpoints/best/epoch=6--eval_loss_epoch=92.584.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/checkpoints/best/epoch=7--eval_loss_epoch=97.055.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/checkpoints/best/epoch=8--eval_loss_epoch=94.407.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/checkpoints/best/epoch=9--eval_loss_epoch=95.255.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/checkpoints/time/2024-04-01 11:22.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder/checkpoints/best/last.ckpt

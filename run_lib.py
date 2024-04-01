@@ -1,5 +1,5 @@
 #from models import ncsnpp, ddpm, ncsnv2, fcn, ddpm3D, fcn_potential, ddpm_potential, csdi #needed for model registration
-from models import ImprovedDiffusionUnet, BeatGANsEncoderModel, BeatGANsUNET_latent_conditioned, BeatGANsUNET, ddpm, ncsnv2, fcn, ddpm3D, fcn_potential, ddpm_potential, csdi, encoder, decoder, half_U #needed for model registration
+from models import SkipMLP, ImprovedDiffusionUnet, BeatGANsEncoderModel, BeatGANsUNET_latent_conditioned, BeatGANsUNET, ddpm, ncsnv2, fcn, ddpm3D, fcn_potential, ddpm_potential, csdi, encoder, decoder, half_U #needed for model registration
 import pytorch_lightning as pl
 #from pytorch_lightning.plugins import DDPPlugin
 import numpy as np
@@ -13,11 +13,12 @@ from lightning_callbacks.utils import get_callbacks
 from lightning_data_modules import HaarDecomposedDataset, ImageDatasets, PairedDataset, SyntheticDataset, SyntheticPairedDataset, Synthetic1DConditionalDataset, SyntheticTimeSeries, SRDataset, SRFLOWDataset, KSphereDataset, MammothDataset, LineDataset, GanDataset, guided_diff_datasets #needed for datamodule registration
 from lightning_data_modules.utils import create_lightning_datamodule
 
-from lightning_modules import AttributeConditionalModel, AttributeEncoder, BaseSdeGenerativeModel, ScoreVAEmodel, PretrainedScoreVAEmodel, EncoderOnlyPretrainedScoreVAEmodel, CorrectedEncoderOnlyPretrainedScoreVAEmodel, ConditionalSdeGenerativeModel #need for lightning module registration
+from lightning_modules import DisentangledScoreVAEmodel, AttributeConditionalModel, AttributeEncoder, BaseSdeGenerativeModel, ScoreVAEmodel, PretrainedScoreVAEmodel, EncoderOnlyPretrainedScoreVAEmodel, CorrectedEncoderOnlyPretrainedScoreVAEmodel, ConditionalSdeGenerativeModel #need for lightning module registration
 from lightning_modules.utils import create_lightning_module
 
 from torchvision.transforms import RandomCrop, CenterCrop, ToTensor, Resize
 from torchvision.transforms.functional import InterpolationMode
+from pytorch_lightning.strategies import DDPStrategy
 
 import create_dataset
 from torch.nn import Upsample
@@ -57,6 +58,7 @@ def train(config, log_path, checkpoint_path, log_name=None):
     #callbacks.append(LearningRateFinder())
 
     trainer = pl.Trainer(accelerator = config.training.accelerator,
+                          strategy = DDPStrategy(find_unused_parameters=True),
                           devices = config.training.gpus,
                           num_nodes = config.training.num_nodes,
                           accumulate_grad_batches = config.training.accumulate_grad_batches,
@@ -96,7 +98,7 @@ def test(config, log_path, checkpoint_path):
     pl_module = pl_module.load_from_checkpoint(checkpoint_path, config=config)
     pl_module = pl_module.to('cuda')
 
-    scoreVAE_testing.check_increasing_classifier_guidance_strength(pl_module, DataModule, logger)
+    scoreVAE_testing.check_changing_attributes(pl_module, DataModule, logger)
     '''
     trainer = pl.Trainer(accelerator = 'gpu' if config.training.gpus > 0 else 'cpu',
                           devices = config.training.gpus,

@@ -119,3 +119,41 @@ class AttributeEncoderVisualizationCallback(Callback):
                 if trainer.global_rank == 0:
                     pl_module.logger.experiment.add_image(tag, concatenated_grid, current_epoch)
 
+@utils.register_callback(name='attribute_conditional_encoder')
+class AttributeConditionalEncoderVisualizationCallback(Callback):
+    def __init__(self):
+        super().__init__()
+
+    def on_validation_epoch_end(self, trainer, pl_module):
+        current_epoch = pl_module.current_epoch
+        vis_freq = pl_module.config.training.visualisation_freq
+        
+        if current_epoch % vis_freq == 0:
+            dataloader_iterator = iter(trainer.datamodule.val_dataloader())
+            attribute_to_index_map = trainer.datamodule.get_attribute_to_index_map()
+            attributes_to_flip = ['Eyeglasses']
+            num_batches = 1
+            for _ in range(num_batches):
+                try:
+                    x, y = next(dataloader_iterator)
+                    x, y = x.to(pl_module.device), y.to(pl_module.device)
+                except StopIteration:
+                    print('Requested number of batches exceeds the number of batches available in the val dataloader.')
+                    break
+                
+                #encode, flip, decode
+                z, _ = pl_module.encode(x, y)
+                flipped_y = pl_module.flip_attributes(y, attributes_to_flip, attribute_to_index_map)
+                x_flipped = pl_module.decode(flipped_y, z)
+                
+                # Create a grid of original images
+                num_rows = int(sqrt(x.size(0)))
+                original_images_grid = torchvision.utils.make_grid(x, nrow=num_rows, normalize=True, scale_each=True)
+                # Create a grid of conditional samples
+                flipped_images_grid = torchvision.utils.make_grid(x_flipped, nrow=num_rows, normalize=True, scale_each=True)
+                # Concatenate the original and conditional samples grids
+                concatenated_grid = torch.cat((original_images_grid, flipped_images_grid), 2)  # Concatenate side by side
+                # Log the concatenated grid to TensorBoard
+                tag = f'Original and Flipped Attributes'
+                if trainer.global_rank == 0:
+                    pl_module.logger.experiment.add_image(tag, concatenated_grid, current_epoch)

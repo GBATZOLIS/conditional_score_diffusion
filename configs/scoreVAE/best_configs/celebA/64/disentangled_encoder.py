@@ -12,7 +12,7 @@ def get_config():
   #logging
   config.logging = logging = ml_collections.ConfigDict()
   logging.log_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/CelebA_64' if config.server=='hpc' else '/store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64' 
-  logging.log_name = 'encoder'
+  logging.log_name = 'disentangled_encoder'
   logging.top_k = 3
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
@@ -26,10 +26,10 @@ def get_config():
   training.encoder_only = True
   training.t_dependent = True
   training.conditioning_approach = 'sr3'
-  training.batch_size = 36
+  training.batch_size = 32
   training.t_batch_size = 1
   training.num_nodes = 1
-  training.gpus = 1
+  training.gpus = 2
   training.accelerator = 'gpu'
   training.accumulate_grad_batches = 1
   training.workers = 4*training.gpus
@@ -56,6 +56,9 @@ def get_config():
   training.variational = True
   training.cde_loss = False
   training.kl_weight = 1e-3
+
+  #DISENTANGLED REPRESENTATION LEARNING TRAINING PARAMETERS (new)
+  training.disentanglement_factor = 0 #controls the degree of disentanglement.
 
   # validation
   config.validation = validation = ml_collections.ConfigDict()
@@ -112,55 +115,80 @@ def get_config():
 
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = '/store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/encoder/checkpoints/best/epoch=23--eval_loss_epoch=69.133.ckpt'
+  model.checkpoint_path = None
   model.num_scales = 1000
   model.ema_rate = 0.999 #0.9999
-  model.image_size = data.image_size
-  model.in_channels = data.num_channels
-  model.out_channels = data.num_channels
-  model.num_res_blocks: int = 2
-  model.num_input_res_blocks: int = None
-  model.embed_channels = 512
-  model.time_embed_channels: int = None
-  model.input_channel_mult = None
-  model.conv_resample: bool = True
-  model.dims: int = 2
-  model.num_classes: int = None
-  model.use_checkpoint: bool = False
-  model.num_heads: int = 1
-  model.num_head_channels: int = -1
-  model.num_heads_upsample: int = -1
-  model.use_new_attention_order: bool = False
-  model.resnet_two_cond: bool = False
-  model.resnet_cond_channels: int = None
-  model.resnet_use_zero_module: bool = True
-  model.attn_checkpoint: bool = False
 
-  model.encoder_name = 'BeatGANsEncoderModel'
-  model.model_channels: int = 64
-  model.enc_num_res_blocks = 2
-  model.latent_dim = data.latent_dim
-  model.enc_attn_resolutions = ()
-  model.enc_use_time_condition = True
-  model.enc_channel_mult = (1, 1, 2, 3, 4)
-  model.enc_pool = 'flatten-linear'
-  model.resolution_before_flattening = data.image_size // 2**(len(model.enc_channel_mult)-1)
-  model.resblock_updown: bool = False
-  model.encoder_input_channels = data.num_channels
-  model.enc_out_channels = 2*data.latent_dim
-  model.encoder_split_output=False
-  model.dropout: float = 0
+  config.encoder = encoder = ml_collections.ConfigDict()
+  encoder.name = 'BeatGANsEncoderModel'
+  
+  encoder.image_size = data.image_size
+  encoder.in_channels = data.num_channels
+  encoder.out_channels = data.num_channels
+  encoder.model_channels = 128
+  encoder.enc_num_res_blocks = 2
+  encoder.latent_dim = data.latent_dim
+  encoder.enc_attn_resolutions = ()
+  encoder.enc_use_time_condition = True
+  encoder.enc_channel_mult = (1, 1, 2, 3, 4)
+  encoder.enc_pool = 'flatten-linear'
+  encoder.resolution_before_flattening = data.image_size // 2 ** (len(encoder.enc_channel_mult) - 1)
+  encoder.conv_resample = True
+  encoder.dims = 2
+  encoder.use_checkpoint = False
+  encoder.num_heads = 1
+  encoder.num_head_channels = -1
+  encoder.use_new_attention_order = False
+  encoder.dropout = 0.1
+  encoder.enc_out_channels = 2 * data.latent_dim
+  encoder.encoder_split_output = False
+  encoder.resblock_updown = False
+
+  # Redundant encoder attributes
+  # encoder.num_input_res_blocks = None
+  # encoder.embed_channels = 512
+  # encoder.time_embed_channels = None
+  # encoder.input_channel_mult = None
+  # encoder.num_classes = None
+  # encoder.num_heads_upsample = -1
+  # encoder.resnet_two_cond = False
+  # encoder.resnet_cond_channels = None
+  # encoder.resnet_use_zero_module = True
+  # encoder.attn_checkpoint = False
+  
+
+  config.MI_estimator = MI_estimator = ml_collections.ConfigDict()
+  MI_estimator.name = 'MLPSkipNet'
+  MI_estimator.output_channels = data.latent_dim
+  MI_estimator.attribute_channels = data.total_num_attributes if data.attributes == 'all' else len(data.attributes)
+  MI_estimator.input_channels = data.latent_dim + MI_estimator.attribute_channels
+  MI_estimator.num_channels = MI_estimator.output_channels  # latent dimension
+  MI_estimator.num_layers = 10
+  MI_estimator.skip_layers = list(range(1, 10))
+  MI_estimator.num_hid_channels = 1024
+  MI_estimator.num_time_emb_channels = 64
+  MI_estimator.activation = 'silu'  # Assuming Activation enum or similar, replace with actual class or enum if needed
+  MI_estimator.use_norm = True
+  MI_estimator.condition_bias = 1
+  MI_estimator.dropout = 0
+  MI_estimator.last_act = 'none'  # Assuming Activation enum or similar, replace with actual class or enum if needed
+  MI_estimator.num_time_layers = 2
+  MI_estimator.time_last_act = False
 
   # optimization
   config.optim = optim = ml_collections.ConfigDict()
+  optim.use_ema = False
   optim.weight_decay = 0
   optim.optimizer = 'Adam'
-  optim.lr = 5e-5
+  optim.encoder_lr = 5e-5
+  optim.MI_diffusion_lr = 1e-4
+  optim.MI_update_steps = 5
   optim.beta1 = 0.9
   optim.eps = 1e-8
   optim.warmup = 1000
   optim.slowing_factor = 1
-  optim.grad_clip = 1.
+  optim.grad_clip = 0
+  optim.manual_grad_clip = 1.
 
   config.seed = 42
   return config

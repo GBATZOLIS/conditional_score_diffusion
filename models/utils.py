@@ -118,11 +118,20 @@ def create_encoder(config):
   encoder = get_model(model_name)(config)
   return encoder
 
-def create_model(config):
-  """Create the score model."""
-  model_name = config.model.name
-  score_model = get_model(model_name)(config)
-  return score_model
+def create_model(config, aux_model=None):
+    """Create the score model."""
+    if aux_model is not None:
+        # Ensure the aux_model attribute exists within config
+        assert hasattr(config, aux_model), f'{aux_model} does not exist in the config.'
+        # Dynamically get the model name based on aux_model
+        model_name = getattr(config, aux_model).name
+    else:
+        # Use the default model name
+        model_name = config.model.name
+
+    # Instantiate the score model using the model name
+    score_model = get_model(model_name)(config)
+    return score_model
 
 def load_encoder(base_config):
   encoder_log_name = base_config.logging.encoder_log_name

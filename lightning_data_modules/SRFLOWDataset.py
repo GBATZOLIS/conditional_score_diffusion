@@ -157,17 +157,28 @@ class CelebAAnnotatedDataset(PKLDataset):
             attributes = torch.stack(attributes, dim=0)
 
             if self.config.data.attributes == 'all':
-                selected_attribute_names = attribute_names
+                # For 'all' attributes, maintain original indices
+                self.index_to_attribute = {index: name for index, name in enumerate(attribute_names)}
+                self.attribute_to_index = {name: index for index, name in enumerate(attribute_names)}
             else:
-                selected_attribute_names = self.config.data.attributes
-                columns = [attribute_names.index(name) for name in selected_attribute_names]
-                attributes = attributes[:, columns]
+                # Get original column indices for the selected attributes
+                columns = [attribute_names.index(name) for name in self.config.data.attributes]
+                # Sort selected_attribute_names based on these column numbers
+                sorted_indices_and_names = sorted(zip(columns, self.config.data.attributes), key=lambda x: x[0])
+                sorted_selected_attribute_names = [name for _, name in sorted_indices_and_names]
+                sorted_columns = [index for index, _ in sorted_indices_and_names]
+
+                # Slice the attributes according to the sorted column indices
+                attributes = attributes[:, sorted_columns]
+
+                # Update mappings to reflect new indices after slicing
+                self.index_to_attribute = {i: name for i, name in enumerate(sorted_selected_attribute_names)}
+                self.attribute_to_index = {name: i for i, name in enumerate(sorted_selected_attribute_names)}
 
             attributes[attributes == -1] = 0
 
-            # Create dictionaries for attribute name to index mapping and vice versa
-            self.index_to_attribute = {index: name for index, name in enumerate(selected_attribute_names)}
-            self.attribute_to_index = {name: index for index, name in self.index_to_attribute.items()}
+            # Convert attributes to float
+            attributes = attributes.float()
 
             return attributes
         
