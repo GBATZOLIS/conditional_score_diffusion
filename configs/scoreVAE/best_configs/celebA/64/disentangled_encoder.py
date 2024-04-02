@@ -170,7 +170,7 @@ def get_config():
   MI_estimator.activation = 'silu'  # Assuming Activation enum or similar, replace with actual class or enum if needed
   MI_estimator.use_norm = True
   MI_estimator.condition_bias = 1
-  MI_estimator.dropout = 0
+  MI_estimator.dropout = 0.2
   MI_estimator.last_act = 'none'  # Assuming Activation enum or similar, replace with actual class or enum if needed
   MI_estimator.num_time_layers = 2
   MI_estimator.time_last_act = False
