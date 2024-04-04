@@ -12,7 +12,7 @@ def get_config():
   #logging
   config.logging = logging = ml_collections.ConfigDict()
   logging.log_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/CelebA_64' if config.server=='hpc' else '/store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64' 
-  logging.log_name = 'disentangled_encoder'
+  logging.log_name = 'disentangled_encoder_disfactor_1'
   logging.top_k = 3
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
@@ -58,7 +58,7 @@ def get_config():
   training.kl_weight = 1e-3
 
   #DISENTANGLED REPRESENTATION LEARNING TRAINING PARAMETERS (new)
-  training.disentanglement_factor = 0 #controls the degree of disentanglement.
+  training.disentanglement_factor = 1 #controls the degree of disentanglement.
 
   # validation
   config.validation = validation = ml_collections.ConfigDict()
@@ -97,6 +97,7 @@ def get_config():
   data.attributes = 'all'
   data.total_num_attributes = 40
   data.num_classes = 2
+  data.num_attributes = data.total_num_attributes if data.attributes == 'all' else len(data.attributes)
 
   data.return_labels = False
   data.use_data_mean = False
@@ -112,10 +113,11 @@ def get_config():
   data.random_crop = False
   data.random_flip = False
   data.num_channels = data.shape[0] #the number of channels the model sees as input.
+  
 
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = None
+  model.checkpoint_path = '/store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentangled_encoder_disfactor_1/checkpoints/best/last.ckpt'
   model.num_scales = 1000
   model.ema_rate = 0.999 #0.9999
 
@@ -159,18 +161,17 @@ def get_config():
 
   config.MI_estimator = MI_estimator = ml_collections.ConfigDict()
   MI_estimator.name = 'MLPSkipNet'
-  MI_estimator.output_channels = data.latent_dim
-  MI_estimator.attribute_channels = data.total_num_attributes if data.attributes == 'all' else len(data.attributes)
-  MI_estimator.input_channels = data.latent_dim + MI_estimator.attribute_channels
-  MI_estimator.num_channels = MI_estimator.output_channels  # latent dimension
-  MI_estimator.num_layers = 10
+  MI_estimator.input_channels = data.num_attributes + data.latent_dim
+  MI_estimator.output_channels = data.num_attributes #data.latent_dim
+  MI_estimator.num_time_channels = 256 #512
+  MI_estimator.num_layers = 5 #10
   MI_estimator.skip_layers = list(range(1, 10))
   MI_estimator.num_hid_channels = 1024
   MI_estimator.num_time_emb_channels = 64
   MI_estimator.activation = 'silu'  # Assuming Activation enum or similar, replace with actual class or enum if needed
   MI_estimator.use_norm = True
   MI_estimator.condition_bias = 1
-  MI_estimator.dropout = 0.2
+  MI_estimator.dropout = 0.25
   MI_estimator.last_act = 'none'  # Assuming Activation enum or similar, replace with actual class or enum if needed
   MI_estimator.num_time_layers = 2
   MI_estimator.time_last_act = False

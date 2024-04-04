@@ -60,7 +60,7 @@ class MLPSkipNet(nn.Module):
         self.conf = config.MI_estimator if hasattr(config, 'MI_estimator') else config.model
         self.input_channels = input_channels = self.conf.input_channels
         self.output_channels = output_channels = self.conf.output_channels
-        self.num_channels = num_channels = self.conf.num_channels
+        self.num_time_channels = num_time_channels = self.conf.num_time_channels
         self.num_layers = num_layers = self.conf.num_layers
         self.skip_layers = skip_layers = self.conf.skip_layers
         self.num_hid_channels = num_hid_channels = self.conf.num_hid_channels
@@ -76,8 +76,8 @@ class MLPSkipNet(nn.Module):
         # Time embedding layers
         time_layers = []
         for i in range(num_time_layers):
-            in_channels = num_time_emb_channels if i == 0 else num_channels
-            time_layers.append(nn.Linear(in_channels, num_channels))
+            in_channels = num_time_emb_channels if i == 0 else num_time_channels
+            time_layers.append(nn.Linear(in_channels, num_time_channels))
             if i < num_time_layers - 1 or time_last_act:
                 time_layers.append(activation.get_act())
         self.time_embed = nn.Sequential(*time_layers)
@@ -86,19 +86,19 @@ class MLPSkipNet(nn.Module):
         self.layers = nn.ModuleList([])
         for i in range(num_layers):
             in_channels = input_channels if i == 0 else num_hid_channels
-            out_channels = num_channels if i == num_layers - 1 else num_hid_channels
+            out_channels = output_channels if i == num_layers - 1 else num_hid_channels
             act = last_act if i == num_layers - 1 else activation
             norm = use_norm and i != num_layers - 1
             cond = i != num_layers - 1
             if i in skip_layers:
-                in_channels += num_channels
+                in_channels += input_channels
             self.layers.append(
                 MLPLNAct(
                     in_channels,
                     out_channels,
                     norm=norm,
                     activation=act,
-                    cond_channels=num_channels,
+                    cond_channels=num_time_channels,
                     use_cond=cond,
                     condition_bias=condition_bias,
                     dropout=dropout,
@@ -112,7 +112,9 @@ class MLPSkipNet(nn.Module):
 
         t = timestep_embedding(t, self.num_time_emb_channels)
         cond = self.time_embed(t)
-        h = torch.cat([x, y], dim=1) if y is not None else x
+
+        x = torch.cat([x, y], dim=1) if y is not None else x
+        h = x.clone()
         for i, layer in enumerate(self.layers):
             if i in self.skip_layers:
                 h = torch.cat([h, x], dim=1)

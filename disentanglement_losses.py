@@ -8,8 +8,39 @@ from torch.autograd.functional import vjp
 import torch.nn as nn
 import torch.nn.functional as F
 
+
+def get_MI_loss_fn(sde): #MINDE version (potentially lower variance estimator of the MI)
+  #Refer to Theorem 4 in 'Maximum likelihood training of score-based models' by Song et al.
+  def mutual_information_fn(score_fn, batch, t_dist):
+      x, y = batch
+
+      t = t_dist.sample((x.shape[0],)).type_as(x)
+      n = torch.randn_like(x)
+      mean, std = sde.marginal_prob(x, t)
+      perturbed_x = mean + std[(...,) + (None,) * len(x.shape[1:])] * n
+      
+      cond = y
+      conditional_score = score_fn(perturbed_x, cond, t)
+
+      cond = torch.ones_like(y) * -1 #this signifies no side information
+      unconditional_score = score_fn(perturbed_x, cond, t)
+
+      losses = torch.square(unconditional_score - conditional_score)
+
+      #we must use likelihood weighting for entropy estimation  
+      _, g = sde.sde(torch.zeros_like(x), t, True)
+      w2 = g ** 2
+            
+      importance_weight = torch.exp(-1*t_dist.log_prob(t).type_as(t))
+      losses = torch.sum(losses.reshape(losses.shape[0], -1), dim=-1) * w2 * importance_weight
+      losses *= 1/2
+      loss = torch.mean(losses)
+      return loss
+  
+  return mutual_information_fn
+
    
-def get_MI_loss_fn(sde):
+def get_MI_loss_fn_deprecated(sde): #this is my version and it has potentially high variance.
   #Refer to Theorem 4 in 'Maximum likelihood training of score-based models' by Song et al.
   def get_unscaled_entropy(score_fn, batch, t_dist):
       x, y = batch
@@ -40,7 +71,7 @@ def get_MI_loss_fn(sde):
       conditional_entropy = get_unscaled_entropy(score_fn, batch, t_dist)
 
       #unconditional entropy (up to the same constant C)
-      y_unlabeled = torch.ones_like(y) * -1
+      y_unlabeled = torch.ones_like(y) * -1 #this signifies no side information
       batch = [x, y_unlabeled]
       unconditional_entropy = get_unscaled_entropy(score_fn, batch, t_dist)
 
@@ -162,7 +193,7 @@ def get_disentangled_scoreVAE_loss_fn(sde, likelihood_weighting=True, kl_weight=
       scoreVAE_loss = scoreVAE_loss_fn(score_fn, x, y, mean_z, log_var_z, latent, t_dist, likelihood_weighting, kl_weight, sde)
       
       MI_loss_fn = get_MI_loss_fn(sde)
-      MI_batch = [latent, y]
+      MI_batch = [y, latent]
       mutual_information = MI_loss_fn(MI_diffusion_model_score_fn, MI_batch, t_dist)
 
       loss = scoreVAE_loss + disentanglement_factor * mutual_information

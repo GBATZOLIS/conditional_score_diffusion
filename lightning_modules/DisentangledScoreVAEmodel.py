@@ -207,7 +207,7 @@ class DisentangledScoreVAEmodel(pl.LightningModule):
         self.mi_step_counter += 1
         x, y = batch
         latent, _ = self.encode(x, y, use_latent_mean=False, encode_x_T=False)
-        MI_batch = [latent, y]
+        MI_batch = [y, latent]
         MI_diffusion_model_score_fn = self.get_latent_score_fn(train=True)
         mi_diffusion_loss = self.train_loss_fn[1](MI_diffusion_model_score_fn, MI_batch, self.t_dist)
         self.log('mi_diffusion_loss', mi_diffusion_loss)
@@ -242,12 +242,12 @@ class DisentangledScoreVAEmodel(pl.LightningModule):
         DSM_loss_fn = get_DSM_loss_fn(self.sde, weighting)
         MI_diffusion_model_score_fn = self.get_latent_score_fn(train=False)
         
-        y_unlabeled = torch.ones_like(y) * -1
-        MI_batch_unlabeled = [latent, y_unlabeled]
+        noninformative_latent = torch.ones_like(latent) * -1
+        MI_batch_unlabeled = [y, noninformative_latent]
         val_latent_diffusion_loss = DSM_loss_fn(MI_diffusion_model_score_fn, MI_batch_unlabeled, self.t_dist)
         self.log('val_latent_diffusion_loss', val_latent_diffusion_loss)
 
-        MI_batch_labeled = [latent, y]
+        MI_batch_labeled = [y, latent]
         val_latent_diffusion_loss_conditional = DSM_loss_fn(MI_diffusion_model_score_fn, MI_batch_labeled, self.t_dist)
         self.log('val_latent_diffusion_loss_conditional', val_latent_diffusion_loss_conditional)
 
