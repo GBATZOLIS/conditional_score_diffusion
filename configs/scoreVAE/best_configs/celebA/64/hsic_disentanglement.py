@@ -11,7 +11,7 @@ def get_config():
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = '/store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentanglement/initial_experiments'
+  logging.log_path = '/store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentanglement/initial_experiments' if config.server == 'CIA' else '/home/gb511/rds_work/projects/scoreVAE/experiments/disentanglement/celebA/hsic'
   logging.log_name = 'hsic_factor_1'
   logging.top_k = 1
   logging.every_n_epochs = 1000
@@ -21,8 +21,8 @@ def get_config():
   config.training = training = ml_collections.ConfigDict()
   config.training.lightning_module = 'disentangled_HSIC_score_vae'
   training.use_pretrained = True
-  training.prior_config_path = '/store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/attribute_conditional/config.pkl' 
-  training.prior_checkpoint_path = '/store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/attribute_conditional/checkpoints/best/epoch=211--eval_loss_epoch=0.016.ckpt'
+  training.prior_config_path = '/store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/attribute_conditional/config.pkl' if config.server == 'CIA' else '/home/gb511/rds_work/projects/scoreVAE/experiments/disentanglement/celebA/attribute_conditional/config.pkl'
+  training.prior_checkpoint_path = '/store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/attribute_conditional/checkpoints/best/epoch=211--eval_loss_epoch=0.016.ckpt' if config.server=='CIA' else '/home/gb511/rds_work/projects/scoreVAE/experiments/disentanglement/celebA/attribute_conditional/checkpoints/best/epoch=211--eval_loss_epoch=0.016.ckpt'
   training.encoder_only = True
   training.t_dependent = True
   training.conditioning_approach = 'sr3'
