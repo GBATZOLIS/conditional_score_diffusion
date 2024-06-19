@@ -21,7 +21,8 @@ from scipy.interpolate import PchipInterpolator
 from torch.distributions import Uniform
 from torch.nn.utils import clip_grad_norm_
 from hsic import HSIC, rbf_kernel, dot_product_kernel, median_heuristic, convert_to_one_hot
-
+import random
+import gc
 
 @utils.register_lightning_module(name='disentangled_HSIC_score_vae')
 class DisentangledHSICScoreVAEmodel(pl.LightningModule):
@@ -188,56 +189,132 @@ class DisentangledHSICScoreVAEmodel(pl.LightningModule):
 
         self.set_requires_grad(self.encoder, True)
 
+        # Extract a small batch for scoreVAE_loss evaluation
+        small_batch_size = self.config.training.small_batch_size
+        indices = random.sample(range(batch[0].size(0)), small_batch_size)
+        small_batch = (batch[0][indices], batch[1][indices])
+
         cond_score_fn = self.get_conditional_score_fn(train=True)
 
-        encoder_loss, hsic_value, condition_numbers, sigma = self.train_loss_fn(
-            cond_score_fn, self.encoder, batch, self.t_dist, self.sigma_ema.item(), self.sigma_decay, self.step_counter.item()
-        )
+        # Use the small batch for scoreVAE_loss evaluation
+        small_x, small_y = small_batch
+        t0 = torch.zeros(small_x.shape[0]).type_as(small_x)
+        latent_distribution_parameters = self.encoder(small_x, t0)
+        channels = latent_distribution_parameters.size(1) // 2
+        mean_z = latent_distribution_parameters[:, :channels]
+        log_var_z = latent_distribution_parameters[:, channels:]
+        latent = mean_z + (0.5 * log_var_z).exp() * torch.randn_like(mean_z)
 
+        scoreVAE_loss = scoreVAE_loss_fn(cond_score_fn, small_x, small_y, mean_z, log_var_z, latent, self.t_dist, self.config.training.likelihood_weighting, self.config.training.kl_weight, self.sde)
+
+        # HSIC part using the entire batch, processed in smaller sub-batches without gradient tracking
+        x, y = batch
+        sub_batch_size = x.size(0) // 2  # Split into 2 sub-batches
+        latents = []
+        with torch.no_grad():
+            for i in range(0, x.size(0), sub_batch_size):
+                sub_x = x[i:i + sub_batch_size]
+                sub_t0 = torch.zeros(sub_x.shape[0]).type_as(sub_x)
+                latent_distribution_parameters = self.encoder(sub_x, sub_t0)
+                channels = latent_distribution_parameters.size(1) // 2
+                mean_z = latent_distribution_parameters[:, :channels]
+                log_var_z = latent_distribution_parameters[:, channels:]
+                latent = mean_z + (0.5 * log_var_z).exp() * torch.randn_like(mean_z)
+                latents.append(latent)
+                # Manual garbage collection
+                del sub_x, latent_distribution_parameters, mean_z, log_var_z, latent
+                torch.cuda.empty_cache()
+                gc.collect()
+
+        latent = torch.cat(latents, dim=0)
+
+        # Update sigma in EMA fashion
+        new_sigma = median_heuristic(latent)
+        if self.sigma_ema.item() < 0:
+            sigma = new_sigma
+        else:
+            sigma = self.sigma_decay * self.sigma_ema.item() + (1 - self.sigma_decay) * new_sigma
         self.sigma_ema = torch.tensor(sigma, device=self.device)
+
+        # HSIC instance
+        hsic_instance = HSIC(
+            kernel_x=lambda X: rbf_kernel(X, sigma=sigma),
+            kernel_y=lambda Y: dot_product_kernel(convert_to_one_hot(Y)),
+            algorithm='unbiased'
+        )
+        hsic_value = hsic_instance(latent, y)
+
+        loss = scoreVAE_loss + self.config.training.disentanglement_factor * hsic_value
+
         self.log('rbf_sigma_ema', sigma)
-        self.log('encoder_loss', encoder_loss)
+        self.log('encoder_loss', scoreVAE_loss)  # Logging the scoreVAE_loss directly
         self.log('hsic_value', hsic_value)
 
-        if self.step_counter.item() % 10 == 0:
-            self.log('condition_number_latent', condition_numbers['latent'])
-            self.log('condition_number_observation', condition_numbers['observation'])
-
-        self.manual_backward(encoder_loss)
+        self.manual_backward(loss)
         clip_grad_norm_(self.encoder.parameters(), self.config.optim.manual_grad_clip)
         encoder_optimizer.step()
         encoder_optimizer.zero_grad()
 
         self.step_counter += 1  # Increment step counter
 
+
     def validation_step(self, batch, batch_idx):
         x, y = batch
 
-        # Get the encoded latent and its associated parameters (mean_z, log_var_z)
-        t0 = torch.zeros(x.shape[0]).type_as(x)
-        latent_distribution_parameters = self.encoder(x, t0)
+        # Get the encoded latent and its associated parameters (mean_z, log_var_z) for the smaller batch
+        small_batch_size = self.config.training.small_batch_size
+        indices = random.sample(range(x.size(0)), small_batch_size)
+        small_x, small_y = x[indices], y[indices]
+
+        t0 = torch.zeros(small_x.shape[0]).type_as(small_x)
+        latent_distribution_parameters = self.encoder(small_x, t0)
         channels = latent_distribution_parameters.size(1) // 2
         mean_z = latent_distribution_parameters[:, :channels]
         log_var_z = latent_distribution_parameters[:, channels:]
         latent = mean_z + (0.5 * log_var_z).exp() * torch.randn_like(mean_z)
-        
+
         cond_score_fn = self.get_conditional_score_fn(train=False)
         weighting = self.config.training.likelihood_weighting
         kl_weight = self.config.training.kl_weight
-        val_scoreVAE_loss = scoreVAE_loss_fn(cond_score_fn, x, y, mean_z, log_var_z, 
-                                            latent, self.t_dist, weighting, 
+        val_scoreVAE_loss = scoreVAE_loss_fn(cond_score_fn, small_x, small_y, mean_z, log_var_z,
+                                            latent, self.t_dist, weighting,
                                             kl_weight, self.sde)
         self.log('val_scoreVAE_loss', val_scoreVAE_loss)
 
-        # Compute HSIC between y and latent using EMA sigma
-        hsic_instance = HSIC(kernel_x=lambda X: rbf_kernel(X, sigma=self.sigma_ema.item()), kernel_y=lambda Y: dot_product_kernel(convert_to_one_hot(Y)), algorithm='unbiased')
+        # Compute HSIC between y and latent using EMA sigma with the entire batch, processed in smaller sub-batches without gradient tracking
+        sub_batch_size = x.size(0) // 2  # Split into 2 sub-batches
+        latents = []
+        with torch.no_grad():
+            for i in range(0, x.size(0), sub_batch_size):
+                sub_x = x[i:i + sub_batch_size]
+                sub_t0 = torch.zeros(sub_x.shape[0]).type_as(sub_x)
+                latent_distribution_parameters = self.encoder(sub_x, sub_t0)
+                channels = latent_distribution_parameters.size(1) // 2
+                mean_z = latent_distribution_parameters[:, :channels]
+                log_var_z = latent_distribution_parameters[:, channels:]
+                latent = mean_z + (0.5 * log_var_z).exp() * torch.randn_like(mean_z)
+                latents.append(latent)
+                # Manual garbage collection
+                del sub_x, latent_distribution_parameters, mean_z, log_var_z, latent
+                torch.cuda.empty_cache()
+                gc.collect()
+
+        latent = torch.cat(latents, dim=0)
+
+        hsic_instance = HSIC(
+            kernel_x=lambda X: rbf_kernel(X, sigma=self.sigma_ema.item()),
+            kernel_y=lambda Y: dot_product_kernel(convert_to_one_hot(Y)),
+            algorithm='unbiased'
+        )
         hsic_value = hsic_instance(latent, y)
         self.log('val_hsic_value', hsic_value)
 
         dis_factor = self.config.training.disentanglement_factor
         loss = val_scoreVAE_loss + dis_factor * hsic_value
         self.log('eval_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
-    
+
+
+
     def encode(self, x, y, use_latent_mean=False, encode_x_T=False):
         t0 = torch.zeros(x.shape[0]).type_as(x)
         latent_distribution_parameters = self.encoder(x, t0)

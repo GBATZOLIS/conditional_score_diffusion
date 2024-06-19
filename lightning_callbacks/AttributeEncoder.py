@@ -3,6 +3,7 @@ import torchvision
 from pytorch_lightning.callbacks import Callback
 from . import utils
 from math import sqrt
+import random
 
 @utils.register_callback(name='AttributeEncoder')
 class AttributeEncoderVisualizationCallback(Callback):
@@ -134,28 +135,35 @@ class AttributeConditionalEncoderVisualizationCallback(Callback):
             dataloader_iterator = iter(trainer.datamodule.val_dataloader())
             attribute_to_index_map = trainer.datamodule.get_attribute_to_index_map()
             attributes_to_flip = ['Eyeglasses']
-            num_batches = 1
-            for _ in range(num_batches):
-                try:
-                    x, y = next(dataloader_iterator)
-                    x, y = x.to(pl_module.device), y.to(pl_module.device)
-                except StopIteration:
-                    print('Requested number of batches exceeds the number of batches available in the val dataloader.')
-                    break
-                
-                #encode, flip, decode
+            try:
+                x, y = next(dataloader_iterator)
+                x, y = x.to(pl_module.device), y.to(pl_module.device)
+            except StopIteration:
+                print('Requested number of batches exceeds the number of batches available in the val dataloader.')
+                return
+
+            # Check if config.training has the small_batch_size attribute
+            if hasattr(pl_module.config.training, 'small_batch_size'):
+                small_batch_size = pl_module.config.training.small_batch_size
+                if x.size(0) > small_batch_size:
+                    indices = random.sample(range(x.size(0)), small_batch_size)
+                    x, y = x[indices], y[indices]
+
+            # Encode, flip, decode
+            with torch.no_grad():
                 z, _ = pl_module.encode(x, y)
                 flipped_y = pl_module.flip_attributes(y, attributes_to_flip, attribute_to_index_map)
                 x_flipped = pl_module.decode(flipped_y, z)
-                
-                # Create a grid of original images
-                num_rows = int(sqrt(x.size(0)))
-                original_images_grid = torchvision.utils.make_grid(x, nrow=num_rows, normalize=True, scale_each=True)
-                # Create a grid of conditional samples
-                flipped_images_grid = torchvision.utils.make_grid(x_flipped, nrow=num_rows, normalize=True, scale_each=True)
-                # Concatenate the original and conditional samples grids
-                concatenated_grid = torch.cat((original_images_grid, flipped_images_grid), 2)  # Concatenate side by side
-                # Log the concatenated grid to TensorBoard
-                tag = f'Original and Flipped Attributes'
-                if trainer.global_rank == 0:
-                    pl_module.logger.experiment.add_image(tag, concatenated_grid, current_epoch)
+
+            # Create a grid of original images
+            num_rows = int(sqrt(x.size(0)))
+            original_images_grid = torchvision.utils.make_grid(x, nrow=num_rows, normalize=True, scale_each=True)
+            # Create a grid of conditional samples
+            flipped_images_grid = torchvision.utils.make_grid(x_flipped, nrow=num_rows, normalize=True, scale_each=True)
+            # Concatenate the original and conditional samples grids
+            concatenated_grid = torch.cat((original_images_grid, flipped_images_grid), 2)  # Concatenate side by side
+            # Log the concatenated grid to TensorBoard
+            tag = f'Original and Flipped Attributes'
+            if trainer.global_rank == 0:
+                pl_module.logger.experiment.add_image(tag, concatenated_grid, current_epoch)
+

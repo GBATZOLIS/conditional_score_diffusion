@@ -6213,3 +6213,11 @@ DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/Cel
 DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentanglement/initial_experiments/hsic_factor_1/checkpoints/best/last.ckpt
 DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentanglement/initial_experiments/hsic_factor_1/checkpoints/best/last.ckpt
 DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentanglement/initial_experiments/hsic_factor_1/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentanglement/initial_experiments/hsic_biased/hparams.yaml
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentanglement/initial_experiments/hsic_biased/hparams.yaml
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentanglement/initial_experiments/hsic_biased/checkpoints/best/epoch=0--eval_loss_epoch=102.834.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentanglement/initial_experiments/hsic_biased/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentanglement/initial_experiments/hsic_biased/checkpoints/time/2024-06-19 09:18.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentanglement/initial_experiments/hsic_biased/checkpoints/best/last.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentanglement/initial_experiments/hsic_bigger_batch/hparams.yaml
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentanglement/initial_experiments/hsic_bigger_batch/hparams.yaml

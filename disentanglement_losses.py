@@ -236,7 +236,7 @@ def get_disentangled_HSIC_scoreVAE_loss_fn(sde, likelihood_weighting=True, kl_we
         hsic_instance = HSIC(
             kernel_x=lambda X: rbf_kernel(X, sigma=sigma),
             kernel_y=lambda Y: dot_product_kernel(convert_to_one_hot(Y)),
-            algorithm='unbiased'
+            algorithm='biased'
         )
         hsic_value = hsic_instance(latent, y)
 

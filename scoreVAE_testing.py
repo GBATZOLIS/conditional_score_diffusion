@@ -153,7 +153,7 @@ def median_heuristic(X):
     return sigma
 
 
-def calculate_hsic(logger):
+def old_calculate_hsic(logger):
     output_dir = logger.log_dir
     os.makedirs(output_dir, exist_ok=True)
 
@@ -182,3 +182,100 @@ def calculate_hsic(logger):
     with open(hsic_file_path, 'w') as f:
         f.write(f'HSIC value: {hsic_value}\n')
     print(f'HSIC value saved to {hsic_file_path}')
+
+
+def calculate_hsic(logger):
+    output_dir = logger.log_dir
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Load the data
+    data_path = os.path.join(output_dir, 'data.npy')
+    data = np.load(data_path, allow_pickle=True).item()
+    y_stack = torch.tensor(data['labels'])
+    z_stack = torch.tensor(data['encodings'])
+
+    # Transform labels to one-hot encoding
+    y_stack_one_hot = convert_to_one_hot(y_stack)
+
+    # Calculate total number of data points
+    N = len(y_stack)
+
+    # Define sigma for the RBF kernel
+    sigma = 25
+
+    # Create HSIC instances for unbiased and biased estimates
+    hsic_unbiased = HSIC(kernel_x=lambda X: rbf_kernel(X, sigma=sigma), kernel_y=dot_product_kernel, algorithm='unbiased')
+    hsic_biased = HSIC(kernel_x=lambda X: rbf_kernel(X, sigma=sigma), kernel_y=dot_product_kernel, algorithm='biased')
+
+    # Generate log-spaced sample sizes starting from 64
+    sample_sizes = np.logspace(np.log10(64), np.log10(4096), num=10, dtype=int)
+    
+    unbiased_means = []
+    unbiased_stds = []
+    biased_means = []
+    biased_stds = []
+
+    for size in tqdm(sample_sizes):
+        unbiased_hsic_values = []
+        biased_hsic_values = []
+
+        for _ in range(10):  # Perform multiple evaluations for averaging
+            indices = np.random.choice(N, size, replace=False)
+            z_sample = z_stack[indices]
+            y_sample = y_stack_one_hot[indices]
+
+            unbiased_hsic_values.append(hsic_unbiased(z_sample, y_sample).item())
+            biased_hsic_values.append(hsic_biased(z_sample, y_sample).item())
+
+        unbiased_means.append(np.mean(unbiased_hsic_values))
+        unbiased_stds.append(np.std(unbiased_hsic_values))
+        biased_means.append(np.mean(biased_hsic_values))
+        biased_stds.append(np.std(biased_hsic_values))
+
+    # Calculate the ratio of sample mean to sample standard deviation
+    unbiased_ratios = np.array(unbiased_means) / np.array(unbiased_stds)
+    biased_ratios = np.array(biased_means) / np.array(biased_stds)
+
+    print(sample_sizes)
+    print(unbiased_means)
+    print(unbiased_stds)
+
+    # Plotting
+    plt.figure(figsize=(18, 6))
+
+    # Sample mean plot
+    plt.subplot(1, 3, 1)
+    plt.plot(sample_sizes, unbiased_means, label='Unbiased HSIC Mean')
+    plt.plot(sample_sizes, biased_means, label='Biased HSIC Mean')
+    plt.xscale('log')
+    plt.xlabel('Sample Size')
+    plt.ylabel('HSIC Mean')
+    plt.legend()
+    plt.title('HSIC Sample Mean')
+
+    # Sample standard deviation plot
+    plt.subplot(1, 3, 2)
+    plt.plot(sample_sizes, unbiased_stds, label='Unbiased HSIC Std')
+    plt.plot(sample_sizes, biased_stds, label='Biased HSIC Std')
+    plt.xscale('log')
+    plt.xlabel('Sample Size')
+    plt.ylabel('HSIC Standard Deviation')
+    plt.legend()
+    plt.title('HSIC Sample Standard Deviation')
+
+    # Ratio of mean to standard deviation plot
+    plt.subplot(1, 3, 3)
+    plt.plot(sample_sizes, unbiased_ratios, label='Unbiased Mean/Std Ratio')
+    plt.plot(sample_sizes, biased_ratios, label='Biased Mean/Std Ratio')
+    plt.xscale('log')
+    plt.xlabel('Sample Size')
+    plt.ylabel('HSIC Mean/Std Ratio')
+    plt.legend()
+    plt.title('HSIC Mean/Std Ratio')
+
+    plt.tight_layout()
+    plot_path = os.path.join(output_dir, 'hsic_evaluation_plots.png')
+    plt.savefig(plot_path)
+    plt.show()
+
+    print(f'HSIC evaluation plots saved to {plot_path}')

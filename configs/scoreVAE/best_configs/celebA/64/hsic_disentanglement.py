@@ -12,7 +12,7 @@ def get_config():
   #logging
   config.logging = logging = ml_collections.ConfigDict()
   logging.log_path = '/store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentanglement/initial_experiments' if config.server == 'CIA' else '/home/gb511/rds_work/projects/scoreVAE/experiments/disentanglement/celebA/hsic'
-  logging.log_name = 'hsic_factor_1'
+  logging.log_name = 'hsic_bigger_batch'
   logging.top_k = 1
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
@@ -26,7 +26,8 @@ def get_config():
   training.encoder_only = True
   training.t_dependent = True
   training.conditioning_approach = 'sr3'
-  training.batch_size = 64
+  training.small_batch_size = 64
+  training.batch_size = 1024
   training.t_batch_size = 1
   training.num_nodes = 1
   training.gpus = 1
