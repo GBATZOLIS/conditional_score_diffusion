@@ -12,7 +12,7 @@ def get_config():
   #logging
   config.logging = logging = ml_collections.ConfigDict()
   logging.log_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/CelebA_64' if config.server=='hpc' else '/store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64' 
-  logging.log_name = 'attribute_conditional'
+  logging.log_name = 'deeper_attribute_conditional_classifier_free'
   logging.top_k = 3
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
@@ -20,15 +20,16 @@ def get_config():
   # training
   config.training = training = ml_collections.ConfigDict()
   config.training.lightning_module = 'attribute_conditional'
+  training.classifier_free = True
   training.use_prior = False
   training.prior_config_path = None
   training.prior_checkpoint_path = None
   training.conditioning_approach = 'sr3'
   training.batch_size = 64
   training.num_nodes = 1
-  training.gpus = 1
+  training.gpus = 2
   training.accelerator = 'gpu'
-  training.accumulate_grad_batches = 2
+  training.accumulate_grad_batches = 1
   training.workers = 4*training.gpus
   
   #----- to be removed -----
@@ -57,7 +58,7 @@ def get_config():
   # sampling
   config.sampling = sampling = ml_collections.ConfigDict()
   sampling.method = 'pc'
-  sampling.predictor = 'conditional_ddim'
+  sampling.predictor = 'conditional_heun'
   sampling.corrector = 'conditional_none'
   sampling.n_steps_each = 1
   sampling.noise_removal = True
@@ -98,7 +99,7 @@ def get_config():
 
   #model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = None
+  model.checkpoint_path = None #'/store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/attribute_conditional_classifier_free/checkpoints/best/epoch=248--eval_loss_epoch=0.016.ckpt'
   model.sigma_min = 0.01
   model.sigma_max = 50
   model.num_scales = 1000
@@ -123,8 +124,8 @@ def get_config():
 
   model.attention_resolutions = (16, )
   model.time_embed_channels: int = None
-  model.dropout: float = 0.
-  model.channel_mult = (1, 1, 2, 3)
+  model.dropout: float = 0.1
+  model.channel_mult = (1, 1, 2, 4)
   model.input_channel_mult = None
   model.conv_resample: bool = True
   model.dims: int = 2

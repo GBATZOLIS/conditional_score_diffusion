@@ -104,20 +104,22 @@ class AttributeEncoderVisualizationCallback(Callback):
                 print('Requested number of batches exceeds the number of batches available in the val dataloader.')
                 break
             
+            num_rows = int(sqrt(x.size(0)))
+            # Create a grid of original images
+            original_images_grid = torchvision.utils.make_grid(x, nrow=num_rows, normalize=True, scale_each=True)
+            
             if current_epoch % vis_freq == 0:
-                # Generate conditional samples
-                conditional_samples = pl_module.sample(attributes)
-                # Create a grid of original images
-                num_rows = int(sqrt(x.size(0)))
-                original_images_grid = torchvision.utils.make_grid(x, nrow=num_rows, normalize=True, scale_each=True)
-                # Create a grid of conditional samples
-                conditional_images_grid = torchvision.utils.make_grid(conditional_samples, nrow=num_rows, normalize=True, scale_each=True)
-                # Concatenate the original and conditional samples grids
-                concatenated_grid = torch.cat((original_images_grid, conditional_images_grid), 2)  # Concatenate side by side
-                # Log the concatenated grid to TensorBoard
-                tag = f'Original and Generated with same attributes'
-                if trainer.global_rank == 0:
-                    pl_module.logger.experiment.add_image(tag, concatenated_grid, current_epoch)
+                for gamma in [1, 2]:
+                    # Generate conditional samples
+                    conditional_samples = pl_module.sample(attributes, gamma=gamma)
+                    # Create a grid of conditional samples
+                    conditional_images_grid = torchvision.utils.make_grid(conditional_samples, nrow=num_rows, normalize=True, scale_each=True)
+                    # Concatenate the original and conditional samples grids
+                    concatenated_grid = torch.cat((original_images_grid, conditional_images_grid), 2)  # Concatenate side by side
+                    # Log the concatenated grid to TensorBoard
+                    tag = f'Original and Generated with same attributes (gamma={gamma})'
+                    if trainer.global_rank == 0:
+                        pl_module.logger.experiment.add_image(tag, concatenated_grid, current_epoch)
 
 @utils.register_callback(name='attribute_conditional_encoder')
 class AttributeConditionalEncoderVisualizationCallback(Callback):

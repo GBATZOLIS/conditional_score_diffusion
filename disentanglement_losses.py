@@ -7,7 +7,7 @@ import math
 from torch.autograd.functional import vjp
 import torch.nn as nn
 import torch.nn.functional as F
-
+from hsic import median_heuristic, HSIC, rbf_kernel, dot_product_kernel, convert_to_one_hot, gram_matrix_condition_number_svd
 
 def get_MI_loss_fn(sde): #MINDE version (potentially lower variance estimator of the MI)
   #Refer to Theorem 4 in 'Maximum likelihood training of score-based models' by Song et al.
@@ -198,5 +198,49 @@ def get_disentangled_scoreVAE_loss_fn(sde, likelihood_weighting=True, kl_weight=
 
       loss = scoreVAE_loss + disentanglement_factor * mutual_information
       return loss
+    
+    return loss_fn
+
+def get_disentangled_HSIC_scoreVAE_loss_fn(sde, likelihood_weighting=True, kl_weight=1, disentanglement_factor=1):
+    def loss_fn(score_fn, encoder, batch, t_dist, sigma, sigma_decay, step_idx):
+        x, y = batch
+
+        t0 = torch.zeros(x.shape[0]).type_as(x)
+        latent_distribution_parameters = encoder(x, t0)
+        channels = latent_distribution_parameters.size(1) // 2
+        mean_z = latent_distribution_parameters[:, :channels]
+        log_var_z = latent_distribution_parameters[:, channels:]
+        latent = mean_z + (0.5 * log_var_z).exp() * torch.randn_like(mean_z)
+
+        scoreVAE_loss = scoreVAE_loss_fn(score_fn, x, y, mean_z, log_var_z, latent, t_dist, likelihood_weighting, kl_weight, sde)
+
+        #HSIC part
+
+        #update sigma in EMA fashion.
+        new_sigma = median_heuristic(latent)
+        if sigma < 0:
+           sigma = new_sigma
+        else:
+           sigma = sigma_decay * sigma + (1 - sigma_decay) * new_sigma
+
+        condition_numbers = {'latent': None, 'observation': None}
+        if step_idx % 10 == 0:
+            kernel_x_fn = lambda X: rbf_kernel(X, sigma=sigma)
+            kernel_x = kernel_x_fn(latent)
+            condition_number_latent = gram_matrix_condition_number_svd(kernel_x)
+            kernel_y_fn = lambda Y: dot_product_kernel(convert_to_one_hot(Y))
+            kernel_y = kernel_y_fn(y)
+            condition_number_observation = gram_matrix_condition_number_svd(kernel_y)
+            condition_numbers = {'latent': condition_number_latent, 'observation': condition_number_observation}
+
+        hsic_instance = HSIC(
+            kernel_x=lambda X: rbf_kernel(X, sigma=sigma),
+            kernel_y=lambda Y: dot_product_kernel(convert_to_one_hot(Y)),
+            algorithm='unbiased'
+        )
+        hsic_value = hsic_instance(latent, y)
+
+        loss = scoreVAE_loss + disentanglement_factor * hsic_value
+        return loss, hsic_value, condition_numbers, sigma
     
     return loss_fn

@@ -12,8 +12,8 @@ def get_config():
   #logging
   config.logging = logging = ml_collections.ConfigDict()
   logging.log_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/CelebA_64' if config.server=='hpc' else '/store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentanglement' 
-  logging.log_name = 'ema_deeper_disentangled_encoder_disfactor_1'
-  logging.top_k = 1
+  logging.log_name = 'ema_deeper_disentangled_encoder_disfactor_1_bigger_latent_debug'
+  logging.top_k = 2
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
 

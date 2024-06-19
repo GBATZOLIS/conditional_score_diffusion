@@ -99,7 +99,7 @@ def get_simplified_scoreVAE_loss_fn(sde, likelihood_weighting=True, kl_weight=1)
     
     return loss_fn
 
-def get_attribute_corrector_loss_fn(sde, likelihood_weighting=True):
+def get_attribute_corrector_loss_fn(sde, likelihood_weighting=True, use_simple_loss=False):
   def recon_loss_fn(score_fn, batch, t_dist):
     x, y = batch
     y = y.float()
@@ -126,7 +126,25 @@ def get_attribute_corrector_loss_fn(sde, likelihood_weighting=True):
     loss = torch.mean(losses)
     return loss
   
-  return recon_loss_fn
+  def simple_loss_fn(noise_fn, batch, t_dist):
+    x, y = batch
+    y = y.float()
+    
+    t = t_dist.sample((x.shape[0],)).type_as(x)
+    z = torch.randn_like(x)
+    mean, std = sde.marginal_prob(x, t)
+    perturbed_x = mean + std[(...,) + (None,) * len(x.shape[1:])] * z
+            
+    noise = noise_fn(perturbed_x, y, t)
+    losses = torch.square(noise - z)
+    loss = torch.mean(losses)
+
+    return loss
+  
+  if use_simple_loss:
+    return simple_loss_fn
+  else:
+    return recon_loss_fn
 
 def get_accuracy_fn(sde, attribute_classifier, t):
     def accuracy_fn(batch):

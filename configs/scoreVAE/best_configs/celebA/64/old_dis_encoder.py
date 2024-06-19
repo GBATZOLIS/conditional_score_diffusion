@@ -12,7 +12,7 @@ def get_config():
   #logging
   config.logging = logging = ml_collections.ConfigDict()
   logging.log_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/CelebA_64' if config.server=='hpc' else '/store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentanglement' 
-  logging.log_name = 'ema_deeper_disentangled_encoder_disfactor_1'
+  logging.log_name = 'disentangled_encoder_disfactor_0.5'
   logging.top_k = 1
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
@@ -21,8 +21,8 @@ def get_config():
   config.training = training = ml_collections.ConfigDict()
   config.training.lightning_module = 'disentangled_score_vae'
   training.use_pretrained = True
-  training.prior_config_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/config.pkl' if config.server=='hpc' else '/store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_attribute_conditional_classifier_free/config.pkl' #'/store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/attribute_conditional/config.pkl' 
-  training.prior_checkpoint_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/checkpoints/best/epoch=141--eval_loss_epoch=0.014.ckpt' if config.server=='hpc' else '/store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_attribute_conditional_classifier_free/checkpoints/best/epoch=172--eval_loss_epoch=0.016.ckpt' #'/store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/attribute_conditional/checkpoints/best/epoch=211--eval_loss_epoch=0.016.ckpt'
+  training.prior_config_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/config.pkl' if config.server=='hpc' else '/store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/attribute_conditional/config.pkl' 
+  training.prior_checkpoint_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/checkpoints/best/epoch=141--eval_loss_epoch=0.014.ckpt' if config.server=='hpc' else '/store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/attribute_conditional/checkpoints/best/epoch=211--eval_loss_epoch=0.016.ckpt'
   training.encoder_only = True
   training.t_dependent = True
   training.conditioning_approach = 'sr3'
@@ -58,7 +58,7 @@ def get_config():
   training.kl_weight = 1e-3
 
   #DISENTANGLED REPRESENTATION LEARNING TRAINING PARAMETERS (new)
-  training.disentanglement_factor = 1 #controls the degree of disentanglement.
+  training.disentanglement_factor = 1.5 #controls the degree of disentanglement.
 
   # validation
   config.validation = validation = ml_collections.ConfigDict()
@@ -117,7 +117,7 @@ def get_config():
 
   # model
   config.model = model = ml_collections.ConfigDict()
-  model.checkpoint_path = None
+  model.checkpoint_path =  '/store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentanglement/disentangled_encoder_disfactor_0.5/checkpoints/best/epoch=261--eval_loss_epoch=70.882.ckpt' #'/store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentanglement/disentangled_encoder_disfactor_0/checkpoints/best/epoch=525--eval_loss_epoch=72.339.ckpt'  #'/store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentanglement/disentangled_encoder_disfactor_1/checkpoints/best/epoch=1514--eval_loss_epoch=71.893.ckpt' 
   model.num_scales = 1000
   model.ema_rate = 0.999 #0.9999
 
@@ -151,7 +151,7 @@ def get_config():
   MI_estimator.input_channels = data.num_attributes + data.latent_dim
   MI_estimator.output_channels = data.num_attributes #data.latent_dim
   MI_estimator.num_time_channels = 256 #512
-  MI_estimator.num_layers = 10 #5 
+  MI_estimator.num_layers = 5 #5 
   MI_estimator.skip_layers = list(range(1, 10))
   MI_estimator.num_hid_channels = 1024
   MI_estimator.num_time_emb_channels = 64
@@ -165,7 +165,7 @@ def get_config():
 
   # optimization
   config.optim = optim = ml_collections.ConfigDict()
-  optim.use_ema = True
+  optim.use_ema = False
   optim.weight_decay = 0
   optim.optimizer = 'Adam'
   optim.encoder_lr = 5e-5

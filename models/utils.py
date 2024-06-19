@@ -254,6 +254,15 @@ def get_model_fn(model, train=False):
   return model_fn
 
 
+def get_noise_fn(sde, model, train=False):
+  model_fn = get_model_fn(model, train=train)
+
+  def noise_fn(x, t):
+    labels = t * (sde.N - 1)
+    noise = model_fn(x, labels)
+    return noise
+  
+  return noise_fn
 
 def get_score_fn(sde, model, conditional=False, train=False, continuous=False):
   """Wraps `score_fn` so that the model output corresponds to a real time-dependent score function.

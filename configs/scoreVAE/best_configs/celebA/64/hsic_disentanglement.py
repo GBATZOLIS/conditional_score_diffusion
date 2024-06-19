@@ -11,18 +11,18 @@ def get_config():
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
-  logging.log_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/CelebA_64' if config.server=='hpc' else '/store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentanglement' 
-  logging.log_name = 'ema_deeper_disentangled_encoder_disfactor_1'
+  logging.log_path = '/store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentanglement/initial_experiments'
+  logging.log_name = 'hsic_factor_1'
   logging.top_k = 1
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
 
   # training
   config.training = training = ml_collections.ConfigDict()
-  config.training.lightning_module = 'disentangled_score_vae'
+  config.training.lightning_module = 'disentangled_HSIC_score_vae'
   training.use_pretrained = True
-  training.prior_config_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/config.pkl' if config.server=='hpc' else '/store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_attribute_conditional_classifier_free/config.pkl' #'/store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/attribute_conditional/config.pkl' 
-  training.prior_checkpoint_path = '/home/gb511/rds_work/projects/scoreVAE/experiments/gd_ffhq/DiffDecoders_continuous_prior/checkpoints/best/epoch=141--eval_loss_epoch=0.014.ckpt' if config.server=='hpc' else '/store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/deeper_attribute_conditional_classifier_free/checkpoints/best/epoch=172--eval_loss_epoch=0.016.ckpt' #'/store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/attribute_conditional/checkpoints/best/epoch=211--eval_loss_epoch=0.016.ckpt'
+  training.prior_config_path = '/store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/attribute_conditional/config.pkl' 
+  training.prior_checkpoint_path = '/store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/attribute_conditional/checkpoints/best/epoch=211--eval_loss_epoch=0.016.ckpt'
   training.encoder_only = True
   training.t_dependent = True
   training.conditioning_approach = 'sr3'
@@ -77,6 +77,7 @@ def get_config():
 
   # evaluation (this file is not modified at all - subject to change)
   config.eval = evaluate = ml_collections.ConfigDict()
+  evaluate.test_mode = 'HSIC'
   evaluate.callback = None
   evaluate.workers = training.workers
   evaluate.begin_ckpt = 50
@@ -146,31 +147,12 @@ def get_config():
   encoder.encoder_split_output = False
   encoder.resblock_updown = False  
 
-  config.MI_estimator = MI_estimator = ml_collections.ConfigDict()
-  MI_estimator.name = 'MLPSkipNet'
-  MI_estimator.input_channels = data.num_attributes + data.latent_dim
-  MI_estimator.output_channels = data.num_attributes #data.latent_dim
-  MI_estimator.num_time_channels = 256 #512
-  MI_estimator.num_layers = 10 #5 
-  MI_estimator.skip_layers = list(range(1, 10))
-  MI_estimator.num_hid_channels = 1024
-  MI_estimator.num_time_emb_channels = 64
-  MI_estimator.activation = 'silu'  # Assuming Activation enum or similar, replace with actual class or enum if needed
-  MI_estimator.use_norm = True
-  MI_estimator.condition_bias = 1
-  MI_estimator.dropout = 0.25
-  MI_estimator.last_act = 'none'  # Assuming Activation enum or similar, replace with actual class or enum if needed
-  MI_estimator.num_time_layers = 2
-  MI_estimator.time_last_act = False
-
   # optimization
   config.optim = optim = ml_collections.ConfigDict()
   optim.use_ema = True
   optim.weight_decay = 0
   optim.optimizer = 'Adam'
   optim.encoder_lr = 5e-5
-  optim.MI_diffusion_lr = 1e-4
-  optim.MI_update_steps = 5
   optim.beta1 = 0.9
   optim.eps = 1e-8
   optim.warmup = 1000

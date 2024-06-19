@@ -9,6 +9,7 @@ from models import utils as mutils
 from scipy.interpolate import PchipInterpolator
 import numpy as np
 from losses import get_attribute_corrector_loss_fn
+from disentanglement_losses import modify_labels_for_classifier_free_guidance
 import torch.nn.functional as F
 from sampling.conditional import get_conditional_sampling_fn
 
@@ -21,7 +22,8 @@ class AttributeConditionalModel(pl.LightningModule):
         self.config = config
 
         #unconditional score model
-        if config.training.use_prior:
+        use_prior = config.training.get('use_prior', False)
+        if use_prior:
             self.unconditional_score_model = mutils.load_prior_model(config)
             self.unconditional_score_model.freeze()
             
@@ -85,32 +87,94 @@ class AttributeConditionalModel(pl.LightningModule):
         attribute_correction = mutils.get_score_fn(self.sde, self.attribute_correction_model, conditional=True, train=train, continuous=True)
         return attribute_correction
 
-    def get_conditional_score_fn(self, train=False, gamma=1):
-        if self.config.training.use_prior:
+    def get_noise_fn(self, train=False):
+        use_prior = self.config.training.get('use_prior', False)
+        classifier_free = self.config.training.get('classifier_free', False)
+        
+        assert use_prior==False, 'use_prior should be false for this experiment'
+        assert classifier_free==True, 'classifier_free should be True for this experiment'
+        
+        raw_noise_fn = mutils.get_noise_fn(self.sde, self.attribute_correction_model, train)
+        def noise_fn(x, y, t):
+            return raw_noise_fn({'x':x, 'y':y}, t)
+
+        return noise_fn
+
+    def get_conditional_score_fn(self, train=False, gamma=1, sampling=False):
+        use_prior = self.config.training.get('use_prior', False)
+        classifier_free = self.config.training.get('classifier_free', False)
+
+        if use_prior:
             unconditional_score_fn = mutils.get_score_fn(self.usde, self.unconditional_score_model, conditional=False, train=False, continuous=True)
             attribute_encoder_correction = self.get_attribute_correction(train=train)
             def conditional_score_fn(x, y, t):
                 return unconditional_score_fn(x, t) + gamma*attribute_encoder_correction({'x':x, 'y':y}, t)
         else:
-            attribute_encoder_correction = self.get_attribute_correction(train=train)
-            def conditional_score_fn(x, y, t):
-                return gamma*attribute_encoder_correction({'x':x, 'y':y}, t)
-            
+            if classifier_free:
+                attribute_encoder_correction = self.get_attribute_correction(train=train)
+
+                if not sampling:
+                    def conditional_score_fn(x, y, t):
+                        return attribute_encoder_correction({'x':x, 'y':y}, t)
+                else:
+                    def conditional_score_fn(x, y, t):
+                        batchsize = x.size(0)
+                        y_uncond = torch.ones_like(y) * -1
+                        x_concat = torch.cat([x, x], dim=0)
+                        y_concat = torch.cat([y_uncond, y], dim=0)
+                        t_concat = torch.cat([t, t], dim=0)
+                        out = attribute_encoder_correction({'x':x_concat, 'y':y_concat}, t_concat) #(2*batchsize, *x.shape[1:])
+                        unconditional_score, conditional_score = out[:batchsize], out[batchsize:]
+                        return (1-gamma) * unconditional_score + gamma * conditional_score
+            else:
+                attribute_encoder_correction = self.get_attribute_correction(train=train)
+                def conditional_score_fn(x, y, t):
+                    return attribute_encoder_correction({'x':x, 'y':y}, t) 
+                
         return conditional_score_fn
 
     def configure_loss_fn(self, config, train):
-        loss_fn = get_attribute_corrector_loss_fn(self.sde, config.training.likelihood_weighting)
+        loss_fn = get_attribute_corrector_loss_fn(self.sde, config.training.likelihood_weighting, 
+                                                  use_simple_loss=True)
         return loss_fn
     
     def training_step(self, batch, batch_idx):
-        cond_score_fn = self.get_conditional_score_fn(train=True)
-        loss = self.train_loss_fn(cond_score_fn, batch, self.t_dist)
+        classifier_free = self.config.training.get('classifier_free', False)
+        if classifier_free:
+            x, y = batch
+            class_free_y = modify_labels_for_classifier_free_guidance(y)
+            batch = (x, class_free_y)
+
+        #OLD
+        #cond_score_fn = self.get_conditional_score_fn(train=True)
+        #loss = self.train_loss_fn(cond_score_fn, batch, self.t_dist)
+
+        #NEW
+        noise_fn = self.get_noise_fn(train=True)
+        loss = self.train_loss_fn(noise_fn, batch, self.t_dist)
+
         self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         return loss
     
     def validation_step(self, batch, batch_idx):
-        cond_score_fn = self.get_conditional_score_fn(train=False)
-        loss = self.eval_loss_fn(cond_score_fn, batch, self.t_dist)
+        classifier_free = self.config.training.get('classifier_free', False)
+        #model_output_fn = self.get_conditional_score_fn(train=False)
+        model_output_fn = self.get_noise_fn(train=False)
+
+        if classifier_free:
+            conditional_loss = self.eval_loss_fn(model_output_fn, batch, self.t_dist)
+            self.log('val_conditional_loss', conditional_loss)
+
+            x, y = batch
+            y_uncond = torch.ones_like(y) * -1
+            unconditional_batch = (x, y_uncond)
+            unconditional_loss = self.eval_loss_fn(model_output_fn, unconditional_batch, self.t_dist)
+            self.log('val_unconditional_loss', unconditional_loss)
+
+            loss = 1/2*(conditional_loss + unconditional_loss)
+        else:
+            loss = self.eval_loss_fn(model_output_fn, batch, self.t_dist)
+
         self.log('eval_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         return loss
     
@@ -120,9 +184,8 @@ class AttributeConditionalModel(pl.LightningModule):
         conditional_sampling_fn = get_conditional_sampling_fn(config=self.config, sde=self.sde, 
                                                               shape=sampling_shape, eps=self.sampling_eps,
                                                               p_steps=128)
-        score_fn = self.get_conditional_score_fn(train=False, gamma=gamma)
+        score_fn = self.get_conditional_score_fn(train=False, gamma=gamma, sampling=True)
         return conditional_sampling_fn(self.attribute_correction_model, y, score_fn=score_fn)
-        
         
     def configure_optimizers(self):
         class SchedulerLambdaFunction:

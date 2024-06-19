@@ -35,6 +35,56 @@ class UnpairedImage2ImageModel(pl.LightningModule):
         self.MI_score_model_domain_A = mutils.create_model(config, type='MI')
         self.MI_score_model_domain_B = mutils.create_model(config, type='MI')
 
+    def get_conditional_score_fn(self, train=False, gamma=1):
+        def get_latent_correction_fn(encoder):
+            def get_log_density_fn(encoder):
+                def log_density_fn(x, z, t):
+                    latent_distribution_parameters = encoder(x, t)
+                    channels = latent_distribution_parameters.size(1) // 2
+                    mean_z = latent_distribution_parameters[:, :channels]
+                    log_var_z = latent_distribution_parameters[:, channels:]
+
+                    # Flatten mean_z and log_var_z for consistent shape handling
+                    mean_z_flat = mean_z.view(mean_z.size(0), -1)
+                    log_var_z_flat = log_var_z.view(log_var_z.size(0), -1)
+                    z_flat = z.view(z.size(0), -1)
+
+                    logdensity = -0.5 * torch.sum(torch.square(z_flat - mean_z_flat) / log_var_z_flat.exp(), dim=1)
+                    return logdensity
+
+                return log_density_fn
+
+            def latent_correction_fn(x, z, t):
+                  if not train: 
+                    torch.set_grad_enabled(True)
+
+                  log_density_fn = get_log_density_fn(encoder)
+                  device = x.device
+                  x.requires_grad=True
+                  ftx = log_density_fn(x, z, t)
+                  grad_log_density = torch.autograd.grad(outputs=ftx, inputs=x,
+                                      grad_outputs=torch.ones(ftx.size()).to(device),
+                                      create_graph=True, retain_graph=True, only_inputs=True)[0]
+                  assert grad_log_density.size() == x.size()
+
+                  if not train:
+                    torch.set_grad_enabled(False)
+
+                  return grad_log_density
+
+            return latent_correction_fn
+
+        def conditional_score_fn(x, cond, t):
+            y, z = cond
+                
+            latent_correction_fn = get_latent_correction_fn(self.encoder)
+            pretrained_score_fn = mutils.get_score_fn(self.sde, self.score_model, conditional=True, 
+                                                        train=train, continuous=True)
+            conditional_score = pretrained_score_fn({'x':x, 'y':y}, t) + latent_correction_fn(x, z, t)
+            return conditional_score
+
+        return conditional_score_fn
+    
     def configure_sde(self, config):
         if config.training.sde.lower() == 'vpsde':
             self.sde = sde_lib.cVPSDE(beta_min=config.model.beta_min, beta_max=config.model.beta_max, N=config.model.num_scales)
@@ -88,55 +138,6 @@ class UnpairedImage2ImageModel(pl.LightningModule):
 
         self.t_dist = Uniform(self.sampling_eps, 1)
     
-    def get_attribute_encoder_correction(self, train=False):
-        #derive the conditional score contribution of the attribute encoder
-        def attribute_encoder_correction(x, y, t):
-            # Ensure `y` is provided with shape (batchsize, num_features) where each element is an integer
-            # representing the class index for the corresponding feature.
-            if not train: 
-                torch.set_grad_enabled(True)
-
-            x_in = x.detach().requires_grad_(True)
-
-            # Obtain logits from the encoder; shape: (batchsize, num_features, num_classes)
-            logits = self.attribute_encoder(x_in, t)
-
-            # Calculate log probabilities across the num_classes dimension
-            log_probs = F.log_softmax(logits, dim=-1)  # Shape: (batchsize, num_features, num_classes)
-
-            # Use `y` to select the log probability of the correct class for each feature.
-            # This requires gathering the relevant log_probs using `y` as the index.
-            # First, prepare `y` indices for gathering. It should have the same dimension as `log_probs`.
-            y_indices = y.unsqueeze(-1)  # Shape: (batchsize, num_features, 1)
-            selected_log_probs = log_probs.gather(dim=-1, index=y_indices)  # Shape: (batchsize, num_features, 1)
-
-            # Since we're only interested in the selected log_probs, squeeze the last dimension
-            selected_log_probs = selected_log_probs.squeeze(-1)  # Shape: (batchsize, num_features)
-
-            log_probs = torch.sum(selected_log_probs, dim=1)
-
-            # Compute gradients with respect to inputs
-            conditional_score = torch.autograd.grad(outputs=log_probs, inputs=x_in,
-                                      grad_outputs=torch.ones(log_probs.size()).to(x.device),
-                                      create_graph=True, retain_graph=True, only_inputs=True)[0]
-            
-            if not train:
-                torch.set_grad_enabled(False)
-
-            return conditional_score
-
-        return attribute_encoder_correction
-
-    def get_conditional_score_fn(self, train=False):
-        unconditional_score_fn = mutils.get_score_fn(self.sde, self.unconditional_score_model, 
-                                                    conditional=False, train=False, continuous=True)
-        attribute_encoder_correction = self.get_attribute_encoder_correction(train=train)
-
-        def conditional_score_fn(x, y, t):
-            return unconditional_score_fn(x, t) + attribute_encoder_correction(x, y, t)
-
-        return conditional_score_fn
-
     def configure_loss_fn(self, config, train):
         if config.training.loss_type == 'scoreVAE':
             loss_fn = get_attribute_classifier_scoreVAE_loss_fn(
