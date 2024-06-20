@@ -187,6 +187,10 @@ class DisentangledHSICScoreVAEmodel(pl.LightningModule):
         optimizers = self.optimizers()
         encoder_optimizer = optimizers
 
+        # Scheduler for the encoder
+        schedulers = self.lr_schedulers()
+        encoder_scheduler = schedulers
+
         self.set_requires_grad(self.encoder, True)
 
         # Extract a small batch for scoreVAE_loss evaluation
@@ -224,7 +228,11 @@ class DisentangledHSICScoreVAEmodel(pl.LightningModule):
         encoder_optimizer.step()
         encoder_optimizer.zero_grad()
 
+        # Step the scheduler
+        encoder_scheduler.step()
+
         self.step_counter += 1  # Increment step counter
+
 
 
     def validation_step(self, batch, batch_idx):
