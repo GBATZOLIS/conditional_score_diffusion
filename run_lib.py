@@ -13,7 +13,7 @@ from lightning_callbacks.utils import get_callbacks
 from lightning_data_modules import HaarDecomposedDataset, ImageDatasets, PairedDataset, SyntheticDataset, SyntheticPairedDataset, Synthetic1DConditionalDataset, SyntheticTimeSeries, SRDataset, SRFLOWDataset, KSphereDataset, MammothDataset, LineDataset, GanDataset, guided_diff_datasets #needed for datamodule registration
 from lightning_data_modules.utils import create_lightning_datamodule
 
-from lightning_modules import HSICDisentangledScoreVAEmodel, No_MI_DisentangledScoreVAEmodel, DisentangledScoreVAEmodel, AttributeConditionalModel, AttributeEncoder, BaseSdeGenerativeModel, ScoreVAEmodel, PretrainedScoreVAEmodel, EncoderOnlyPretrainedScoreVAEmodel, CorrectedEncoderOnlyPretrainedScoreVAEmodel, ConditionalSdeGenerativeModel #need for lightning module registration
+from lightning_modules import DebugHSICmodule, HSICDisentangledScoreVAEmodel, No_MI_DisentangledScoreVAEmodel, DisentangledScoreVAEmodel, AttributeConditionalModel, AttributeEncoder, BaseSdeGenerativeModel, ScoreVAEmodel, PretrainedScoreVAEmodel, EncoderOnlyPretrainedScoreVAEmodel, CorrectedEncoderOnlyPretrainedScoreVAEmodel, ConditionalSdeGenerativeModel #need for lightning module registration
 from lightning_modules.utils import create_lightning_module
 
 from torchvision.transforms import RandomCrop, CenterCrop, ToTensor, Resize

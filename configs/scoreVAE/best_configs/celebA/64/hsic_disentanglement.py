@@ -7,27 +7,27 @@ from datetime import timedelta
 def get_config():
   config = ml_collections.ConfigDict()
 
-  config.server = 'CIA'
+  config.server = 'hpc'
 
   #logging
   config.logging = logging = ml_collections.ConfigDict()
   logging.log_path = '/store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentanglement/initial_experiments' if config.server == 'CIA' else '/home/gb511/rds_work/projects/scoreVAE/experiments/disentanglement/celebA/hsic'
-  logging.log_name = 'hsic_bigger_batch'
+  logging.log_name = 'hsic_debug'
   logging.top_k = 1
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
 
   # training
   config.training = training = ml_collections.ConfigDict()
-  config.training.lightning_module = 'disentangled_HSIC_score_vae'
+  config.training.lightning_module = 'debug_disentangled_HSIC_score_vae'
   training.use_pretrained = True
   training.prior_config_path = '/store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/attribute_conditional/config.pkl' if config.server == 'CIA' else '/home/gb511/rds_work/projects/scoreVAE/experiments/disentanglement/celebA/attribute_conditional/config.pkl'
   training.prior_checkpoint_path = '/store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/attribute_conditional/checkpoints/best/epoch=211--eval_loss_epoch=0.016.ckpt' if config.server=='CIA' else '/home/gb511/rds_work/projects/scoreVAE/experiments/disentanglement/celebA/attribute_conditional/checkpoints/best/epoch=211--eval_loss_epoch=0.016.ckpt'
   training.encoder_only = True
   training.t_dependent = True
   training.conditioning_approach = 'sr3'
-  training.small_batch_size = 64
-  training.batch_size = 1024
+  training.small_batch_size = 128
+  training.batch_size = 128
   training.t_batch_size = 1
   training.num_nodes = 1
   training.gpus = 1
@@ -63,7 +63,7 @@ def get_config():
 
   # validation
   config.validation = validation = ml_collections.ConfigDict()
-  validation.batch_size = training.batch_size
+  validation.batch_size = 1024 #training.batch_size
   validation.workers = training.workers
 
   # sampling
