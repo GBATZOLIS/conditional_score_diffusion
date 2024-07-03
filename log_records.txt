@@ -6404,3 +6404,5 @@ DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/Cel
 DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentanglement/initial_experiments/hsic_normalized_sub/checkpoints/best/epoch=3--eval_loss_epoch=97.104.ckpt
 DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentanglement/initial_experiments/hsic_normalized_sub/checkpoints/best/last-v1.ckpt
 DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentanglement/initial_experiments/hsic_normalized_sub/checkpoints/time/2024-07-03 09:48.ckpt
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentanglement/initial_experiments/diff_mi/hparams.yaml
+DEBUG:fsspec.local:open file: /store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentanglement/initial_experiments/diff_mi/hparams.yaml
