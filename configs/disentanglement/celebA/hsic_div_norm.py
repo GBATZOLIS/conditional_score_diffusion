@@ -12,7 +12,7 @@ def get_config():
   #logging
   config.logging = logging = ml_collections.ConfigDict()
   logging.log_path = '/store/CIA/gb511/projects/scoreVAE/experiments/CelebA_64/disentanglement/initial_experiments' if config.server == 'CIA' else '/home/gb511/rds_work/projects/scoreVAE/experiments/disentanglement/celebA/hsic'
-  logging.log_name = 'hsic_unnormalized'
+  logging.log_name = 'hsic_div_norm'
   logging.top_k = 1
   logging.every_n_epochs = 1000
   logging.envery_timedelta = timedelta(minutes=1)
@@ -26,13 +26,12 @@ def get_config():
   training.encoder_only = True
   training.t_dependent = True
   training.conditioning_approach = 'sr3'
-  training.small_batch_size = 64
-  training.batch_size = 1024
+  training.batch_size = 128
   training.t_batch_size = 1
   training.num_nodes = 1
   training.gpus = 1
   training.accelerator = 'gpu'
-  training.accumulate_grad_batches = 1
+  training.accumulate_grad_batches = 4
   training.workers = 4*training.gpus
 
   #----- to be removed -----
@@ -61,7 +60,7 @@ def get_config():
   #DISENTANGLED REPRESENTATION LEARNING TRAINING PARAMETERS (new)
   training.disentanglement_factor = 1 #controls the degree of disentanglement.
   training.use_hsic_norm = True
-  training.hsic_norm_type = 'sub' #[div, sub]
+  training.hsic_norm_type = 'div' #[div, sub]
 
   # validation
   config.validation = validation = ml_collections.ConfigDict()
@@ -160,7 +159,7 @@ def get_config():
   optim.eps = 1e-8
   optim.warmup = 1000
   optim.slowing_factor = 1
-  optim.grad_clip = 0
+  optim.grad_clip = 1.
   optim.manual_grad_clip = 1.
 
   config.seed = 42
